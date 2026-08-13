@@ -6,3 +6,4 @@ next.config*.js
 *.log
 *.tsbuildinfo
 .DS_Store
+android/keystore.properties
