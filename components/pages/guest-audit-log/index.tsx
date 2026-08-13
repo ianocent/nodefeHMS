@@ -1,0 +1,56 @@
+import ButtonAddList from "../../../components/common/button/ButtonAddList";
+import PaperBase from "../../../components/common/paper/PaperBase";
+import React, { useContext, useEffect, useState } from "react";
+import Seo from "../../../components/common/seo";
+import TableView from "../../../components/common/table-edit";
+
+const AuditLog = () => {
+  const GLOBALURI = "/cms/bar/rate-link-listing";
+  const groups = "";
+  const [parentid, setparentid] = useState("0");
+  const [add, setadd] = useState("0");
+  const [view, setview] = useState("0");
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const parent = urlParams.get("parent");
+    const add = urlParams.get("add");
+    const view = urlParams.get("view");
+    setparentid(parent);
+    setadd(add);
+    setview(view);
+    // console.log("DATALOG", window.location.pathname.split("/"));
+  });
+  function RouteInit() {
+    return (
+      <div className="mt-2 min-w-full table-auto">
+        <fieldset className="border min-w-full table-auto">
+          <legend className="ml-2 ">Data Change History</legend>
+          <TableView
+            groups={groups}
+            uri={GLOBALURI}
+            isEditTable={false}
+            queryString={
+              "&bar_id=" +
+              new URLSearchParams(window.location.search).get("data")
+            }
+            isBtnAdd={false}
+          />
+        </fieldset>
+      </div>
+    );
+  }
+  return (
+    <>
+      <Seo
+        title={
+          "Management " +
+          GLOBALURI.replaceAll("/cms/", " ").replaceAll("-", " ")
+        }
+      />
+
+      {RouteInit()}
+    </>
+  );
+};
+
+export default AuditLog;

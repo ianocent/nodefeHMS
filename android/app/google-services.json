@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1015621150471",
+    "project_id": "anyaman-hms",
+    "storage_bucket": "anyaman-hms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015621150471:android:4c14949eb25d738a4947a2",
+        "android_client_info": {
+          "package_name": "com.anyaman.hms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRcoOJSF13q81fe0SEckrPJQ6IkmidAt8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
