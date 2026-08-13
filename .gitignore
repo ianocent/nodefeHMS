@@ -2,7 +2,8 @@ node_modules
 .next
 out
 .env*
-next.config*.js
+next.config.local.js
+next.config.qa.js
 *.log
 *.tsbuildinfo
 .DS_Store
