@@ -275,8 +275,8 @@ const generatePDFDownload = async (
     const jsPDFModule = await import("jspdf");
     // @ts-ignore - Dynamic import untuk client-side only
     const html2canvasModule = await import("html2canvas");
-    const jsPDF = jsPDFModule.default;
-    const html2canvas = html2canvasModule.default;
+    const jsPDF: any = jsPDFModule.default;
+    const html2canvas: any = html2canvasModule.default;
 
     // Buat temporary container untuk element yang akan di-capture
     tempContainer = document.createElement("div");

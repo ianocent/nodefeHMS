@@ -455,39 +455,39 @@ export function formatAmountNoDecimals(number: string) {
   }
   return number;
 }
-export function formatAmount(number: string) {
+export function formatAmount(number: string | number) {
+  number = String(number);
   var numberD = number.split(",");
-  number = numberD[0];
-  number = number.replace(/[A-Za-z]/g, "");
-  number = number.replace(/[.]/g, "");
-  number = number.replace(/[!$%^&*()_+|~=`{}[:;<>?.@#\]]/g, "");
-  var numbersubstr = number.substring(1).replace(/[-]/g, "");
+  var main = numberD[0];
+  main = main.replace(/[A-Za-z]/g, "");
+  main = main.replace(/[.]/g, "");
+  main = main.replace(/[!$%^&*()_+|~=`{}[:;<>?.@#\]]/g, "");
+  var numbersubstr = main.substring(1).replace(/[-]/g, "");
   var minus = "";
-  if (number.substring(0, 1) == "-") {
-    number = numbersubstr;
+  if (main.substring(0, 1) == "-") {
+    main = numbersubstr;
     minus = "-";
   }
-  if (number.length == 0) number = "0";
+  if (main.length == 0) main = "0";
   else
-    number =
-      number.substring(0, number.length - 0) +
+    main =
+      main.substring(0, main.length - 0) +
       "." +
-      number.substring(number.length - 0, number.length);
-  number = new Number(number);
-  number = number.toFixed(0);
-  number = number.replace(/\./g, ",");
-  var x = number.split(",");
+      main.substring(main.length - 0, main.length);
+  var num: any = new Number(main);
+  num = num.toFixed(0);
+  num = num.replace(/\./g, ",");
+  var x = num.split(",");
   var x1 = x[0];
   var x2 = x.length > 1 ? "," + x[1] : "";
+  var dec = "";
   if (numberD.length > 1) {
-    numberD = "," + numberD[1];
-  } else {
-    numberD = "";
+    dec = "," + numberD[1];
   }
-  numberD = numberD.replace(/[A-Za-z]/g, "");
-  numberD = numberD.replace(/[.]/g, "");
-  numberD = numberD.replace(/[-!$%^&*()_+|~=`{}[:;<>?.@#\]]/g, "");
-  return minus + "" + (number == 0 ? "0" : formatAmountNoDecimals(x1)) + numberD;
+  dec = dec.replace(/[A-Za-z]/g, "");
+  dec = dec.replace(/[.]/g, "");
+  dec = dec.replace(/[-!$%^&*()_+|~=`{}[:;<>?.@#\]]/g, "");
+  return minus + "" + (num == 0 ? "0" : formatAmountNoDecimals(x1)) + dec;
 }
 export function NumberClear(cur: string) {
   cur = cur.replaceAll(".", "").replaceAll(",", ".");
