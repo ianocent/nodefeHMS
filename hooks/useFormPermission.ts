@@ -85,7 +85,7 @@ export const useTransactionPermission = (action: string): boolean => {
     for (const [menuId, menuPerm] of Object.entries(permissions)) {
         const perm = menuPerm as any;
         if (perm?.transaction_actions && typeof perm.transaction_actions === 'object') {
-            if (perm.transaction_actions[action] === true) {
+            if (perm.transaction_actions[action]) {
                 console.log(`✅ Permission GRANTED for ${action} on menu ${menuId}`);
                 return true;
             }
