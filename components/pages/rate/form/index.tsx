@@ -229,11 +229,10 @@ const AddView = (props: AddviewProps) => {
       setDataEd(datauser?.data);
       let dataInput = [...dataform];
       console.log(datauser, "<<< cek data user");
-      dataInput[0].data[5].options = datauser?.master?.comm_codes;
-      dataInput[0].data[6].options = datauser?.master?.code_posts;
-      dataInput[0].data[7].options = datauser?.master?.company_types;
-      dataInput[0].data[8].options = datauser?.master?.cancelations;
-      dataInput[0].data[10].options = datauser?.master?.code_posts;
+      dataInput[0].data[7].options = datauser?.master?.code_posts;
+      dataInput[0].data[8].options = datauser?.master?.company_types;
+      dataInput[0].data[9].options = datauser?.master?.cancelations;
+      dataInput[0].data[11].options = datauser?.master?.code_posts;
 
       setdataform([...dataInput]);
       dataform[0].data?.map((row) => {
