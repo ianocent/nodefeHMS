@@ -206,6 +206,19 @@ export const FetchData = async (
       }
     } catch (error) {
       console.log("debug", error);
+      if (methods != "GET" && !isNotToast) {
+        toast("Failed to connect to server", {
+          autoClose: 6000,
+          type: "error",
+          position: "bottom-center",
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      }
       return false;
     }
   });
