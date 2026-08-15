@@ -1189,7 +1189,7 @@ const TableView = (props: TableViewProps) => {
               >
                 <table
                   className={
-                    "table-auto border-separate border-spacing-0 rounded-lg" +
+                    "table-auto border-separate border-spacing-0 rounded-lg min-w-full whitespace-nowrap" +
                     (editActive != -1 ? " w-full " : " w-full ")
                   }
                 >

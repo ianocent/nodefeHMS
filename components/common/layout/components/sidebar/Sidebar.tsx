@@ -42,13 +42,6 @@ const Sidebar = (props: sidebarprops) => {
   const path = router.pathname;
   const GetMenus = async () => {
     if (!isDesktop || menuLoaded) return;
-    const cached = sessionStorage.getItem("sidebar_menus");
-    if (cached) {
-      setdatamenu(JSON.parse(cached));
-      setMenuLoaded(true);
-      return;
-    }
-    
     const datamenu: any = await FetchData(
       "/cms/menu?page=1&limit=280&name=&trash=0",
       "GET",
@@ -93,7 +86,6 @@ const Sidebar = (props: sidebarprops) => {
         }
       });
       setdatamenu(arr);
-      sessionStorage.setItem("sidebar_menus", JSON.stringify(arr));
       setMenuLoaded(true);
     }
   };
