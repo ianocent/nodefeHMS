@@ -37,7 +37,7 @@ const IndexSVG = (props: PropMap) => {
           rw?.floor?.label == floorval?.label &&
           buildingval?.label == rw?.building?.label
         ) {
-          obj[rw?.map_id.replaceAll("-", "_") + "_data"] = rw;
+          obj[(rw?.map_id ?? "").replaceAll("-", "_") + "_data"] = rw;
           // console.log("wes", rw?.name);
           // let label1 = document.querySelector("#" + rw?.map_id);
           if (!rw?.map_id) return;
@@ -86,7 +86,7 @@ const IndexSVG = (props: PropMap) => {
           rw?.floor?.label == building[0]?.floors[0]?.label &&
           building[0]?.label == rw?.building?.label
         ) {
-          obj[rw?.map_id.replaceAll("-", "_") + "_data"] = rw;
+          obj[(rw?.map_id ?? "").replaceAll("-", "_") + "_data"] = rw;
           //   console.log("wes", rw);
           let label1 = document.querySelector("#" + rw?.map_id);
           const element = document.getElementById(rw?.map_id);

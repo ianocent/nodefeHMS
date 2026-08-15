@@ -966,7 +966,7 @@ const TableView = (props: TableViewProps) => {
 
                           setaddform(true);
                           let datatype = {};
-                          datatable.table.map((row) => {
+                          (datatable?.table ?? []).map((row) => {
                             if (row?.type == "number") {
                               datatype = { ...datatype, [row?.key]: 0 };
                             } else if (row?.type == "checkbox") {
@@ -1499,7 +1499,7 @@ const TableView = (props: TableViewProps) => {
                           </div>
                         </td>
 
-                        {datatable.table.map((item: any, a: any) => {
+                        {(datatable?.table ?? []).map((item: any, a: any) => {
 
                           if (item.type == "hide") {
                             return <></>
@@ -1951,7 +1951,7 @@ const TableView = (props: TableViewProps) => {
                           ) : (
                             <></>
                           )}
-                          {datatable.table.map((item: any, a: any) => {
+                          {(datatable?.table ?? []).map((item: any, a: any) => {
                             if (item.type == "hide") {
                               return <></>
                             }
@@ -2443,7 +2443,7 @@ const TableView = (props: TableViewProps) => {
                             </div>
                           </td>
 
-                          {datatable.table.map((item: any, a: any) => {
+                          {(datatable?.table ?? []).map((item: any, a: any) => {
                             if (item.type == "hide") {
                               return <></>
                             }

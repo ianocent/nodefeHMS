@@ -263,9 +263,9 @@ const RoomStatistic = () => {
     // setError("");
   };
   useEffect(() => {
-    setbuildingval(building[0]);
-    setfloorval(building[0]?.floors[0]);
-    setflooropt(building[0]?.floors);
+    setbuildingval(building?.[0]);
+    setfloorval(building?.[0]?.floors?.[0]);
+    setflooropt(building?.[0]?.floors);
   }, [building, data]);
   useEffect(() => {
     console.log("datalog", dataval);

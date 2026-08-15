@@ -206,7 +206,7 @@ export const FetchData = async (
       }
     } catch (error) {
       console.log("debug", error);
-      return true;
+      return false;
     }
   });
 };
