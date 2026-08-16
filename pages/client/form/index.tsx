@@ -95,7 +95,7 @@ const AddView = () => {
         code: code,
         status: status?.value,
         no_tlp: no_tlp,
-        contract_expired: expired,
+        contract_expired: contract_expired,
         join_date: join_date,
         npwp: npwp,
         pic_name: pic_name,
@@ -116,7 +116,7 @@ const AddView = () => {
         false,
         datalocal?.data?.access_token,
         router,
-        "/company"
+        "/client"
       );
       if (saveprocess?.code == "200") {
         setloading(false);

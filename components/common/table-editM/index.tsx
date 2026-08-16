@@ -551,7 +551,7 @@ const TableView = (props: TableViewProps) => {
   const onSaveMulti = async (id: number) => {
     try {
       if (uriSave != "") {
-        let urisave = uriSave + "?group=" + Lastpath + "&" + queryString;
+        let urisave = uriSave + "?group=" + Lastpath + (queryString ? "&" + queryString : "");
         let mth = "POST";
 
         const transformeddatavalMulti = Object.entries(datavalMulti).filter(
@@ -562,7 +562,7 @@ const TableView = (props: TableViewProps) => {
         });
 
         if (id != 0) {
-          urisave = uri + "/" + id + "?group=" + Lastpath + "&" + queryString;
+          urisave = uri + "/" + id + "?group=" + Lastpath + (queryString ? "&" + queryString : "");
           mth = "PUT";
         }
         const aesraw = GetEncrypt(raw);

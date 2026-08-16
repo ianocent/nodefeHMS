@@ -428,7 +428,7 @@ const TableView = (props: TableViewProps) => {
     // console.log("sets", FinalPOstDat());
     try {
       setlaodbtn(true);
-      let urisave = uri + "?group=" + Lastpath + "&" + queryString;
+      let urisave = uri + "?group=" + Lastpath + (queryString ? "&" + queryString : "");
       let mth = "POST";
 
       const raw = JSON.stringify(FinalPOstDat());
@@ -507,7 +507,7 @@ const TableView = (props: TableViewProps) => {
   const onSaveMulti = async (id: number) => {
     try {
       if (uriSave != "") {
-        let urisave = uriSave + "?group=" + Lastpath + "&" + queryString;
+        let urisave = uriSave + "?group=" + Lastpath + (queryString ? "&" + queryString : "");
         let mth = "POST";
 
         const transformeddatavalMulti = Object.entries(datavalMulti).filter(
