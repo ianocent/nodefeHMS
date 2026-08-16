@@ -5,7 +5,12 @@ export const hasPermission = (
   userRoles: string[] = []
 ): boolean => {
   const roles = userRoles.map(r => String(r).toLowerCase());
-  if (roles.includes("developer") || roles.includes("administrator")) {
+  if (
+    roles.includes("developer") ||
+    roles.includes("administrator") ||
+    roles.includes("admin") ||
+    roles.includes("anyaman")
+  ) {
     return true;
   }
 

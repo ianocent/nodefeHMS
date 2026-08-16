@@ -1,11 +1,8 @@
 /**@type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
-const suriFe = "";
-// const suriApi = "http://127.0.0.1:8000";
-// const suriApi = "http://192.168.1.2:8000";
-const suriApi = "http://localhost:3001";
-// const suriApi = "https://cms.anyaman.id/";
-const sPassAes = "lbwyBzfgzUIvXZFShJuikaWvLJhIVq36";
+const suriFe = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
+const suriApi = process.env.NEXT_PUBLIC_API_URL || process.env.URI_API || "http://localhost:3001";
+const sPassAes = process.env.NEXT_PUBLIC_AES_KEY || "lbwyBzfgzUIvXZFShJuikaWvLJhIVq36";
 const nextConfig = {
   //output: "export",
   reactStrictMode: false,
