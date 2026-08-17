@@ -138,12 +138,12 @@ const ListView = () => {
                     <div className="mt-4">
                       <TableView
                         groups={groups}
-                        uri={"/cms/system-balance/advanceDepositMovement"}
+                        uri={"/cms/system-balance/deposit"}
                         queryString={"&date=" + dataDate}
                         isEditTable={false}
                         isPageing={false}
                         isHeader={false}
-                        typeTbl={"posting"}
+                        typeTbl={"deposit"}
                         dateDat={dataDate}
                       />
                     </div>
@@ -155,13 +155,13 @@ const ListView = () => {
                     <div className="mt-4">
                       <TableView
                         groups={groups}
-                        uri={"/cms/system-balance/guestLedgerMovement"}
+                        uri={"/cms/system-balance/ledger"}
                         queryString={"&date=" + dataDate}
                         isEditTable={false}
                         isPageing={false}
                         isHeader={false}
                         isResult={true}
-                        typeTbl={"posting"}
+                        typeTbl={"ledger"}
                         dateDat={dataDate}
                       />
                     </div>

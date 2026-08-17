@@ -131,7 +131,7 @@ const ListView = () => {
                     <div className="mt-4">
                       <TableView
                         groups={groups}
-                        uri={"/cms/system-balance/advanceDepositMovement"}
+                        uri={"/cms/system-balance/deposit"}
                         queryString={
                           "&date=" +
                           dataDate 
@@ -150,7 +150,7 @@ const ListView = () => {
                     <div className="mt-4">
                       <TableView
                         groups={groups}
-                        uri={"/cms/system-balance/guestLedgerMovement"}
+                        uri={"/cms/system-balance/ledger"}
                         queryString={
                           "&date=" +
                           dataDate 
