@@ -26,7 +26,4 @@ npm run lint       # eslint
 ```
 
 ## Catatan penting
-
-- `next.config*.js` (ada `sPassAes` + `uriApi` di dalamnya) dan `.env*` **jangan pernah di-commit** — itu udah di-`.gitignore`, tapi kalau suatu saat kepaksa nambahin file konfigurasi lokal, pastikan namanya masuk ignore dulu.
-- File lokal kayak `cookie.txt`, `login_response.txt` bekas debug juga jangan ikut ter-push.
 - Backend baru butuh `Authorization: Bearer <token>` (token dari login), `X-Token` masih didukung untuk kompatibilitas aplikasi native.
