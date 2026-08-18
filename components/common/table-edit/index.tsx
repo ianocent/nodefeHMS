@@ -922,7 +922,7 @@ const TableView = (props: TableViewProps) => {
 
       {datatable?.code == "200" ? (
         <>
-          {isAdvance ? (
+          {isAdvance || isEditTable ? (
             <>
               <TabMenuIcon
                 actMenu={actMenu?.actions}

@@ -185,6 +185,7 @@ const TableReport: React.FC<TableReportProps> = ({
       // console.log("weww", staffVal);
       let response;
       let isBlob = true;
+      let nonFileAttempts = 0; // Guard against infinite polling
       while (isBlob) {
         response = await fetch(
           `${env.uriApi}${item.url}?date=${formatDate(
@@ -218,30 +219,36 @@ const TableReport: React.FC<TableReportProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1000));
           setPercentage(100);
           isBlob = false;
-          const blob = await response.blob();
-          const baseName =
-            (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
-          const fileName =
-            baseName +
-            (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
+            const blob = await response.blob();
+            const baseName =
+              (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
+            const fileName =
+              baseName +
+              (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
-          if (Capacitor.isNativePlatform()) {
-            // Mobile: pakai Capacitor Filesystem + Share
-            await saveFileOnMobile(blob, fileName);
+            if (Capacitor.isNativePlatform()) {
+              // Mobile: pakai Capacitor Filesystem + Share
+              await saveFileOnMobile(blob, fileName);
+            } else {
+              // Web: pakai cara lama
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.style.display = "none";
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+              }, 3000);
+            }
           } else {
-            // Web: pakai cara lama
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.style.display = "none";
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-              window.URL.revokeObjectURL(url);
-            }, 3000);
+            nonFileAttempts++;
+            if (nonFileAttempts > 5) {
+              isBlob = false;
+              toast.error("Report is not ready. Please try again later.");
+            }
           }
-        }
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setPercentage(50);
@@ -271,6 +278,7 @@ const TableReport: React.FC<TableReportProps> = ({
       let response;
       let counter = 0; // Initialize counter
       let isBlob = true;
+      let nonFileAttempts = 0; // Guard against infinite polling
 
       while (isBlob) {
         response = await fetch(
@@ -303,49 +311,35 @@ const TableReport: React.FC<TableReportProps> = ({
             contentType.includes("application/vnd.ms-excel"));
 
         if (isFile) {
-          if (counter > 0) {
-            const blob = await response.blob();
-            const baseName =
-              (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
-            const fileName =
-              baseName +
-              (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setPercentage(100);
+          isBlob = false;
+          const blob = await response.blob();
+          const baseName =
+            (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
+          const fileName =
+            baseName +
+            (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
-            if (Capacitor.isNativePlatform()) {
-              await saveFileOnMobile(blob, fileName);
-            } else {
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.style.display = "none";
-              a.href = url;
-              a.download = fileName;
-              document.body.appendChild(a);
-              a.click();
-              setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-              }, 3000);
-            }
-            isBlob = false;
+          if (Capacitor.isNativePlatform()) {
+            await saveFileOnMobile(blob, fileName);
           } else {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            setPercentage(100);
-            isBlob = false;
-            const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-
-            console.log("Opening PDF URL:", url);
-
-            // Ensure `window.open()` is executed **inside** the loop before moving on
-            setTimeout(() => {
-              const newTab = window.open(url, "_blank");
-              if (!newTab) {
-                alert("Popup blocked! Please allow pop-ups for this site.");
-              }
-            }, 500);
-            // Revoke URL after some delay
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
             setTimeout(() => {
               window.URL.revokeObjectURL(url);
             }, 3000);
+          }
+        } else {
+          nonFileAttempts++;
+          if (nonFileAttempts > 5) {
+            isBlob = false;
+            toast.error("Report is not ready. Please try again later.");
           }
         }
         counter++;
@@ -381,7 +375,9 @@ const TableReport: React.FC<TableReportProps> = ({
           }
 
           const blob = await response.blob();
-          zip.file(`${item.batch_name}.pdf`, blob);
+          const baseName =
+            (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
+          zip.file(`${baseName}.pdf`, blob);
         } catch (error) {
           console.error(`Failed to download ${item.batch_name}:`, error);
           failedDownloads.push(item.batch_name);
