@@ -219,8 +219,10 @@ const TableReport: React.FC<TableReportProps> = ({
           setPercentage(100);
           isBlob = false;
           const blob = await response.blob();
+          const baseName =
+            (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
           const fileName =
-            item.batch_name +
+            baseName +
             (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
           if (Capacitor.isNativePlatform()) {
@@ -303,8 +305,10 @@ const TableReport: React.FC<TableReportProps> = ({
         if (isFile) {
           if (counter > 0) {
             const blob = await response.blob();
+            const baseName =
+              (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
             const fileName =
-              item.batch_name +
+              baseName +
               (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
             if (Capacitor.isNativePlatform()) {
