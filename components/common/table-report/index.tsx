@@ -208,16 +208,20 @@ const TableReport: React.FC<TableReportProps> = ({
         const contentType = response.headers.get("Content-Type");
         // Correct MIME type detection
         const isFile =
-        contentType &&
+          contentType &&
           (contentType.includes("application/pdf") ||
             contentType.includes("image/") ||
-            contentType.includes("application/octet-stream"));
+            contentType.includes("application/octet-stream") ||
+            contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
+            contentType.includes("application/vnd.ms-excel"));
         if (isFile) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           setPercentage(100);
           isBlob = false;
           const blob = await response.blob();
-          const fileName = item.batch_name + ".pdf";
+          const fileName =
+            item.batch_name +
+            (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
           if (Capacitor.isNativePlatform()) {
             // Mobile: pakai Capacitor Filesystem + Share
@@ -292,12 +296,16 @@ const TableReport: React.FC<TableReportProps> = ({
           contentType &&
           (contentType.includes("application/pdf") ||
             contentType.includes("image/") ||
-            contentType.includes("application/octet-stream"));
+            contentType.includes("application/octet-stream") ||
+            contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
+            contentType.includes("application/vnd.ms-excel"));
 
         if (isFile) {
           if (counter > 0) {
             const blob = await response.blob();
-            const fileName = item.batch_name + ".pdf";
+            const fileName =
+              item.batch_name +
+              (contentType.includes("spreadsheetml") || contentType.includes("ms-excel") ? ".xlsx" : ".pdf");
 
             if (Capacitor.isNativePlatform()) {
               await saveFileOnMobile(blob, fileName);
