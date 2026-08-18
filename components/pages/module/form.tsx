@@ -81,7 +81,7 @@ const ModuleAddPage = (props: AddProps) => {
 
       if (isFormData) {
       }
-      let uriRedirect = window.location.pathname;
+      let uriRedirect = window.location.pathname + window.location.search;
       let manualRedirect = "";
       if (GetQueryStr("tblid")) {
         uriRedirect = "";

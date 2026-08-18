@@ -206,10 +206,10 @@ const DragTblView = (props: DragProps) => {
               onAdd={() => {
                 window.location.assign(
                   window.location.pathname +
-                    "?add=1" +
-                    (GetQueryStr("tblid")
-                      ? "&tblid=" + GetQueryStr("tblid")
-                      : "")
+                    (window.location.search
+                      ? window.location.search + "&"
+                      : "?") +
+                    "add=1"
                 );
               }}
             />
