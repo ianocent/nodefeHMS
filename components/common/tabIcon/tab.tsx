@@ -1431,7 +1431,8 @@ const TabMenuIcon = (props: DatatabProps) => {
     // }
   };
   useEffect(() => {
-    if (GetQueryStr("data")) {
+    const key = GetQueryStr("key");
+    if (GetQueryStr("data") && key) {
       GetDataDetail();
       GetDataMaster();
     }
