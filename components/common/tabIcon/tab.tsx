@@ -53,7 +53,7 @@ const TabMenuIcon = (props: DatatabProps) => {
   const [isPay, setisPay] = useState(false);
   const [amountPay, setamountPay] = useState(0);
   const [reloadPay, setreloadPay] = useState(true);
-  const { canCreate, canUpdate } = useFormPermission(63);
+  const { canCreate, canUpdate } = useFormPermission();
   const canCreateRsvFIT = useTransactionPermission("fit");
   const canCreateRsvGIT = useTransactionPermission("git");
   const canCreateRsvVR = useTransactionPermission("vr");
@@ -357,13 +357,12 @@ const TabMenuIcon = (props: DatatabProps) => {
     );
   };
   const ResetPath = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("key");
+    params.set("call", String(Math.floor(Math.random() * 100)));
     router.replace({
       pathname: window.location.pathname,
-      query: {
-        parent: new URLSearchParams(window.location.search).get("parent"),
-        data: GetQueryStr("data"),
-        call: Math.floor(Math.random() * 100),
-      },
+      query: Object.fromEntries(params),
     });
   };
   const move_rsvView = (ed) => {
@@ -1239,6 +1238,27 @@ const TabMenuIcon = (props: DatatabProps) => {
               }}
               isprimary={false}
             />
+            const txPermMap: Record<string, boolean> = {
+              assign_room: canAssignRoom,
+              move_reservation: canMoveRsv,
+              copy_reservation: canCopyRsv,
+              cancel_reservation: canCancelRsv,
+              confirm_reservation: canConfirmRsv,
+              un_assign_room: canUnAssignRoom,
+              check_in: canCheckIn,
+              check_out: canCheckOut,
+              un_check_in: canUnCheckIn,
+              un_check_out: canUnCheckOut,
+              confirm_change_room: canConfirmChangeRoom,
+              cancel_change_room: canCancelChangeRoom,
+              un_cancel_reservation: canConfirmRsv,
+              add_remark: canUpdate,
+              view_remark: canUpdate,
+              add_message: canUpdate,
+              view_message: canUpdate,
+            };
+            const canPerformTx = txPermMap[key] ?? (canCreate || canUpdate);
+
             {key == "add_remark" ||
             key == "check_in" ||
             key == "check_out" ||
@@ -1250,9 +1270,11 @@ const TabMenuIcon = (props: DatatabProps) => {
             key == "copy_reservation" ||
             key == "confirm_change_room" ||
             key == "cancel_change_room" ||
-            key == "confirm_reservation" ? (
+            key == "confirm_reservation" ||
+            key == "assign_room" ||
+            key == "move_reservation" ? (
               <ButtonSubmit
-                isBtnAdd={canCreate || canUpdate}
+                isBtnAdd={canPerformTx}
                 label={
                   key == "check_in" ||
                   key == "check_out" ||
@@ -1264,7 +1286,9 @@ const TabMenuIcon = (props: DatatabProps) => {
                   key == "copy_reservation" ||
                   key == "confirm_change_room" ||
                   key == "cancel_change_room" ||
-                  key == "confirm_reservation"
+                  key == "confirm_reservation" ||
+                  key == "assign_room" ||
+                  key == "move_reservation"
                     ? "Confirmation"
                     : "Save"
                 }

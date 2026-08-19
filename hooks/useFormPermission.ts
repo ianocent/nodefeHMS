@@ -3,7 +3,7 @@ import { GetDecrypt } from "../components/helper";
 import { hasPermission } from "../redux/auth/permissionHelper";
 import { GetQueryParam } from "../components/helper";
 
-const SUPER_USER_IDENTIFIERS = ["developer", "administrator", "admin", "anyaman"];
+const SUPER_USER_IDENTIFIERS = ["developer", "anyaman"];
 
 export const checkIsSuperUser = (roles: string[], users: string[], username?: string): boolean => {
     const rolesLower = roles.map((r) => r.toLowerCase().trim());
