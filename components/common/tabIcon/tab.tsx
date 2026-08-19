@@ -530,6 +530,26 @@ const TabMenuIcon = (props: DatatabProps) => {
     } else {
       title = key;
     }
+    const txPermMap: Record<string, boolean> = {
+      assign_room: canAssignRoom,
+      move_reservation: canMoveRsv,
+      copy_reservation: canCopyRsv,
+      cancel_reservation: canCancelRsv,
+      confirm_reservation: canConfirmRsv,
+      un_assign_room: canUnAssignRoom,
+      check_in: canCheckIn,
+      check_out: canCheckOut,
+      un_check_in: canUnCheckIn,
+      un_check_out: canUnCheckOut,
+      confirm_change_room: canConfirmChangeRoom,
+      cancel_change_room: canCancelChangeRoom,
+      un_cancel_reservation: canConfirmRsv,
+      add_remark: canUpdate,
+      view_remark: canUpdate,
+      add_message: canUpdate,
+      view_message: canUpdate,
+    };
+    const canPerformTx = txPermMap[key] ?? (canCreate || canUpdate);
     return (
       <>
         <div>
@@ -1238,27 +1258,6 @@ const TabMenuIcon = (props: DatatabProps) => {
               }}
               isprimary={false}
             />
-            const txPermMap: Record<string, boolean> = {
-              assign_room: canAssignRoom,
-              move_reservation: canMoveRsv,
-              copy_reservation: canCopyRsv,
-              cancel_reservation: canCancelRsv,
-              confirm_reservation: canConfirmRsv,
-              un_assign_room: canUnAssignRoom,
-              check_in: canCheckIn,
-              check_out: canCheckOut,
-              un_check_in: canUnCheckIn,
-              un_check_out: canUnCheckOut,
-              confirm_change_room: canConfirmChangeRoom,
-              cancel_change_room: canCancelChangeRoom,
-              un_cancel_reservation: canConfirmRsv,
-              add_remark: canUpdate,
-              view_remark: canUpdate,
-              add_message: canUpdate,
-              view_message: canUpdate,
-            };
-            const canPerformTx = txPermMap[key] ?? (canCreate || canUpdate);
-
             {key == "add_remark" ||
             key == "check_in" ||
             key == "check_out" ||
