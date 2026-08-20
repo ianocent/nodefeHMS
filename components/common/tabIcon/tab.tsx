@@ -1597,6 +1597,9 @@ const TabMenuIcon = (props: DatatabProps) => {
     }
   };
 
+  const rsvPaths = ["/front-desk", "/reservation", "/night-audit", "/folio"];
+  const isRsvArea = rsvPaths.some((p) => window.location.pathname.includes(p));
+
   return (
     <>
       {popup ? (
@@ -1617,9 +1620,10 @@ const TabMenuIcon = (props: DatatabProps) => {
       ) : (
         <></>
       )}
-      {(dataIcon && GetQueryStr("card") == "0") ||
+      {isRsvArea &&
+      ((dataIcon && GetQueryStr("card") == "0") ||
       (dataIcon && !GetQueryStr("card")) ||
-      (dataIcon && GetQueryStr("card") == NAuditCode) ? (
+      (dataIcon && GetQueryStr("card") == NAuditCode)) ? (
         <>
           {isTabIcon ? (
             <div className="flex gap-4 auto-cols-max overflow-x-auto min-w-full ">
