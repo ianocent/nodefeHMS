@@ -284,7 +284,7 @@ const ListView = () => {
           GLOBALURI.replaceAll("/cms/", " ").replaceAll("-", " ")
         }
       />
-      <TabMenuIcon actMenu={""} id={GetQueryStr("data")} foliodat={""} />
+      <TabMenuIcon actMenu={""} id={GetQueryStr("data")} foliodat={""} isTabIcon={false} />
 
       {RouteInit()}
     </>
