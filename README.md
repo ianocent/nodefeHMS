@@ -6,11 +6,11 @@ Repo: https://github.com/ianocent/nodefeHMS · SSH `git@github.com:ianocent/node
 
 ## Repo lain yang nyambung
 
-| Repo | Isinya |
-|------|--------|
-| `ianocent/hms-frontend` | Frontend Next.js asli (sumber, jangan diedit) |
-| `ianocent/hms-backend` | Backend Laravel lama (referensi) |
-| `ianocent/nodeHMS` | Backend baru Express/PostgreSQL yang dilayani frontend ini |
+| Repo                    | Isinya                                  |
+| ----------------------- | --------------------------------------- |
+| `ianocent/hms-frontend` | Frontend Next.js                        |
+| `ianocent/hms-backend`  | Backend Laravel lama (sumber referensi) |
+| `ianocent/nodeHMS`      | Backend baru Express/PostgreSQL         |
 
 ## Status
 
@@ -26,4 +26,5 @@ npm run lint       # eslint
 ```
 
 ## Catatan penting
+
 - Backend baru butuh `Authorization: Bearer <token>` (token dari login), `X-Token` masih didukung untuk kompatibilitas aplikasi native.
