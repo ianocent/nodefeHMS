@@ -133,18 +133,18 @@ const DynamicRateManagement = () => {
     setActiveTab("stats");
     setMessage("");
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Authorization", "Bearer " + token);
-      const apiUrl = (process.env.uriApi || "") + `${GLOBALURI}/${configId}/statistics`;
-      const res = await fetch(apiUrl, {
-        method: "GET",
-        headers: myHeaders,
-        redirect: "follow",
-      });
-      const text = await res.text();
-      const datajson = JSON.parse(GetDecrypt(text));
-      if (datajson?.code == 200 && datajson?.data) {
-        setStats(datajson.data);
+      const res = await FetchData(
+        `${GLOBALURI}/${configId}/statistics`,
+        "GET",
+        "",
+        true,
+        token,
+        router,
+        "",
+        true
+      );
+      if (res?.code == 200 && res?.data) {
+        setStats(res.data);
       } else {
         setStats(null);
         setMessage("Statistics not available.");
