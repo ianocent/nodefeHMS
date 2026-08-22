@@ -447,7 +447,7 @@ const HouseKeepingRoomStatus = () => {
   };
 
   const handleSaveSelection = async () => {
-    if (setSelectedHousekeeper.length === 0) {
+    if (selectedHousekeeper.length === 0) {
       toast.error("Please select at least one report.");
       return;
     }
