@@ -259,7 +259,10 @@ const ListView = (props: ReservationFitprp) => {
       );
 
       let dataInput = [...dataform];
-      dataInput[0].data[0].options = datauser?.master?.stay_dates;
+      dataInput[0].data[0].options = [
+        ...(datauser?.master?.stay_dates ?? []),
+        { value: "between", label: "Between" },
+      ];
       dataInput[0].data[3].options = datauser?.master?.display_status;
 
       setdataform([...dataInput]);
