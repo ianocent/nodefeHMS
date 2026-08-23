@@ -5,10 +5,11 @@ export const hasPermission = (
   userRoles: string[] = []
 ): boolean => {
   const roles = userRoles.map(r => String(r).toLowerCase());
+  // Super-user set matches base app: developer/administrator (+ "anyaman" project role).
+  // Generic "admin" removed — privilege widening (audit #1).
   if (
     roles.includes("developer") ||
     roles.includes("administrator") ||
-    roles.includes("admin") ||
     roles.includes("anyaman")
   ) {
     return true;

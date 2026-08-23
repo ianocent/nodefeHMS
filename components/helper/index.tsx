@@ -58,6 +58,12 @@ export function GetNextDay(dt1: string, next: number) {
   return formatDate(hariKedepan);
 }
 export function formatDate(date: string) {
+  // Date-only strings ("YYYY-MM-DD") are parsed as Asia/Jakarta wall time,
+  // not UTC — prevents off-by-one-day shifts on browsers west of GMT.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(date ?? ""));
+  if (m) {
+    return [m[1], m[2], m[3]].join("-");
+  }
   var d = new Date(date),
     month = "" + (d.getMonth() + 1),
     day = "" + d.getDate(),
@@ -74,7 +80,8 @@ export function getEnv(key: string) {
     return "https://cmsbankofindia.dipstrategy.co.id/";
   }
   if (key == "token") {
-    return "8|QPIdzPvafAonPK2cP2Ko0i1zYY0A0duJJ8wEImz471afe86d";
+    // Legacy hardcoded PAT removed — supply via NEXT_PUBLIC_PAT_TOKEN if ever needed
+    return process.env.NEXT_PUBLIC_PAT_TOKEN ?? "";
   }
 }
 export function GetEncrypt(text: any, logout?: boolean) {

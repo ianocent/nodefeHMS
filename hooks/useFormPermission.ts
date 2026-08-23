@@ -19,7 +19,7 @@ export const checkIsSuperUser = (roles: string[], users: string[], username?: st
 
 export const useFormPermission = (menuId?: number) => {
     const { isLogin, permissions } = useSelector((state: any) => state?.auth);
-    const parsed: any = JSON.parse(GetDecrypt(isLogin ?? "") || "{}");
+    let parsed: any = {}; try { parsed = JSON.parse(GetDecrypt(isLogin ?? "") || "{}"); } catch { /* malformed/undecryptable payload — treat as anonymous */ }
     const datalocal = parsed?.data ?? parsed;
     const rawRoles = datalocal?.role || [];
     const rawUser = datalocal?.name || [];
@@ -64,7 +64,7 @@ export const useFormPermission = (menuId?: number) => {
 export const useTransactionPermission = (action: string): boolean => {
     const { isLogin, permissions } = useSelector((state: any) => state?.auth);
 
-    const parsed: any = JSON.parse(GetDecrypt(isLogin ?? "") || "{}");
+    let parsed: any = {}; try { parsed = JSON.parse(GetDecrypt(isLogin ?? "") || "{}"); } catch { /* malformed/undecryptable payload — treat as anonymous */ }
     const datalocal = parsed?.data ?? parsed;
     const rawUser = datalocal?.name || [];
     const rawRoles = datalocal?.role || [];
