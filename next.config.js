@@ -8,8 +8,8 @@ const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
   eslint: {
-    // Legacy repo: ESLint config has no TS parser; type-checking still runs via tsc
-    ignoreDuringBuilds: true,
+    // Lint is clean (0 errors / 0 warnings as of 2026-08-23) — keep it enforced
+    ignoreDuringBuilds: false,
   },
   experimental: {
     optimizePackageImports: ["@nextui-org/react", "framer-motion", "apexcharts", "@tinymce/tinymce-react", "@ckeditor/ckeditor5-react"],

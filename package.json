@@ -68,6 +68,7 @@
     "@capacitor/assets": "^3.0.5",
     "@fullhuman/postcss-purgecss": "^5.0.0",
     "@types/react": "18.2.60",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.52.0",
     "eslint-config-next": "14.0.0",

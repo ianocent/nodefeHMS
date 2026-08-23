@@ -39,11 +39,18 @@ export function CarbonLikeParse(dateStr: string) {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 export function GetSelisihDay(dt1: string, dt2: string) {
-  var tanggal1: any = new Date(dt1);
-  var tanggal2: any = new Date(dt2);
-  tanggal1.setHours(0, 0, 0, 0);
-  tanggal2.setHours(0, 0, 0, 0);
-  var selisih = Math.abs(tanggal1 - tanggal2);
+  // Date-only strings must not shift with browser timezone — normalize
+  // to the Y-M-D part before comparing (Asia/Jakarta wall time parity).
+  const norm = (s: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s ?? ""));
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    const d = new Date(s);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+  var tanggal1 = norm(dt1);
+  var tanggal2 = norm(dt2);
+  var selisih = Math.abs(tanggal1.getTime() - tanggal2.getTime());
   var hariDalamMillisecond = 1000 * 60 * 60 * 24;
   var selisihTanggal = Math.round(selisih / hariDalamMillisecond);
   return selisihTanggal;
@@ -51,6 +58,15 @@ export function GetSelisihDay(dt1: string, dt2: string) {
 export function GetNextDay(dt1: string, next: number) {
   if (isNaN(Date.parse(dt1))) {
     dt1 = new Date().toISOString().split("T")[0];
+  }
+  // Wall-time arithmetic on the Y-M-D part — no UTC round-trip, no day shift
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dt1 ?? ""));
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    d.setDate(d.getDate() + next);
+    return formatDate(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+    );
   }
   var hariKedepan = new Date(new Date(dt1).getTime() + next * 24 * 60 * 60 * 1000)
     .toISOString()

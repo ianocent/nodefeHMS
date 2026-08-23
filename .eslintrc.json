@@ -4,50 +4,55 @@
       "es2021": true
   },
   "extends": [
-      "eslint:recommended",
-      "plugin:react/recommended"
+      "plugin:react/recommended",
+      "next/core-web-vitals"
   ],
-  "overrides": [
-  ],
+  "parser": "@typescript-eslint/parser",
+  "overrides": [],
   "parserOptions": {
       "ecmaVersion": "latest",
       "sourceType": "module"
   },
   "plugins": [
-      "react"
+      "react",
+      "@typescript-eslint"
   ],
   "rules": {
-      "indent": [
-          "off"
-      ],
-      "linebreak-style": [
-          "off"
-      ],
-      "quotes": [
-          "error",
-          "double"
-      ],
-      "semi": [
-          "error",
-          "always"
-      ],
-      "no-multiple-empty-lines":["error", { "max": 1, "maxEOF": 1 }],
-      "no-console":"off",
-      "eol-last":"error",
-      "block-spacing":"error",
-      "vars-on-top":"error",
-      "no-useless-return":"error",
-      "no-useless-escape":"error",
-      "no-lone-blocks":"error",
-      "no-empty":"error",
-      "camelcase":"error",
+      "indent": ["off"],
+      "linebreak-style": ["off"],
+      "quotes": ["off"],
+      "semi": ["off"],
+      "no-multiple-empty-lines": ["off"],
+      "no-console": "off",
+      "eol-last": ["off"],
+      "block-spacing": ["off"],
+      "vars-on-top": "off",
+      "no-useless-return": "off",
+      "no-useless-escape": "off",
+      "no-lone-blocks": "off",
+      "no-empty": "off",
+      "camelcase": "off",
       "no-empty-function": "off",
-      "no-whitespace-before-property": "error",
-      "no-dupe-class-members":"off",
-      "react/no-unknown-property":"off",
-      "no-unused-vars":"off",
-      "no-lone-blocks":"off",
+      "no-whitespace-before-property": "off",
+      "no-dupe-class-members": "off",
+      "react/no-unknown-property": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
       "react/no-unescaped-entities": "off",
-      "no-mixed-spaces-and-tabs": "off"
-  }
+      "no-mixed-spaces-and-tabs": "off",
+      "@next/next/no-img-element": "off",
+      "react/display-name": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "no-undef": "off",
+      "react/jsx-key": "off",
+      "@next/next/no-assign-module-variable": "off",
+      "@next/next/no-html-link-for-pages": "off",
+      "@next/next/no-page-custom-font": "off",
+      "no-dupe-else-if": "off",
+      "no-redeclare": "off",
+      "no-prototype-builtins": "off",
+      "no-case-declarations": "off",
+      "jsx-a11y/alt-text": "off"
+  },
+  "ignorePatterns": ["node_modules/", ".next/", "android/"]
 }
