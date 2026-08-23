@@ -7,5 +7,6 @@ next.config.qa.js
 *.log
 *.tsbuildinfo
 package-lock.json
+next.config.js
 .DS_Store
 android/keystore.properties
