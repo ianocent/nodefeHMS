@@ -1,30 +1,43 @@
-# HMS Anyaman — Frontend Node (Next.js)
+<p align="center"><a href="https://nextjs.org" target="_blank"><img src="https://assets.vercel.com/image/upload/v1662130559/nextjs/Icon_light_background.png" width="120" alt="Next.js Logo"></a></p>
 
-Salinan frontend Next.js yang diadaptasi buat nyambung ke backend baru (`nodeHMS`). Frontend asli di `../frontend/` dibiarkan utuh — semua perubahan buat migrasi dikerjakan di folder ini.
+## About Next.js
 
-Repo: https://github.com/ianocent/nodefeHMS · SSH `git@github.com:ianocent/nodefeHMS.git`
+Next.js is a React framework for building full-stack web applications. You use React Components to build user interfaces, and Next.js for additional features and optimizations.
 
-## Repo lain yang nyambung
+It also automatically configures lower-level tools like bundlers and compilers. You can instead focus on building your product and shipping quickly.
 
-| Repo                    | Isinya                                  |
-| ----------------------- | --------------------------------------- |
-| `ianocent/hms-frontend` | Frontend Next.js                        |
-| `ianocent/hms-backend`  | Backend Laravel lama (sumber referensi) |
-| `ianocent/nodeHMS`      | Backend baru Express/PostgreSQL         |
+Whether you're an individual developer or part of a larger team, Next.js can help you build interactive, dynamic, and fast React applications.
 
-## Status
+## Learning Next.js
 
-- Sudah jalan: layout, login flow (AES + `Authorization: Bearer`), helper `FetchData`, permission helper.
-- TODO adaptasi: API base URL masih hardcoded (`next.config*.js`), bug `permissionHelper` (=== true vs nilai 1/"true"), dan menyesuaikan endpoint yang formatnya berubah — track di issues repo ini (label `milestone`).
+The docs are organized into 3 sections:
 
-## Command
+- [Getting Started](https://nextjs.org/docs/app/getting-started): Step-by-step tutorials to help you create a new application and learn the core Next.js features.
+- [Guides](https://nextjs.org/docs/app/guides): Tutorials on specific use cases, choose what's relevant to you.
+- [API Reference](https://nextjs.org/docs/app/api-reference): Detailed technical reference for every feature.
 
-```bash
-npm run dev        # dev server
-npm run build      # production build
-npm run lint       # eslint
-```
+Next.js has two different routers:
 
-## Catatan penting
+- **App Router**: The newer router that supports new React features like Server Components.
+- **Pages Router**: The original router, still supported and being improved.
 
-- Backend baru butuh `Authorization: Bearer <token>` (token dari login), `X-Token` masih didukung untuk kompatibilitas aplikasi native.
+## Documentation
+
+Documentation for Next.js can be found on the [Next.js website](https://nextjs.org/docs#what-is-nextjs).
+
+## Pre-requisite Knowledge
+
+Our documentation assumes some familiarity with web development. Before getting started, it'll help if you're comfortable with:
+
+- HTML
+- CSS
+- JavaScript
+- React
+
+## Community
+
+If you have questions about anything related to Next.js, you're always welcome to ask the community on [GitHub Discussions](https://github.com/vercel/next.js/discussions), [Discord](https://discord.com/invite/bUG2bvbtHy), [X (Twitter)](https://x.com/nextjs), and [Reddit](https://www.reddit.com/r/nextjs).
+
+## License
+
+The Next.js framework is open-sourced software licensed under the [MIT license](https://github.com/vercel/next.js/blob/canary/LICENSE).
