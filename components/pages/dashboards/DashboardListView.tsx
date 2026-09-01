@@ -534,8 +534,111 @@ const DashboardListView = () => {
 
   useEffect(() => {
       refreshNotification();
-      const interval = setInterval(refreshNotification, 25000); // 25 detik
-      return () => clearInterval(interval);
+      // SSE push notifications — auto-reconnect
+      let eventSource: EventSource | null = null;
+      let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const connectSSE = () => {
+          const token = datalocal?.data?.access_token;
+          if (!token) return;
+          const apiUrl = (process.env.uriApi || '') + '/cms/helper/notification-stream?token=' + encodeURIComponent(token);
+          eventSource = new EventSource(apiUrl);
+
+          eventSource.addEventListener('task-created', (e) => {
+              try {
+                  const data = JSON.parse(e.data);
+                  setListDashboard(prev => {
+                      const next = { ...prev };
+                      Object.keys(next).forEach(key => {
+                          if (next[key]?.type === "notification-list") {
+                              const items = next[key].items || [];
+                              next[key] = {
+                                  ...next[key],
+                                  count: (next[key].count || 0) + 1,
+                                  items: [data, ...items],
+                              };
+                          }
+                      });
+                      return next;
+                  });
+              } catch {}
+          });
+
+          eventSource.addEventListener('task-updated', (e) => {
+              try {
+                  const data = JSON.parse(e.data);
+                  setListDashboard(prev => {
+                      const next = { ...prev };
+                      Object.keys(next).forEach(key => {
+                          if (next[key]?.type === "notification-list") {
+                              const items = (next[key].items || []).map((item: any) =>
+                                  item.id === data.id ? { ...item, ...data } : item
+                              );
+                              next[key] = { ...next[key], items };
+                          }
+                      });
+                      return next;
+                  });
+              } catch {}
+          });
+
+          eventSource.addEventListener('task-reply', (e) => {
+              try {
+                  const data = JSON.parse(e.data);
+                  setListDashboard(prev => {
+                      const next = { ...prev };
+                      Object.keys(next).forEach(key => {
+                          if (next[key]?.type === "notification-list") {
+                              const items = next[key].items || [];
+                              next[key] = {
+                                  ...next[key],
+                                  count: (next[key].count || 0) + 1,
+                                  items: [data, ...items],
+                              };
+                          }
+                      });
+                      return next;
+                  });
+              } catch {}
+          });
+
+          eventSource.addEventListener('housekeeping-notification', (e) => {
+              try {
+                  const data = JSON.parse(e.data);
+                  setListDashboard(prev => {
+                      const next = { ...prev };
+                      Object.keys(next).forEach(key => {
+                          if (next[key]?.type === "notification-list") {
+                              const items = next[key].items || [];
+                              next[key] = {
+                                  ...next[key],
+                                  count: (next[key].count || 0) + 1,
+                                  items: [data, ...items],
+                              };
+                          }
+                      });
+                      return next;
+                  });
+              } catch {}
+          });
+
+          eventSource.onerror = () => {
+              eventSource?.close();
+              // Reconnect after 5s
+              reconnectTimer = setTimeout(connectSSE, 5000);
+          };
+      };
+
+      connectSSE();
+
+      // Fallback poll every 60s to catch anything SSE missed
+      const interval = setInterval(refreshNotification, 60000);
+
+      return () => {
+          eventSource?.close();
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          clearInterval(interval);
+      };
   }, []);
   
 
