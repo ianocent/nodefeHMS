@@ -1928,6 +1928,41 @@ const EditView = () => {
       dataInput[frm].data[ix].valueid = rw?.id;
       dataInput[frm].data[ix].value = rw[names[0]];
     }
+    // Auto-fill market segments from company sync_mkt_segment_* when selecting from autocomplete
+    if (name == "name-company" && rw) {
+      setData((prev: any) => {
+        const master = prev?.masterdata;
+        if (!master) return prev;
+        const updates: any = {};
+        for (let i = 1; i <= 4; i++) {
+          const syncVal = rw[`sync_mkt_segment_${i}`];
+          if (syncVal) {
+            const matchOpt = (master[`market_segment_${i}`] || []).find(
+              (o: any) => String(o.label).toLowerCase() === String(syncVal).toLowerCase()
+            );
+            if (matchOpt) {
+              updates[`market_segment_${i}`] = matchOpt;
+              updates[`market_segment_${i}_ori`] = matchOpt;
+              // Also update form array
+              const idx = dataInput[frm]?.data?.findIndex((d: any) => d.name === `market_segment_${i}`);
+              if (idx >= 0 && dataInput[frm]?.data?.[idx]) dataInput[frm].data[idx].value = matchOpt;
+            }
+          }
+        }
+        if (rw.source) {
+          const srcMatch = (master.source || []).find(
+            (o: any) => String(o.label).toLowerCase() === String(rw.source).toLowerCase()
+          );
+          if (srcMatch) {
+            updates.source = srcMatch;
+            updates.source_ori = srcMatch;
+            const idx = dataInput[frm]?.data?.findIndex((d: any) => d.name === 'source');
+            if (idx >= 0 && dataInput[frm]?.data?.[idx]) dataInput[frm].data[idx].value = srcMatch;
+          }
+        }
+        return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+      });
+    }
     if (name == "name-rate") {
       dataInput[frm].items[ia].data[4].uri =
         "/cms/room-type?reservation=1&check_in_date=[0]&check_out_date=[1]&rate_id=" +

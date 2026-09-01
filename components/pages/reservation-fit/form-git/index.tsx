@@ -687,6 +687,37 @@ const AddView = (props: AddviewProps) => {
         }
       });
     });
+    // Auto-fill market segments from company sync_mkt_segment_* (PHP: CompanyProfile->formatData)
+    if (name == "name-company" && rw) {
+      setData((dataval) => {
+        const master = dataval?.masterdata;
+        if (!master) return dataval;
+        const mktUpdates: any = {};
+        for (let i = 1; i <= 4; i++) {
+          const syncKey = `sync_mkt_segment_${i}`;
+          const syncVal = rw[syncKey];
+          if (syncVal) {
+            const matchOpt = (master[`market_segment_${i}`] || []).find(
+              (o: any) => String(o.label).toLowerCase() === String(syncVal).toLowerCase()
+            );
+            if (matchOpt) {
+              mktUpdates[`market_segment_${i}`] = matchOpt;
+              mktUpdates[`market_segment_${i}_ori`] = matchOpt;
+            }
+          }
+        }
+        if (rw.source) {
+          const srcMatch = (master.source || []).find(
+            (o: any) => String(o.label).toLowerCase() === String(rw.source).toLowerCase()
+          );
+          if (srcMatch) {
+            mktUpdates.source = srcMatch;
+            mktUpdates.source_ori = srcMatch;
+          }
+        }
+        return Object.keys(mktUpdates).length > 0 ? { ...dataval, ...mktUpdates } : dataval;
+      });
+    }
     if (ia != -1) {
       let dataInput: any = [...dataform];
       dataInput[1].items[ia].data[ix].valueid = rw?.id;
