@@ -574,6 +574,10 @@ const Profile = () => {
     setdatajsonp(datalocal);
     fetchTaskOptions();
   }, []);
+  // Keep datajsonp in sync when login data changes (e.g. after shift start)
+  useEffect(() => {
+    setdatajsonp(datalocal);
+  }, [isLogin]);
   useEffect(() => {
     if (openTask && activeTab === "manage") {
       fetchTasks();

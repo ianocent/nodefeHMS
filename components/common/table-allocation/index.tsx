@@ -109,13 +109,13 @@ const TableReservatuinView = (props: TableViewProps) => {
       label: "New FIT",
       key: "new",
       line: false,
-      icon: "http://rndhms.dipstrategy.co.id/theme/cms/images/reservation/icon/New_Reservation.svg",
+      icon: (process.env.uriApi || "") + "/theme/cms/images/reservation/icon/New_Reservation.svg",
     },
     {
       label: "New GIT",
       key: "new",
       line: false,
-      icon: "http://rndhms.dipstrategy.co.id/theme/cms/images/reservation/icon/New_Reservation.svg",
+      icon: (process.env.uriApi || "") + "/theme/cms/images/reservation/icon/New_Reservation.svg",
     },
   ]);
   const [datadet, setdatadet] = useState<any>({});

@@ -75,7 +75,7 @@ const TabMenuIcon = (props: DatatabProps) => {
     label: "New FIT",
     key: "new",
     line: false,
-    icon: "https://cms.anyaman.id/theme/cms/images/reservation/icon/New_Reservation.svg",
+    icon: (process.env.uriApi || "") + "/theme/cms/images/reservation/icon/New_Reservation.svg",
   };
   const [dataIcon, setdataIcon] = useState<any>([isNAudit ? {} : objIco]);
   const [dataIconAll, setdataIconAll] = useState<any>({});
@@ -1472,14 +1472,14 @@ const TabMenuIcon = (props: DatatabProps) => {
           label: "New FIT",
           key: "fit",
           line: false,
-          icon: "https://cms.anyaman.id/theme/cms/images/reservation/icon/New_Reservation.svg",
+          icon: (process.env.uriApi || "") + "/theme/cms/images/reservation/icon/New_Reservation.svg",
         };
 
         var objIcoDayuse = {
           label: "New Day Use",
           key: "day-use",
           line: false,
-          icon: "https://cms.anyaman.id/theme/cms/images/reservation/icon/New_Reservation.svg",
+          icon: (process.env.uriApi || "") + "/theme/cms/images/reservation/icon/New_Reservation.svg",
         }
 
         setdataIcon([obj, objIco, objIcoDayuse]);

@@ -126,11 +126,9 @@ const AddUsertView = () => {
     //   rolear.push(element?.value);
     // });
     let propertyar = [];
-    if (idusr != "0") {
-      propertiess.forEach((element: any) => {
-        propertyar.push(element?.value);
-      });
-    }
+    propertiess.forEach((element: any) => {
+      propertyar.push(element?.value);
+    });
 
     let valid = false;
     if (errconfirmpass == "" && errnewpass == "") {
@@ -349,27 +347,21 @@ const AddUsertView = () => {
                 isMulti={false}
               />
             </div>
-            {idusr != "0" ? (
-              <>
-                <div className={"col-span-6"}>
-                  <InputMain
-                    typeInput={"select-multi"}
-                    error={false}
-                    label={"Property"}
-                    required={true}
-                    options={dataoption?.master?.properties}
-                    onChangeSel={(e) => {
-                      changeHandler(e, true, "propertiess");
-                    }}
-                    restSelect={{}}
-                    valueSel={propertiess}
-                    isMulti={true}
-                  />
-                </div>
-              </>
-            ) : (
-              <></>
-            )}
+            <div className={"col-span-6"}>
+              <InputMain
+                typeInput={"select-multi"}
+                error={false}
+                label={"Property"}
+                required={true}
+                options={dataoption?.master?.properties}
+                onChangeSel={(e) => {
+                  changeHandler(e, true, "propertiess");
+                }}
+                restSelect={{}}
+                valueSel={propertiess}
+                isMulti={true}
+              />
+            </div>
             <div className={"col-span-6"}>
               <InputMain
                 typeInput={"base"}
