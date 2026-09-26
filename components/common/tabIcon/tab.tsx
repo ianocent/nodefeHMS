@@ -1431,7 +1431,12 @@ const TabMenuIcon = (props: DatatabProps) => {
     // }
   };
   useEffect(() => {
-    if (GetQueryStr("data")) {
+    // Reservation actions only exist on reservation pages. Other master pages
+    // (bar, rate, ...) reuse this component, and calling /cms/reservation/:id/update
+    // there only produced a 404 in the network tab.
+    const rsvPath = GetPathUri(2);
+    const isRsvPage = ["fit", "git", "day-use", "vr", "folio"].includes(rsvPath);
+    if (isRsvPage && GetQueryStr("data")) {
       GetDataDetail();
       GetDataMaster();
     }
@@ -1600,9 +1605,9 @@ const TabMenuIcon = (props: DatatabProps) => {
   const rsvPaths = ["/front-desk", "/reservation", "/night-audit", "/folio"];
   const isRsvArea = rsvPaths.some((p) => window.location.pathname.includes(p));
 
-  return (
+    return (
     <>
-      {popup ? (
+      {popup && String(id) === GetQueryStr("data") ? (
         <div className="overlay">
           <div
             ref={ref}

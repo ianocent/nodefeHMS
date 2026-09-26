@@ -124,6 +124,33 @@ export function GetDecrypt(text: any, logout?: boolean) {
   }
 }
 
+const STATIC_CACHE_TTL = 30000;
+const staticCache = new Map<string, { t: number; v: any }>();
+const STATIC_CACHE_LIKE = [
+  "/cms/uall",
+  "/cms/rall",
+  "/cms/role",
+  "/cms/countryByRegion",
+  "/cms/cityByCountry",
+];
+const STATIC_CACHE_PREFIX = [
+  "/cms/menu",
+  "/cms/menu/get-parent-by-id-children",
+];
+function staticCacheGet(uri: string): any | null {
+  const e = staticCache.get(uri);
+  if (e && Date.now() - e.t < STATIC_CACHE_TTL) return e.v;
+  return null;
+}
+function staticCacheSet(uri: string, v: any): void {
+  if (staticCache.size > 200) staticCache.clear();
+  staticCache.set(uri, { t: Date.now(), v });
+}
+const isStaticCachedUri = (uri: string): boolean => {
+  const base = uri.split("?")[0];
+  return STATIC_CACHE_LIKE.includes(base) || STATIC_CACHE_PREFIX.some((p) => base === p);
+};
+
 export const FetchData = async (
   uri: string,
   methods: string,
@@ -134,6 +161,10 @@ export const FetchData = async (
   linksucces: any,
   isNotToast?: boolean
 ) => {
+  if (methods == "GET" && isStaticCachedUri(uri)) {
+    const cached = staticCacheGet(uri);
+    if (cached) return Promise.resolve(cached);
+  }
   return fetchQueue.add(async () => {
     let requestOptions: RequestInit = {};
     var myHeaders = new Headers();
@@ -225,6 +256,7 @@ export const FetchData = async (
             }, 800);
           }
         }
+        if (methods == "GET") staticCacheSet(uri, datajson);
         return datajson;
       }
     } catch (error) {

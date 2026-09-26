@@ -225,7 +225,7 @@ const SidebarMobile = () => {
 
             <div className="p-3 border-t border-white/10 shrink-0">
               <img
-                src={datalocal?.imgProperty || datalocal?.image}
+                src={`${process.env.uriApi || ""}${datalocal?.imgProperty || datalocal?.image || ""}`}
                 className="w-full h-12 object-contain bg-white/30 rounded-lg"
                 alt="property logo"
               />

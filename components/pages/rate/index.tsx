@@ -14,7 +14,7 @@ const ListView = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const parent = urlParams.get("parent");
-    const add = urlParams.get("data");
+    const add = urlParams.get("add");
     const view = urlParams.get("view");
     setparentid(parent);
     setadd(add);
@@ -22,7 +22,7 @@ const ListView = () => {
     // console.log("DATALOG", window.location.pathname.split("/"));
   });
   function RouteInit() {
-    if (add) {
+    if (add == "1") {
       return <AddPage />;
     } else if (view == "1") {
       return <AddPage isview={true} />;

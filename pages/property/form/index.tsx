@@ -185,7 +185,7 @@ const AddView = () => {
         region_id: datauser?.data?.relation?.regions,
         country_id: datauser?.data?.relation?.countries,
         is_tax: datauser?.data?.is_tax,
-        logo: datauser?.data?.image,
+        logo: datauser?.data?.logo,
         ip_doorlock: datauser?.data?.ip_doorlock,
         market_segment_1: datauser?.data?.market_segment_1,
         market_segment_2: datauser?.data?.market_segment_2,

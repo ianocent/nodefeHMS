@@ -146,7 +146,7 @@ const PropertyListView = () => {
           className="flex items-center justify-center min-h-[180px] flex-1 p-6 transition-colors duration-300"
         >
           <img
-            src={row?.image}
+            src={`${process.env.uriApi || ""}${row?.image || ""}`}
             alt={row?.name}
             className="max-h-[140px] max-w-full object-contain"
           />

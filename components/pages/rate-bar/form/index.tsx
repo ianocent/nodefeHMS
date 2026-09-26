@@ -28,7 +28,7 @@ const AddView = (props: AddviewProps) => {
   const [getdata, setgetdata] = useState(false);
   const [isapplyrate, setIsapplayrate] = useState(false);
   const [IsOpenModal, setIsOpenModal] = useState(false);
-  const { canUpdate, canCreate } = useFormPermission(86);
+  const { canUpdate, canCreate } = useFormPermission(87);
   const [isrestriction, setisrestriction] = useState(false);
   const currentDate = new Date().toJSON().slice(0, 10);
 

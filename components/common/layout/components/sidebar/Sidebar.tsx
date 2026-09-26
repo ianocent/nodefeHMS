@@ -307,7 +307,7 @@ const Sidebar = (props: sidebarprops) => {
             style={{ width: !hide ? '55px' : '15rem' }}
           >
             <img
-              src={imageProp}
+              src={`${process.env.uriApi || ""}${imageProp || ""}`}
               className="w-full h-16 object-contain bg-white/30 rounded-lg hover:bg-white/75"
             />
           </div>
