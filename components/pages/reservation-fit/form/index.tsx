@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { LayoutContext } from "../../../../context/LayoutContext";
 import { useFormPermission } from "../../../../hooks/useFormPermission";
 import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { IconSpiner } from "../../../common/icon/CardIcon";
+import { PanelSkeleton } from "../../../common/skeleton/Skeleton";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
 import TableView from "../../../common/table-edit";
@@ -21,10 +21,13 @@ import {
   GetNextDay,
   GetQueryStr,
   GetSelisihDay,
+  formatValidationMessage,
+  onValidationError,
   removeItem
 } from "../../../helper";
 import CompanyAdd from "../../company-profile/form/index";
 import GuestAdd from "../../guest/form/index";
+import StepLayout from "./step-layout";
 
 interface AddviewProps {
   isview?: boolean;
@@ -52,7 +55,18 @@ const AddView = (props: AddviewProps) => {
   const [dataWalkIn, setdataWalkIn] = useState<any>([]);
   const [dataInHouse, setdataInHouse] = useState<any>([]);
   const [printrate, setprintrate] = useState<any>({});
+  // Server-side validation errors for this form's own save endpoint. The
+  // generic toast only says "Validation failed"; this keeps the per-field
+  // messages so the form can point at the offending input.
+  const [serverErrors, setserverErrors] = useState<{
+    message: string;
+    fields: Record<string, string>;
+  } | null>(null);
   const [openRoom, setOpenroom] = useState<any>(false);
+  // Set when a guest was just quick-created from this popup. The backend reports
+  // which profile fields check-in will still reject, so the reservation screen
+  // can say so instead of the guest only finding out at the desk.
+  const [mandatoryNotice, setmandatoryNotice] = useState<any>(null);
   const [dataform, setdataform] = useState<any>([
     {
       name: "main",
@@ -700,10 +714,11 @@ const AddView = (props: AddviewProps) => {
 
     setdataform([...dataInput]);
   };
-  const ActSv = (id, fn, ln, ti, pn, em, type, market = [], source = []) => {
+  const ActSv = (id, fn, ln, ti, pn, em, type, market: any = [], source: any = []) => {
     setpopup(false);
 
     if (type == "guest") {
+      setmandatoryNotice(source?.mandatory_check_in ?? null);
       var objcus = {
         ["guest_profile_id"]: id,
         ["title"]: ti,
@@ -934,6 +949,44 @@ const AddView = (props: AddviewProps) => {
     setData({ ...dataval, ["checkbokmulti"]: checkbokmulti });
     // console.log(checkbokmulti);
   }, [checkbokmulti]);
+
+  // Any edit invalidates the previous 422 — drop it so the panel does not keep
+  // flagging fields the user has just corrected. `dataval` is replaced on every
+  // keystroke (and by FinalPOstDat on submit), so this covers all inputs.
+  useEffect(() => {
+    setserverErrors(null);
+  }, [dataval]);
+
+  // Collect 422s raised by this form's own save endpoint. FetchData toasts the
+  // flattened list too, but the message has to disappear once the user edits
+  // anything, otherwise a stale error keeps pointing at a field they fixed.
+  useEffect(() => {
+    return onValidationError((payload) => {
+      if (!payload?.uri?.startsWith(GLOBALURI)) return;
+      const fields: Record<string, string> = {};
+      const collect = (errs: any, prefix = "") => {
+        if (errs == null) return;
+        if (typeof errs === "string") {
+          if (prefix) fields[prefix] = errs;
+          return;
+        }
+        if (Array.isArray(errs)) {
+          errs.forEach((e: any) => collect(e, prefix));
+          return;
+        }
+        if (typeof errs === "object") {
+          Object.entries(errs).forEach(([k, v]: [string, any]) =>
+            collect(v, prefix ? `${prefix}.${k}` : k)
+          );
+        }
+      };
+      collect(payload.errors);
+      setserverErrors({
+        message: formatValidationMessage(payload.message, payload.errors),
+        fields,
+      });
+    });
+  }, []);
 
   const changeHandlera = (
     e: any,
@@ -1336,33 +1389,34 @@ const AddView = (props: AddviewProps) => {
       });
     }
 
-    // Auto-fill market segments from company sync_mkt_segment_* (PHP: CompanyProfile->formatData)
+    // Auto-fill market segments from the company's own type selection
+    // (PHP: `$company->type->where('group','market-segment-N')`). The backend
+    // list endpoint attaches these as `{ value, label }`; `sync_mkt_segment_*`
+    // is the OTA sync string and is normally empty, so it must not be the
+    // source here. Selecting a company already determines the segments, so the
+    // user is not asked to retype them.
     if (name == "name-company" && rw) {
       setData((dataval) => {
         const master = dataval?.masterdata;
         if (!master) return dataval;
         const mktUpdates: any = {};
         for (let i = 1; i <= 4; i++) {
-          const syncKey = `sync_mkt_segment_${i}`;
-          const syncVal = rw[syncKey];
-          if (syncVal) {
-            const matchOpt = (master[`market_segment_${i}`] || []).find(
-              (o: any) => String(o.label).toLowerCase() === String(syncVal).toLowerCase()
-            );
-            if (matchOpt) {
-              mktUpdates[`market_segment_${i}`] = matchOpt;
-              mktUpdates[`market_segment_${i}_ori`] = matchOpt;
-            }
+          const key = `market_segment_${i}`;
+          const opt = rw[key];
+          if (opt && typeof opt === "object" && opt.value) {
+            const matchOpt = (master[key] || []).find(
+              (o: any) => String(o.value ?? o.id) === String(opt.value)
+            ) || opt;
+            mktUpdates[key] = matchOpt;
+            mktUpdates[`${key}_ori`] = matchOpt;
           }
         }
-        if (rw.source) {
+        if (rw.source && typeof rw.source === "object" && rw.source.value) {
           const srcMatch = (master.source || []).find(
-            (o: any) => String(o.label).toLowerCase() === String(rw.source).toLowerCase()
-          );
-          if (srcMatch) {
-            mktUpdates.source = srcMatch;
-            mktUpdates.source_ori = srcMatch;
-          }
+            (o: any) => String(o.value ?? o.id) === String(rw.source.value)
+          ) || rw.source;
+          mktUpdates.source = srcMatch;
+          mktUpdates.source_ori = srcMatch;
         }
         return Object.keys(mktUpdates).length > 0 ? { ...dataval, ...mktUpdates } : dataval;
       });
@@ -1414,6 +1468,7 @@ const AddView = (props: AddviewProps) => {
       );
 
       if (saveprocess?.code == "200") {
+        setserverErrors(null);
         router.replace({
           pathname: "/reservation/fit/reservation",
           query: {
@@ -1436,7 +1491,7 @@ const AddView = (props: AddviewProps) => {
       <>
         <div
           ref={ref} // pastikan ref ini udah di-define di atasnya ya
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           {!loading ? (
             <div className="table-responsive w-full">
@@ -1547,12 +1602,10 @@ const AddView = (props: AddviewProps) => {
               
             </div>
           ) : (
-            <div className="flex w-full justify-center mt-2">
-              <IconSpiner />
-            </div>
+            <PanelSkeleton />
           )}
         </div>
-      </>
+        </>
     );
   };
   const ContentPopUp = (key) => {
@@ -1571,11 +1624,12 @@ const AddView = (props: AddviewProps) => {
               <GuestAdd
                 isPopup={true}
                 nameinit={dataval["first_name-guest_profile"] ?? ""}
-                ActionSv={(id, fn, ln, ti, pn, em, gs) =>
-                  ActSv(id, fn, ln, ti, pn, em, "guest", gs)
+                OnCancelSv={() => setpopup(false)}
+                ActionSv={(id, fn, ln, ti, pn, em, gs, all) =>
+                  ActSv(id, fn, ln, ti, pn, em, "guest", gs, all)
                 }
               />
-            </>
+              </>
           ) : (
             <>
               <CompanyAdd
@@ -1585,10 +1639,10 @@ const AddView = (props: AddviewProps) => {
                   ActSv(id, nm, "", "", "", "", "company", market, source)
                 }
               />
-            </>
+              </>
           )}
         </div>
-      </>
+        </>
     );
   };
   const GetDataDetail = async () => {
@@ -1604,11 +1658,17 @@ const AddView = (props: AddviewProps) => {
         ""
       );
       if (data?.code == "200") {
+        // Walk-in is a real company row that carries the market segments, so
+        // only pre-fill it when this form IS a walk-in. A normal FIT/Mandiri
+        // booking must start with an empty company box.
+        const isWalkIn = isType === "is_walk_in";
         let dataInput = [...dataform];
         dataInput[0].data[1].options = data?.master?.typemulti;
-        dataInput[0].data[9].value = data?.master?.is_walk_in?.name;
-        dataInput[0].data[2].value = data?.master?.is_walk_in?.name;
-        dataInput[0].data[2].valueid = data?.master?.is_walk_in?.id;
+        if (isWalkIn) {
+          dataInput[0].data[9].value = data?.master?.is_walk_in?.name;
+          dataInput[0].data[2].value = data?.master?.is_walk_in?.name;
+          dataInput[0].data[2].valueid = data?.master?.is_walk_in?.id;
+        }
 
         dataInput[1].items[0].data[0].value = data?.master?.business_date;
         dataInput[1].items[0].data[2].value = GetNextDay(
@@ -1662,19 +1722,23 @@ const AddView = (props: AddviewProps) => {
         let obj: any = {};
         obj.masterdata = data?.master;
         obj.typemulti = data?.master?.typemulti[0];
-        obj["name-company"] = data?.master?.is_walk_in?.name;
-        obj["company_profile_id"] = data?.master?.is_walk_in?.id;
-        obj["name"] = data?.master?.is_walk_in?.name;
-        obj["market_segment_1"] = data?.master?.is_walk_in?.market_segment_1;
-        obj["market_segment_1_ori"] = data?.master?.is_walk_in?.market_segment_1;
-        obj["market_segment_2"] = data?.master?.is_walk_in?.market_segment_2;
-        obj["market_segment_2_ori"] = data?.master?.is_walk_in?.market_segment_2;
-        obj["market_segment_3"] = data?.master?.is_walk_in?.market_segment_3;
-        obj["market_segment_3_ori"] = data?.master?.is_walk_in?.market_segment_3;
-        obj["market_segment_4"] = data?.master?.is_walk_in?.market_segment_4;
-        obj["market_segment_4_ori"] = data?.master?.is_walk_in?.market_segment_4;
-        obj["source"] = data?.master?.is_walk_in?.source;
-        obj["source_ori"] = data?.master?.is_walk_in?.source;
+        // Company + market segments come from the walk-in company row, so they
+        // are only seeded for a walk-in. See the isWalkIn guard above.
+        if (isWalkIn) {
+          obj["name-company"] = data?.master?.is_walk_in?.name;
+          obj["company_profile_id"] = data?.master?.is_walk_in?.id;
+          obj["name"] = data?.master?.is_walk_in?.name;
+          obj["market_segment_1"] = data?.master?.is_walk_in?.market_segment_1;
+          obj["market_segment_1_ori"] = data?.master?.is_walk_in?.market_segment_1;
+          obj["market_segment_2"] = data?.master?.is_walk_in?.market_segment_2;
+          obj["market_segment_2_ori"] = data?.master?.is_walk_in?.market_segment_2;
+          obj["market_segment_3"] = data?.master?.is_walk_in?.market_segment_3;
+          obj["market_segment_3_ori"] = data?.master?.is_walk_in?.market_segment_3;
+          obj["market_segment_4"] = data?.master?.is_walk_in?.market_segment_4;
+          obj["market_segment_4_ori"] = data?.master?.is_walk_in?.market_segment_4;
+          obj["source"] = data?.master?.is_walk_in?.source;
+          obj["source_ori"] = data?.master?.is_walk_in?.source;
+        }
 
         obj.guest_status = data?.master?.status_guests[0];
         obj.guest_status_ori = data?.master?.status_guests[0];
@@ -1762,10 +1826,10 @@ const AddView = (props: AddviewProps) => {
       <Seo title={"Management " + layout?.title} />
       {popup ? (
         <>
-          <div className="overlay">
+          <div className="overlay flex items-center justify-center p-4">
             <div
               ref={ref}
-              className="w-full md:w-[75%] overflow-auto relative h-[650px] rounded-lg bg-gray-200 z-20 top-0 md:top-2 xl:top-[110px] left-0 md:left-[20%]"
+              className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
             >
               {/* <div className="mt-2 mr-4 absolute z-20 right-0">
                 <ButtonSubmit
@@ -1781,11 +1845,65 @@ const AddView = (props: AddviewProps) => {
               )}
             </div>
           </div>
-        </>
+          </>
       ) : (
         <></>
       )}
       <div className="flex flex-col gap-4">
+        {idusr == "0" && isType == "fit" ? (
+          <StepLayout
+            dataform={dataform}
+            setdataform={setdataform}
+            dataval={dataval}
+            setData={setData}
+            changeHandler={changeHandler}
+            changeHandlera={changeHandlera}
+            GetDataAutoComp={GetDataAutoComp}
+            onSelecteda={onSelecteda}
+            ListTblGuest={ListTblGuest}
+            actAuto={actAuto}
+            setactAuto={setactAuto}
+            businessDate={businessDate}
+            openRoom={openRoom}
+            load={load}
+            datprice={datprice}
+            printrate={printrate}
+            isview={isview}
+            loading={loading}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            OnSave={OnSave}
+            AddReservation={AddReservation}
+            idusr={idusr}
+            parent={parent}
+            datalocal={datalocal}
+            checkbokmulti={checkbokmulti}
+            setcheckbokmulti={setcheckbokmulti}
+            removeItemMulti={removeItemMulti}
+            serverErrors={serverErrors}
+          />
+        ) : (
+          <>
+          <div className="flex flex-col gap-4">
+        {serverErrors ? (
+          <div
+            role="alert"
+            className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+          >
+            <div className="font-semibold capitalize">
+              {serverErrors.message?.split("\n")[0]}
+            </div>
+            {Object.keys(serverErrors.fields).length > 0 ? (
+              <ul className="mt-2 list-disc space-y-0.5 pl-5">
+                {Object.entries(serverErrors.fields).map(([field, msg]) => (
+                  <li key={field}>
+                    <span className="font-medium">{field}</span> — {msg}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         {isview ? (
           <div className="absolute h-full w-full bg-[rgba(0,0,0,0)] z-20"></div>
         ) : (
@@ -1806,6 +1924,13 @@ const AddView = (props: AddviewProps) => {
         <div className="grid grid-cols-12 h-fit gap-4 ">
           <div className="col-span-12 grid grid-cols-12 h-fit  gap-2">
             <div className="col-span-12 lg:col-span-8 ">
+              {mandatoryNotice && mandatoryNotice.is_complete === false && (
+                <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                  <span className="font-semibold">Guest profile is incomplete.</span>{" "}
+                  Check-in will be blocked until these are filled:{" "}
+                  {(mandatoryNotice.missing_fields ?? []).join(", ")}
+                </div>
+              )}
               <fieldset className="border">
                 <legend className="">Guest Profile</legend>
                 <div className="form-grid-responsive grid grid-cols-12 h-fit gap-2 ml-2 mb-4 mt-4 mr-2">
@@ -1920,7 +2045,7 @@ const AddView = (props: AddviewProps) => {
                                 -1,
                                 row?.AdduRi ?? false
                               )}
-                            </>
+                              </>
                           ) : (
                             <></>
                           )}
@@ -1928,7 +2053,7 @@ const AddView = (props: AddviewProps) => {
                       ) : (
                         <></>
                       )}
-                    </>
+                      </>
                   ))}
                 </div>
               </fieldset>
@@ -1961,7 +2086,7 @@ const AddView = (props: AddviewProps) => {
                           >
                             Delete
                           </div>
-                        </>
+                          </>
                       ) : (
                         <></>
                       )}
@@ -2097,7 +2222,7 @@ const AddView = (props: AddviewProps) => {
                                     i,
                                     row?.AdduRi ?? false
                                   )}
-                                </>
+                                  </>
                               ) : (
                                 <></>
                               )}
@@ -2105,17 +2230,17 @@ const AddView = (props: AddviewProps) => {
                           ) : (
                             <></>
                           )}
-                        </>
+                          </>
                       ))}
                     </div>
                   </fieldset>
-                </>
+                  </>
               ))}
               <div className="flex gap-2 overflow-auto">
                 {dataval?.masterdata?.legend.map((rw) => (
                   <>
                     <div className={rw?.color + " p-2"}>{rw?.label}</div>
-                  </>
+                    </>
                 ))}
               </div>
             </div>
@@ -2143,7 +2268,7 @@ const AddView = (props: AddviewProps) => {
                         isBtnAdd={false}
                         isPageing={false}
                       />
-                    </>
+                      </>
                   ) : (
                     <></>
                   )}
@@ -2160,7 +2285,7 @@ const AddView = (props: AddviewProps) => {
                         <div className="col-span-4">{index + 1}</div>
                         <div className="col-span-4">{row?.date}</div>
                         <div className="col-span-4">{row?.charge}</div>
-                      </>
+                        </>
                     ))}
 
                     <div className="col-span-12 border-b-2"></div>
@@ -2170,7 +2295,7 @@ const AddView = (props: AddviewProps) => {
                         <div className="col-span-4"></div>
                         <div className="col-span-4">{row?.label}</div>
                         <div className="col-span-4">{row?.value}</div>
-                      </>
+                        </>
                     ))}
                   </div>
                 </fieldset>
@@ -2251,7 +2376,7 @@ const AddView = (props: AddviewProps) => {
                                   -1,
                                   row?.AdduRi ?? false
                                 )}
-                              </>
+                                </>
                             ) : (
                               <></>
                             )}
@@ -2259,7 +2384,7 @@ const AddView = (props: AddviewProps) => {
                         ) : (
                           <></>
                         )}
-                      </>
+                        </>
                     ))}
                   </div>
                 </fieldset>
@@ -2297,6 +2422,9 @@ const AddView = (props: AddviewProps) => {
             />
           )}
         </div>
+      </div>
+      </>
+      )}
       </div>
     </>
   );

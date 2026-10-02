@@ -1,19 +1,19 @@
 // end of day
-import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setLogin } from "../../../redux/auth/authSlice";
+import ButtonSubmit from "../../common/button/ButtonSubmit";
+import ModalPinComponent from "../../common/modal/ModalPin";
 import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import {
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  FetchData,
-  Logout,
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetQueryStr,
+    Logout,
 } from "../../helper";
-import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
-import ButtonSubmit from "../../common/button/ButtonSubmit";
-import ModalPinComponent from "../../common/modal/ModalPin";
-import { setLogin } from "../../../redux/auth/authSlice";
 
 const ListView = () => {
   let URL = "/cms/shift/detail";

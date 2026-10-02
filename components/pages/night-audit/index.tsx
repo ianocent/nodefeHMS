@@ -1,20 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
+import Router, { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Seo from "../../../components/common/seo";
 import TableView from "../../../components/common/table-edit";
+import TableErrorState from "../../common/table/TableErrorState";
 import {
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  RouteChange,
-  GFormatDate,
+    GetDecrypt,
+    GetQueryStr,
+    GFormatDate
 } from "../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
-import { FetchData } from "../../helper";
-import ButtonSubmit from "../../common/button/ButtonSubmit";
-import Router from "next/router";
-import { setLogin } from "../../../redux/auth/authSlice";
 import { useFormPermission } from "../../../hooks/useFormPermission";
+import ButtonSubmit from "../../common/button/ButtonSubmit";
+import LoadInPage from "../../common/loader/LoadInpage";
+import { FetchData } from "../../helper";
 
 const ListView = () => {
   const GLOBALURI = "/cms/shift-confirmation";
@@ -24,6 +22,10 @@ const ListView = () => {
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [loading, setloading] = useState(false);
   const [dataDate, setdataDate] = useState("-1");
+  // Audit date is fetched client side; keep the page in a loading state so the
+  // "-1" placeholder never renders as a real empty result.
+  const [detailLoading, setdetailLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { canCreate, canUpdate } = useFormPermission(1027);
   const router = useRouter();
   const [parentid, setparentid] = useState("0");
@@ -86,23 +88,37 @@ const ListView = () => {
         router,
         ""
       );
-      if (data?.code == "200") {
-        if (data?.data?.date) {
-          setdataDate(data?.data?.date);
-        }
+      if (data === false || data?.code != "200" || !data?.data?.date) {
+        // `dataDate` feeds `&date=` on all five grids below. Leaving it at the
+        // "-1" placeholder makes every grid query a non-existent business date,
+        // which renders as "Not Data" — indistinguishable from "zero overstays".
+        setLoadError(
+          "Gagal memuat tanggal audit. Kelima tabel di bawah tidak dapat querying tanggal yang benar."
+        );
+        return;
       }
+      setLoadError(null);
+      setdataDate(data?.data?.date);
 
       return;
     } catch (error) {
+      setLoadError("Gagal memuat tanggal audit. Kelima tabel di bawah tidak dapat querying tanggal yang benar.");
       console.log(error);
       return;
+    } finally {
+      // Gate the empty-state behind the request, otherwise `dataDate` still
+      // holds its "-1" placeholder and "No Data Available" flashes first.
+      setdetailLoading(false);
     }
   };
   function RouteInit() {
     return (
       <>
         {GetQueryStr("add") != "1" ? (
-          <>
+          loadError ? (
+            <TableErrorState message={loadError} onRetry={GetDataDetail} />
+          ) : (
+            <>
             <div className="mt-2 min-w-full table-auto">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 xl:col-span-6 overflow-auto max-h-[400px]">
@@ -232,7 +248,8 @@ const ListView = () => {
                 />
               </div>
             </div>
-          </>
+            </>
+          )
         ) : (
           <></>
         )}
@@ -251,7 +268,13 @@ const ListView = () => {
         }
       />
 
-      {dataDate != "-1" ? RouteInit() : "No Data Available"}
+      {detailLoading ? (
+        <LoadInPage variant="block" />
+      ) : dataDate != "-1" ? (
+        RouteInit()
+      ) : (
+        "No Data Available"
+      )}
     </>
   );
 };

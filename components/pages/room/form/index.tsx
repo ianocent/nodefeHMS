@@ -1,20 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../common/paper/PaperBase";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useFormPermission } from "../../../../hooks/useFormPermission";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
 import {
-  FetchData,
-  GetCapitalFirst,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
+    FetchData,
+    GetCapitalFirst,
+    GetDecrypt,
+    GetEncrypt
 } from "../../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../common/layout/LayoutComponent";
-import { useFormPermission } from "../../../../hooks/useFormPermission";
 interface AddviewProps {
   isview?: boolean;
 }

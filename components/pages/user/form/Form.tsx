@@ -117,6 +117,16 @@ const AddUsertView = () => {
       return;
     }
   };
+  // The property dropdown used to list every active property in the system. Narrow it
+  // to the company currently selected in the form (each option carries `company_id` from
+  // the backend). Falls back to the full list when no company is chosen yet, so the
+  // field is never empty on first paint.
+  const allProperties: any[] = dataoption?.master?.properties ?? [];
+  const selectedCompanyId = companies?.value;
+  const propertyOptions = selectedCompanyId
+    ? allProperties.filter((p: any) => Number(p?.company_id) === Number(selectedCompanyId))
+    : allProperties;
+
   const OnSave = async () => {
     // try {
     let urisave = "/cms/user";
@@ -353,7 +363,7 @@ const AddUsertView = () => {
                 error={false}
                 label={"Property"}
                 required={true}
-                options={dataoption?.master?.properties}
+                options={propertyOptions}
                 onChangeSel={(e) => {
                   changeHandler(e, true, "propertiess");
                 }}

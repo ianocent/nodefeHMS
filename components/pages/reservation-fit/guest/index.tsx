@@ -121,10 +121,10 @@ const ListView = () => {
       <>
         {useradd && (
           <>
-            <div className="overlay">
+            <div className="overlay flex items-center justify-center p-4">
               <div
                 ref={ref}
-                className="w-[75%] overflow-auto relative h-[650px] rounded-lg bg-gray-200 z-20 top-2 xl:top-[110px] left-[20%]"
+                className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
               >
                 {/* <div className="mt-2 mr-4 absolute z-20 right-0">
                 <ButtonSubmit
@@ -138,6 +138,7 @@ const ListView = () => {
                 <GuestAdd
                   isPopup={true}
                   nameinit={""}
+                  OnCancelSv={() => setpopup(false)}
                   ActionSv={
                     (id, fn, ln, ti, pn, em, gs) => {}
                     // ActSv(id, fn, ln, ti, pn, em, "guest", gs)
@@ -371,7 +372,7 @@ const ListView = () => {
           GLOBALURI.replaceAll("/cms/", " ").replaceAll("-", " ")
         }
       />
-      <TabMenuIcon actMenu={""} id={GetQueryStr("data")} foliodat={""} />
+      <TabMenuIcon actMenu={""} id={GetQueryStr("data")} foliodat={""} isTabIcon={false} />
       {RouteInit()}
     </>
   );

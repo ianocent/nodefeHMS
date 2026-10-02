@@ -10,7 +10,8 @@ import {
   GFormatDate,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { useSelector } from "react-redux";
@@ -72,7 +73,12 @@ const TableViewDocument = (props: TableViewProps) => {
   const [dataval, setData] = useState<any>({});
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(true);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [datavalsrc, setDatasrc] = useState<any>({
     status: { value: "-1", label: "ALL" },
   });
@@ -171,7 +177,7 @@ const TableViewDocument = (props: TableViewProps) => {
       namecur = name;
     }
 
-    Object.keys(datavalsrc)?.map((rw) => {
+    Object.keys(datavalsrc ?? {})?.map((rw) => {
       var minsatu = false;
       if (rw != namecur) {
         if (
@@ -254,6 +260,10 @@ const TableViewDocument = (props: TableViewProps) => {
             router,
             ""
           );
+          if (saveprocess === false) {
+            setloadingin(false);
+            return;
+          }
           seteditActive(-1);
           setaddform(false);
           setData({});
@@ -274,6 +284,10 @@ const TableViewDocument = (props: TableViewProps) => {
             router,
             ""
           );
+          if (saveprocess === false) {
+            setloadingin(false);
+            return;
+          }
           seteditActive(-1);
           setaddform(false);
           setData({});
@@ -292,6 +306,10 @@ const TableViewDocument = (props: TableViewProps) => {
         ""
       );
 
+      if (saveprocess === false) {
+        setloadingin(false);
+        return;
+      }
       seteditActive(-1);
       setaddform(false);
       setData({});
@@ -413,6 +431,7 @@ const TableViewDocument = (props: TableViewProps) => {
   };
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -423,7 +442,7 @@ const TableViewDocument = (props: TableViewProps) => {
       var srcval = urlParams.get("search_value")
         ? "&search_value=" + urlParams.get("search_value")
         : "";
-      let status = i ?? datavalsrc["status"]?.value;
+      let status = i ?? datavalsrc?.status?.value;
 
       let pages = 1;
       if (page) {
@@ -440,7 +459,7 @@ const TableViewDocument = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&search=" +
-          (datavalsrc["search"] ?? (search == null ? "" : search)) +
+          (datavalsrc?.search ?? (search == null ? "" : search)) +
           "&" +
           (queryString ?? "") +
           "" +
@@ -474,10 +493,16 @@ const TableViewDocument = (props: TableViewProps) => {
         });
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -491,7 +516,7 @@ const TableViewDocument = (props: TableViewProps) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
 
-      let status = i ?? datavalsrc["status"][0]?.value;
+      let status = i ?? datavalsrc?.status?.[0]?.value;
 
       let pages = 1;
       if (page) {
@@ -508,7 +533,7 @@ const TableViewDocument = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&name=" +
-          (datavalsrc["search"] ?? "") +
+          (datavalsrc?.search ?? "") +
           "&trash=" +
           status +
           "&" +
@@ -572,7 +597,7 @@ const TableViewDocument = (props: TableViewProps) => {
   const onLoadmore = () => {
     if (datatable?.pagging?.next) {
       GetDataTable(
-        datavalsrc["status"][0].value,
+        datavalsrc?.status?.[0]?.value,
         datatable?.pagging?.next,
         true
       );
@@ -603,7 +628,7 @@ const TableViewDocument = (props: TableViewProps) => {
   }, []);
   return (
     <>
-      {datatable?.code == "200" ? (
+      {datatable?.code == "200" && !loadError ? (
         <>
           {datatable?.permission?.add == 1 ? (
             <>
@@ -675,7 +700,7 @@ const TableViewDocument = (props: TableViewProps) => {
                                 // GetDataTable();
                               }
                             }}
-                            value={datavalsrc["search"]}
+                            value={datavalsrc?.search}
                           />
                           <button
                             onClick={() => {
@@ -725,7 +750,7 @@ const TableViewDocument = (props: TableViewProps) => {
                             rest={{
                               name: row?.key,
                               placeholder: row?.label,
-                              value: datavalsrc[row?.key],
+                              value: datavalsrc?.[row?.key],
                               type: types,
                               onChange: (e) => {
                                 changeHandlerSrc(e, false, row?.key);
@@ -736,7 +761,7 @@ const TableViewDocument = (props: TableViewProps) => {
                               //GetDataTable(e.value);
                             }}
                             valueSel={
-                              datavalsrc[row?.key] ?? {
+                              datavalsrc?.[row?.key] ?? {
                                 value: "-1",
                                 label: "ALL",
                               }
@@ -765,7 +790,7 @@ const TableViewDocument = (props: TableViewProps) => {
             <>
             <div
                 className={
-                  "  " +
+                  " rounded-xl overflow-hidden shadow-md " +
                   (overflow == true
                     ? " w-full overflow-auto min-h-screen"
                     : " table-responsive ")
@@ -775,14 +800,14 @@ const TableViewDocument = (props: TableViewProps) => {
               >
                 <table
                   className={
-                    "shadow-lg table-auto m-2" +
+                    "table-auto border-separate border-spacing-0 rounded-lg min-w-full " +
                     (editActive != -1 ? " min-w-full " : " min-w-full ")
                   }
                 >
                   <thead>
                     <tr className="">
                       {checked ? (
-                        <td className="bg-[#323A50] text-white p-2 font-bold cursor-pointer">
+                        <td className="bg-[#323A50] text-white p-2 font-bold cursor-pointer rounded-tl-lg">
                           <div className="form-check">
                             <input
                               className="form-check-input"
@@ -803,7 +828,12 @@ const TableViewDocument = (props: TableViewProps) => {
                       ) : (
                         <></>
                       )}
-                      <td className="bg-[#323A50] w-[50px] p-2 font-bold">
+                      <td
+                        className={
+                          "bg-[#323A50] w-[50px] p-2 font-bold " +
+                          (!checked ? "rounded-tl-lg" : "")
+                        }
+                      >
                         {""}
                       </td>
                       {datatable?.table?.map((row: any, i: any) =>
@@ -811,7 +841,12 @@ const TableViewDocument = (props: TableViewProps) => {
                           <td
                             title={"Sort By " + row.label}
                             key={i}
-                            className="bg-[#323A50] text-white p-2 font-bold cursor-pointer"
+                            className={
+                              "bg-[#323A50] text-white p-2 font-bold cursor-pointer" +
+                              (i === (datatable?.table?.filter((r: any) => !r?.row || r?.row == 1).length - 1)
+                                ? " rounded-tr-lg"
+                                : "")
+                            }
                             onClick={() => {
                               clickSort(row);
                             }}
@@ -829,11 +864,16 @@ const TableViewDocument = (props: TableViewProps) => {
                       <>
                         <tr className="">
                           {checked ? (
-                            <td className="bg-[#323A50] text-white p-2 font-bold cursor-pointer"></td>
+                            <td className="bg-[#323A50] text-white p-2 font-bold cursor-pointer rounded-tl-lg"></td>
                           ) : (
                             <></>
                           )}
-                          <td className="bg-[#323A50] w-[50px] p-2 font-bold">
+                          <td
+                            className={
+                              "bg-[#323A50] w-[50px] p-2 font-bold " +
+                              (!checked ? "rounded-tl-lg" : "")
+                            }
+                          >
                             {""}
                           </td>
                           {datatable?.table?.map((row: any, i: any) =>
@@ -1407,23 +1447,35 @@ const TableViewDocument = (props: TableViewProps) => {
               </div>
             </>
           ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
+              <>
+                {loadError ? (
+                  <TableErrorState
+                    message={loadError}
+                    onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                  />
+                ) : (
+                  <div className="mt-8 flex justify-center">Not Data</div>
+                )}
+              </>
           )}
         </>
       ) : (
         <>
           {isloading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
           ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
+              <>
+                {loadError ? (
+                  <TableErrorState
+                    message={loadError}
+                    onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                  />
+                ) : (
+                  <div className="mt-8 flex justify-center">Not Data</div>
+                )}
+              </>
           )}
         </>
       )}

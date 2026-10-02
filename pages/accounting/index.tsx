@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import InvoicePage from "../../components/pages/invoice/index";
 import CreditNotePage from "../../components/pages/credit-note/index";
@@ -72,15 +71,11 @@ const MasterPage = () => {
     }
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={GetPathUri(1)} idparent={parentid} />
 
         {RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

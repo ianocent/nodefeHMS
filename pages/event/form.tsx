@@ -1,20 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import ButtonSubmit from "../../components/common/button/ButtonSubmit";
-import ButtonCreate from "../../components/common/button/ButtonCreate";
+import FileInputBase from "../../components/common/input/FileInputBase";
 import InputBase from "../../components/common/input/InputBase";
 import MultiSelectBAse from "../../components/common/input/MultiSelectBase";
-import { forEach } from "jszip";
 import RichEditorBase from "../../components/common/input/RichEditorBase";
-import TextareaBase from "../../components/common/input/TextareaBase";
-import FileInputBase from "../../components/common/input/FileInputBase";
-import { FetchData, GetDecrypt, GetEncrypt, GetQueryStr } from "../../components/helper";
-import { useSelector } from "react-redux";
-import { useRouter } from "next/router";
-import TableView from "../../components/common/table-edit";
 import InputField from "../../components/common/input/SelectAsycn";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
-import { env } from "../../next.config";
+import TextareaBase from "../../components/common/input/TextareaBase";
+import TableView from "../../components/common/table-edit";
+import { FetchData, GetDecrypt, GetEncrypt, GetQueryStr } from "../../components/helper";
 import { useFormPermission } from "../../hooks/useFormPermission";
+import { env } from "../../next.config";
 
 interface AddProps {
   data: any;

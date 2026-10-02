@@ -1,21 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../common/paper/PaperBase";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import { useFormPermission } from "../../../../hooks/useFormPermission";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
-import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-  GetQueryStr,
-} from "../../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../common/layout/LayoutComponent";
 import TableView from "../../../common/table-edit";
-import { useFormPermission } from "../../../../hooks/useFormPermission";
+import {
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetQueryStr
+} from "../../../helper";
 interface AddviewProps {
   isview?: boolean;
 }
@@ -310,12 +307,12 @@ const AddView = (props: AddviewProps) => {
         <>
           <div
             className="absolute min-h-full w-full inset-0 
-                    bg-gray-800 opacity-50 
+                    bg-gray-800 opacity-50 animate-fade-in
                     z-10"
           ></div>
 
           <div
-            className="absolute right-[10%] flex 
+            className="absolute right-[10%] flex
                     items-center justify-center
                    z-20 "
           >

@@ -10,6 +10,7 @@ export const hasPermission = (
   if (
     roles.includes("developer") ||
     roles.includes("administrator") ||
+    roles.includes("admin") ||
     roles.includes("anyaman")
   ) {
     return true;

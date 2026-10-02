@@ -1,22 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../../components/common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import InputMain from "../../../../components/common/input/InputMain";
 import Seo from "../../../../components/common/seo";
 import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-  formatAmount,
-  NumberClear,
+    FetchData,
+    formatAmount,
+    GetDecrypt,
+    GetEncrypt,
+    NumberClear
 } from "../../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../../components/common/layout/LayoutComponent";
-import TableView from "../../../common/table-edit";
-import { usePathname } from "next/navigation";
 import { useFormPermission, useTransactionPermission } from "../../../../hooks/useFormPermission";
 interface AddviewProps {
   isview?: boolean;
@@ -514,61 +510,62 @@ const AddView = (props: AddviewProps) => {
         ""
       );
 
-      setDataEd(datauser?.data);
-      setDataMaster(datauser?.master);
+      // `master` travels as response meta on both create and edit, but fall back
+      // to `data.master` so a shape change cannot silently empty every dropdown.
+      const master = datauser?.master ?? datauser?.data?.master;
+      const row: any = { ...(datauser?.data ?? {}) };
+      if (row.master) delete row.master;
+
+      setDataEd(row);
+      setDataMaster(master);
       let dataInput = [...dataform];
-      dataInput[0].data[2].options = datauser?.master?.statusGuest;
-      dataInput[0].data[3].options = datauser?.master?.typeCompany;
+      dataInput[0].data[2].options = master?.statusGuest;
+      dataInput[0].data[3].options = master?.typeCompany;
       if (i == 0) {
         setData({
           ...dataval,
-          ...datauser?.data,
-          company_type: datauser?.master?.typeCompany[0],
-          statusBlacklist: datauser?.master?.statusBlacklist,
+          ...row,
+          company_type: master?.typeCompany?.[0],
+          statusBlacklist: master?.statusBlacklist,
         });
       } else {
         setData({
           ...dataval,
-          ...datauser?.data,
-          statusBlacklist: datauser?.master?.statusBlacklist,
+          ...row,
+          statusBlacklist: master?.statusBlacklist,
         });
       }
       setdataform([...dataInput]);
 
       let dataInputBillingAddress = [...dataFormBillingAddress];
-      dataInputBillingAddress[0].data[1].options = datauser?.master?.regions;
-      // dataInputBillingAddress[0].data[2].options = datauser?.master?.countries;
-      // dataInputBillingAddress[0].data[3].options = datauser?.master?.cities;
-      GetDataRelation(datauser?.data?.billing_region?.value, "billing_region");
-      GetDataRelation(
-        datauser?.data?.billing_country?.value,
-        "billing_country"
-      );
-      GetDataRelation(datauser?.data?.mailing_region?.value, "region");
-      GetDataRelation(datauser?.data?.mailing_country?.value, "country_id");
+      dataInputBillingAddress[0].data[1].options = master?.regions;
+      GetDataRelation(row?.billing_region?.value, "billing_region");
+      GetDataRelation(row?.billing_country?.value, "billing_country");
+      GetDataRelation(row?.mailing_region?.value, "region");
+      GetDataRelation(row?.mailing_country?.value, "country_id");
 
       setDataFormBillingAddress([...dataInputBillingAddress]);
 
       let dataInputMailingAddress = [...dataFormMailingAddress];
-      dataInputMailingAddress[0].data[1].options = datauser?.master?.regions;
-      dataInputMailingAddress[0].data[2].options = datauser?.master?.countries;
-      dataInputMailingAddress[0].data[3].options = datauser?.master?.cities;
+      dataInputMailingAddress[0].data[1].options = master?.regions;
+      dataInputMailingAddress[0].data[2].options = master?.countries;
+      dataInputMailingAddress[0].data[3].options = master?.cities;
       setDataFormMailingAddress([...dataInputMailingAddress]);
 
       let dataInputFinance = [...dataFormFinance];
-      dataInputFinance[0].data[0].options = datauser?.master?.terms;
-      dataInputFinance[0].data[2].options = datauser?.master?.billings;
+      dataInputFinance[0].data[0].options = master?.terms;
+      dataInputFinance[0].data[2].options = master?.billings;
       setDataFormFinance([...dataInputFinance]);
       if (i == 0) {
         try {
           var objinames = {
             ["billing"]: {
-              value: datauser?.master?.billings[0].value,
-              label: datauser?.master?.billings[0].label,
+              value: master?.billings[0].value,
+              label: master?.billings[0].label,
             },
             ["term"]: {
-              value: datauser?.master?.terms[0].value,
-              label: datauser?.master?.terms[0].label,
+              value: master?.terms[0].value,
+              label: master?.terms[0].label,
             },
             ["gst"]: true,
           };
@@ -580,25 +577,21 @@ const AddView = (props: AddviewProps) => {
       }
 
       let dataInputMkt = [...dataFormCompanyGrouping];
-      dataInputMkt[0].data[0].options = datauser?.master?.market_segment_1;
-      dataInputMkt[0].data[0].isShow =
-        datauser?.master?.markets?.is_market_segment_1;
-      dataInputMkt[0].data[1].options = datauser?.master?.market_segment_2;
-      dataInputMkt[0].data[1].isShow =
-        datauser?.master?.markets?.is_market_segment_2;
-      dataInputMkt[0].data[2].options = datauser?.master?.market_segment_3;
-      dataInputMkt[0].data[2].isShow =
-        datauser?.master?.markets?.is_market_segment_3;
-      dataInputMkt[0].data[3].options = datauser?.master?.market_segment_4;
-      dataInputMkt[0].data[3].isShow =
-        datauser?.master?.markets?.is_market_segment_4;
+      dataInputMkt[0].data[0].options = master?.market_segment_1;
+      dataInputMkt[0].data[0].isShow = master?.markets?.is_market_segment_1;
+      dataInputMkt[0].data[1].options = master?.market_segment_2;
+      dataInputMkt[0].data[1].isShow = master?.markets?.is_market_segment_2;
+      dataInputMkt[0].data[2].options = master?.market_segment_3;
+      dataInputMkt[0].data[2].isShow = master?.markets?.is_market_segment_3;
+      dataInputMkt[0].data[3].options = master?.market_segment_4;
+      dataInputMkt[0].data[3].isShow = master?.markets?.is_market_segment_4;
       setDataFormCompanyGrouping([...dataInputMkt]);
 
       let dataInputStaff = [...dataFormStaff];
-      dataInputStaff[0].data[1].options = datauser?.master?.source;
-      dataInputStaff[0].data[1].isShow = datauser?.master?.markets?.is_source;
+      dataInputStaff[0].data[1].options = master?.source;
+      dataInputStaff[0].data[1].isShow = master?.markets?.is_source;
 
-      dataInputStaff[0].data[0].options = datauser?.master?.staff;
+      dataInputStaff[0].data[0].options = master?.staff;
 
       setDataFormStaff([...dataInputStaff]);
 
@@ -671,17 +664,25 @@ const AddView = (props: AddviewProps) => {
       );
       if (saveprocess?.code == "200") {
         setloading(false);
-        ActionSv(
-          saveprocess?.data?.id,
-          saveprocess?.data?.name,
-          [
-            saveprocess?.data?.market_segment_1,
-            saveprocess?.data?.market_segment_2,
-            saveprocess?.data?.market_segment_3,
-            saveprocess?.data?.market_segment_4,
-          ],
-          [saveprocess?.data?.source]
-        );
+        // The standalone Company page renders <AddPage /> with no ActionSv, so
+        // calling it unconditionally threw a TypeError *after* the row was
+        // already saved — the user saw an error popup and never left the form.
+        // Fall back to navigating home ourselves in that case.
+        if (ActionSv) {
+          ActionSv(
+            saveprocess?.data?.id,
+            saveprocess?.data?.name,
+            [
+              saveprocess?.data?.market_segment_1,
+              saveprocess?.data?.market_segment_2,
+              saveprocess?.data?.market_segment_3,
+              saveprocess?.data?.market_segment_4,
+            ],
+            [saveprocess?.data?.source]
+          );
+        } else if (!isPopup) {
+          router.replace({ pathname: "/profile/company", query: { parent: parent } });
+        }
       } else {
         setloading(false);
       }

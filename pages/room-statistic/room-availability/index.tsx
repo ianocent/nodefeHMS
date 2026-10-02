@@ -9,7 +9,6 @@ import InputMain from "../../../components/common/input/InputMain";
 import ButtonSubmit from "../../../components/common/button/ButtonSubmit";
 import Tabs from "../../../components/common/tab";
 import PaperBase from "../../../components/common/paper/PaperBase";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
 import {
   FetchData,
   GetCapitalFirst,
@@ -394,11 +393,11 @@ const RoomStatistic = () => {
         {canBlockRoom && (
           <>
           {popup && (
-            <div className="overlay">
+            <div className="overlay flex items-center justify-center p-4">
               <div
                 ref={ref}
                 className={
-                  "w-full md:w-[90%] lg:w-[77%] relative max-h-[calc(100vh-140px)] bg-white z-50 top-0 md:top-[95px] left-0 md:left-[19%] rounded-xl "
+                  "w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-50 "
                 }
               >
                 <fieldset className="mt-4">
@@ -539,12 +538,8 @@ const RoomStatistic = () => {
   }
 
   return (
-    <>
-      <LayoutComponent>
-        {/* <CrmView /> */}
-        <PaperBase>{RouteInit()}</PaperBase>
-      </LayoutComponent>
-    </>
+    <>{/* <CrmView /> */}
+        <PaperBase>{RouteInit()}</PaperBase></>
   );
 };
 

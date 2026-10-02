@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import NightAudit from "../../components/pages/night-audit";
 import Tabs from "../../components/common/tab";
@@ -30,15 +29,11 @@ const MasterPage = () => {
     return <NightAudit />;
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={path} idparent={parentid} />
 
         {RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

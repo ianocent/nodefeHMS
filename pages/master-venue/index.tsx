@@ -1,6 +1,5 @@
 // import ButtonAddList from "../../../components/common/button/ButtonAddList";
 // import PaperBase from "../../../components/common/paper/PaperBase";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import Seo from "../../components/common/seo";
 import TableView from "../../components/common/table-edit";
@@ -38,7 +37,7 @@ const ListView = () => {
     }
   }
   return (
-    <LayoutComponent>
+    <>
       <Seo
         title={
           "Management " +
@@ -46,7 +45,7 @@ const ListView = () => {
         }
       />
       {RouteInit()}
-    </LayoutComponent>
+    </>
   );
 };
 

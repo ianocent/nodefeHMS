@@ -1,33 +1,31 @@
 import { useRouter } from "next/router";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import Seo from "../../../common/seo";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  GetSelisihDay,
-  RouteChange,
-  removeItem,
-  GetNextDay,
-  GetPathUri,
-  GetCurrentDate,
-  GetQueryParam,
-} from "../../../helper";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import { env } from "../../../../next.config";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
-import TableView from "../../../common/table-edit";
-import TabMenuIcon from "../../../common/tabIcon/tab";
+import MultiSelectBAse from "../../../common/input/MultiSelectBase";
 import ModalConfirmationComponent from "../../../common/modal/ModalConfirmation";
 import ModalNotedComponent from "../../../common/modal/ModalNoted";
-import { IconSpiner } from "../../../common/icon/CardIcon";
+import Seo from "../../../common/seo";
+import { PanelSkeleton } from "../../../common/skeleton/Skeleton";
 import MoveRsv from "../../../common/tabIcon/move-rsv";
-import GuestAdd from "../../guest/form/index";
+import TabMenuIcon from "../../../common/tabIcon/tab";
+import TableView from "../../../common/table-edit";
+import {
+    FetchData,
+    GetCurrentDate,
+    GetDecrypt,
+    GetEncrypt,
+    GetNextDay,
+    GetQueryParam,
+    GetQueryStr,
+    GetSelisihDay,
+    removeItem
+} from "../../../helper";
 import CompanyAdd from "../../company-profile/form/index";
-import MultiSelectBAse from "../../../common/input/MultiSelectBase";
-import { env } from "../../../../next.config";
+import GuestAdd from "../../guest/form/index";
 
 const EditView = () => {
   const ModuleName = "Edit Reservation";
@@ -1950,7 +1948,7 @@ const EditView = () => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             {!loading ? (
@@ -2070,9 +2068,7 @@ const EditView = () => {
                 )}
               </div>
             ) : (
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <PanelSkeleton rows={8} />
             )}
           </>
         </div>
@@ -2140,6 +2136,7 @@ const EditView = () => {
               <GuestAdd
                 isPopup={true}
                 nameinit={dataval["first_name-guest"] ?? ""}
+                OnCancelSv={() => setpopup(false)}
                 ActionSv={(id, fn, ln, ti, pn, em, gs, all) => {
                   console.log("bbbbb", all);
                   ActSv(id, fn, ln, ti, pn, em, "guest", gs, [], all);
@@ -2343,9 +2340,9 @@ const EditView = () => {
   return (
     <>
       <Seo title={"Management " + layout?.title} />
-      <div className={(ispopupChange ? "block" : "hidden") + " overlay "}>
-        <div className="flex justify-center mt-20 ">
-          <div className="bg-white w-[600px] p-4">
+      <div className={ispopupChange ? "overlay flex items-center justify-center p-4" : "overlay hidden"}>
+        <div className="flex justify-center ">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl p-4">
             <div>
               <h4>Selected Change Folio </h4>
             </div>
@@ -2378,10 +2375,10 @@ const EditView = () => {
       <div className="flex flex-col gap-4">
         {popup ? (
           <>
-            <div className="overlay">
+            <div className="overlay flex items-center justify-center p-4">
               <div
                 ref={ref}
-                className="w-[75%] overflow-auto relative h-[650px] bg-gray-200 z-20 top-2 xl:top-[110px] left-[20%]"
+                className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
               >
                 {/* <div className="mt-2 mr-4 absolute z-20 right-0">
                 <ButtonSubmit
@@ -3380,9 +3377,7 @@ const EditView = () => {
             </div>
           </div>
         ) : (
-          <div className="mt-8 flex justify-center">
-            <IconSpiner />
-          </div>
+          <PanelSkeleton rows={8} />
         )}
       </div>
       {

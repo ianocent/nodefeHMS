@@ -29,7 +29,7 @@ import LayoutComponent from "../../../common/layout/LayoutComponent";
 import TableView from "../../../common/table-edit";
 import GuestAdd from "../../guest/form/index";
 import CompanyAdd from "../../company-profile/form/index";
-import { IconSpiner } from "../../../common/icon/CardIcon";
+import { PanelSkeleton } from "../../../common/skeleton/Skeleton";
 import { Value } from "sass";
 import { toast } from "react-toastify";
 import { useFormPermission } from "../../../../hooks/useFormPermission";
@@ -1511,7 +1511,7 @@ const AddView = (props: AddviewProps) => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             {!loading ? (
@@ -1621,9 +1621,7 @@ const AddView = (props: AddviewProps) => {
                 )}
               </div>
             ) : (
-              <div className="flex w-full justify-center mt-2">
-                <IconSpiner />
-              </div>
+              <PanelSkeleton />
             )}
           </>
         </div>
@@ -1646,6 +1644,7 @@ const AddView = (props: AddviewProps) => {
               <GuestAdd
                 isPopup={true}
                 nameinit={dataval["first_name-guest_profile"] ?? ""}
+                OnCancelSv={() => setpopup(false)}
                 ActionSv={(id, fn, ln, ti, pn, em, gs) =>
                   ActSv(id, fn, ln, ti, pn, em, "guest", gs)
                 }
@@ -1833,10 +1832,10 @@ const AddView = (props: AddviewProps) => {
       <Seo title={"Management " + layout?.title} />
       {popup ? (
         <>
-          <div className="overlay">
+          <div className="overlay flex items-center justify-center p-4">
             <div
               ref={ref}
-              className="w-full md:w-[75%] overflow-auto relative h-[650px] bg-gray-200 z-20 top-0 md:top-2 xl:top-[110px] left-0 md:left-[20%]"
+              className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
             >
               {/* <div className="mt-2 mr-4 absolute z-20 right-0">
                 <ButtonSubmit

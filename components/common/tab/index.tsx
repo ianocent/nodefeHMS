@@ -124,6 +124,20 @@ const Tabs = (props: tabsProps) => {
           {childs?.map((row: any, index: number) => (
             <div
               onClick={() => {
+                // A tab URL points at the module's list view, so navigating between a
+                // module's own tabs dropped `add=1`. Opening rate code detail
+                // (rate?add=1&data=57) then clicking "rate link" lost the flag, and
+                // clicking "rate" again landed on the list with the tab strip showing.
+                // Carry `add` across whenever we stay inside the same module family,
+                // which means the prefix relation has to be checked in BOTH directions:
+                // hopping to a sub-route (rate -> rate/rate-link-listing) and hopping
+                // back to the parent tab (rate/rate-link-listing -> rate).
+                const currentPath = window.location.pathname;
+                const targetPath = row?.url.split("?")[0];
+                const sameModule =
+                  currentPath === targetPath ||
+                  currentPath.startsWith(targetPath + "/") ||
+                  targetPath.startsWith(currentPath + "/");
                 if (row?.place == "form") {
                   if (new URLSearchParams(window.location.search).get("data")) {
                     let parameter = {};
@@ -148,11 +162,14 @@ const Tabs = (props: tabsProps) => {
                         ),
                       };
                     }
+                    if (sameModule && new URLSearchParams(window.location.search).get("add") === "1") {
+                      parameter = { ...parameter, add: "1" };
+                    }
                     if (GetQueryParam(0) == "module") {
                       window.location.assign(row?.url);
                     } else {
                       routers.replace({
-                        pathname: row?.url.split("?")[0],
+                        pathname: targetPath,
                         query: parameter,
                       });
                     }
@@ -179,11 +196,14 @@ const Tabs = (props: tabsProps) => {
                       ),
                     };
                   }
+                  if (sameModule && new URLSearchParams(window.location.search).get("add") === "1") {
+                    parameter = { ...parameter, add: "1" };
+                  }
                   if (GetQueryParam(0) == "module") {
                     window.location.assign(row?.url);
                   } else {
                     routers.replace({
-                      pathname: row?.url.split("?")[0],
+                      pathname: targetPath,
                       query: parameter,
                     });
                   }

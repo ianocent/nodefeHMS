@@ -6,8 +6,8 @@ import PaperBase from "../../components/common/paper/PaperBase";
 import Seo from "../../components/common/seo";
 import { LayoutContext } from "../../context/LayoutContext";
 import InputMain from "../../components/common/input/InputMain";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import TableView from "../../components/common/table-edit";
+import TableErrorState from "../../components/common/table/TableErrorState";
 import TableDrag from "../../components/common/table-drag";
 import DragTblView from "./drag";
 import ModuleAdd from "./form";
@@ -32,11 +32,13 @@ const ModulePage = () => {
   const layout = useContext(LayoutContext);
 
   const [initList, setInitList] = useState<any>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [initCreateUpdate, setInitCreateUpdate] = useState<any>({});
 
-  const GetInitList = async (uri: any) => {
-    try {
-      let uris = uri.split("/");
+    const GetInitList = async (uri: any) => {
+      try {
+        setLoadError(null);
+        let uris = uri.split("/");
       let tblid = GetQueryStr("tblid") ? "?tblid=" + GetQueryStr("tblid") : "";
       let getuuri =
         GLOBALURILIST +
@@ -53,15 +55,24 @@ const ModulePage = () => {
         router,
         ""
       );
-      if (data?.code == "200") {
-        setInitList(data);
+        if (data?.code == "200") {
+          setInitList(data);
+        } else {
+          // `uriTable` decides which table renders. Without it the block below
+          // renders nothing at all — blank, with no error and no retry.
+          setLoadError(
+            "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+          );
+        }
+        return;
+      } catch (error) {
+        setLoadError(
+          "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+        );
+        console.log(error);
+        return;
       }
-      return;
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-  };
+    };
   const GetInitCreateUpdate = async (uri: any, id: any) => {
     try {
       let uris = uri.split("/");
@@ -98,7 +109,7 @@ const ModulePage = () => {
         ""
       );
       if (data?.code == "200") {
-        setInitCreateUpdate(data);
+        setInitCreateUpdate(data?.data);
       }
       return;
     } catch (error) {
@@ -129,9 +140,7 @@ const ModulePage = () => {
   });
 
   return (
-    <>
-      <LayoutComponent>
-        <Seo title={"Management " + layout?.title} />
+    <><Seo title={"Management " + layout?.title} />
         {(GetQueryStr("data") || GetQueryStr("add")) && (
           <>
             {initCreateUpdate?.form && (
@@ -141,7 +150,13 @@ const ModulePage = () => {
             )}
           </>
         )}
-        {!GetQueryStr("data") && !GetQueryStr("add") && initList?.uriTable && (
+        {!GetQueryStr("data") && !GetQueryStr("add") && loadError && (
+        <TableErrorState
+          message={loadError}
+          onRetry={() => GetInitList(window.location.pathname)}
+        />
+      )}
+      {!GetQueryStr("data") && !GetQueryStr("add") && !loadError && initList?.uriTable && (
           <>
             {/* CHANGED: grid responsive - 1 col mobile, 12 col desktop */}
             <div className="grid grid-cols-1 md:grid-cols-12 h-fit gap-4">
@@ -180,9 +195,7 @@ const ModulePage = () => {
               </div>
             </div>
           </>
-        )}
-      </LayoutComponent>
-    </>
+        )}</>
   );
 };
 

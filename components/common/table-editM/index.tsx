@@ -18,7 +18,8 @@ import {
   GFormatDate,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { useSelector } from "react-redux";
@@ -113,7 +114,12 @@ const TableView = (props: TableViewProps) => {
   const [dataval, setData] = useState<any>({});
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(false);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSelected, setisSelected] = useState<any>(-1);
   const [isidSelected, setisidSelected] = useState<any>(-1);
   const [isPopup, setIsPopUp] = useState(false);
@@ -678,6 +684,7 @@ const TableView = (props: TableViewProps) => {
   };
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -765,10 +772,16 @@ const TableView = (props: TableViewProps) => {
         setpath2(window.location.pathname.split("/")[2]);
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -782,7 +795,7 @@ const TableView = (props: TableViewProps) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
 
-      let status = i ?? datavalsrc["status"][0]?.value;
+      let status = i ?? datavalsrc?.status?.[0]?.value;
 
       let pages = 1;
       if (page) {
@@ -799,7 +812,7 @@ const TableView = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&name=" +
-          (datavalsrc["search"] ?? "") +
+          (datavalsrc?.search ?? "") +
           "&trash=" +
           status +
           "&" +
@@ -943,9 +956,9 @@ const TableView = (props: TableViewProps) => {
 
   return (
     <>
-      <div className={(popupIntbl ? "block" : "hidden") + " overlay "}>
-        <div className="flex justify-center mt-20 ">
-          <div className="bg-white w-[600px] p-4">
+      <div className={popupIntbl ? "overlay flex items-center justify-center p-4" : "overlay hidden"}>
+        <div className="flex justify-center ">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl p-4">
             <div>
               <h4>Information {titlePopupTbl}</h4>
             </div>
@@ -965,7 +978,7 @@ const TableView = (props: TableViewProps) => {
         </div>
       </div>
 
-      {datatable?.code == "200" ? (
+      {datatable?.code == "200" && !loadError ? (
         <>
           {isAdvance ? (
             <>
@@ -1117,7 +1130,7 @@ const TableView = (props: TableViewProps) => {
                               rest={{
                                 name: row?.key,
                                 placeholder: row?.label,
-                                value: datavalsrc[row?.key] ?? row?.value ?? "",
+                                value: datavalsrc?.[row?.key] ?? row?.value ?? "",
                                 type: types,
                                 onChange: (e) => {
                                   changeHandlerSrc(e, false, row?.key);
@@ -1129,8 +1142,8 @@ const TableView = (props: TableViewProps) => {
                                 //GetDataTable(e.value);
                               }}
                               valueSel={
-                                datavalsrc[row?.key]
-                                  ? datavalsrc[row?.key]
+                                datavalsrc?.[row?.key]
+                                  ? datavalsrc?.[row?.key]
                                   : row?.key == "status"
                                   ? {
                                       value: "1",
@@ -1597,8 +1610,12 @@ const TableView = (props: TableViewProps) => {
                             }
                           }}
                           onClick={() => {
+                            const pathAtClick = window.location.pathname;
                             setTimeout(() => {
                               if (isAdvance && isClickAbled) {
+                                if (window.location.pathname != pathAtClick) {
+                                  return;
+                                }
                                 setisSelected(index);
                                 setisidSelected(row?.id);
                                 setdatadet(row);
@@ -1606,7 +1623,7 @@ const TableView = (props: TableViewProps) => {
                                 setActMenu(row);
                                 if (!GetQueryStr("key")) {
                                   router.replace({
-                                    pathname: window.location.pathname,
+                                    pathname: pathAtClick,
                                     query: {
                                       parent: GetQueryStr("parent"),
                                       data: row?.id,
@@ -1821,27 +1838,28 @@ const TableView = (props: TableViewProps) => {
                                     : ""
                                 } relative`}
                                 key={item.key + "-" + a}
-                                onClick={() => {
+                                onClick={(e) => {
                                   if (item?.is_link) {
+                                    e.stopPropagation();
+                                    const linkQuery = {
+                                      parent: idparent,
+                                      add: 1,
+                                      data: row?.id,
+                                      datetbl: row?.id,
+                                      time: new Date().getTime(),
+                                      card: NAuditCode,
+                                      pageload: pageDat,
+                                      group: Lastpath,
+                                    };
                                     if (item?.uri) {
                                       router.push({
                                         pathname: item?.uri,
-                                        query: {
-                                          parent: idparent,
-                                          add: 1,
-                                          data: row?.id,
-                                          datetbl: row?.id,
-                                        },
+                                        query: linkQuery,
                                       });
                                     } else {
                                       router.replace({
                                         pathname: window.location.pathname,
-                                        query: {
-                                          parent: idparent,
-                                          add: 1,
-                                          data: row?.id,
-                                          datetbl: row?.id,
-                                        },
+                                        query: linkQuery,
                                       });
                                     }
                                   } else if (item?.is_popup) {
@@ -2293,27 +2311,37 @@ const TableView = (props: TableViewProps) => {
                 </table>
               </div>
             </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
-        </>
-      ) : (
-        <>
-          {isloading ? (
-            <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
-        </>
-      )}
+            ) : (
+              <>
+                {loadError ? (
+                  <TableErrorState
+                    message={loadError}
+                    onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                  />
+                ) : (
+                  <div className="mt-8 flex justify-center">Not Data</div>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {isloading ? (
+              <>
+                <TableSkeleton rows={8} />
+              </>
+            ) : loadError ? (
+              <TableErrorState
+                message={loadError}
+                onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+              />
+            ) : (
+              <>
+                <div className="mt-8 flex justify-center">Not Data</div>
+              </>
+            )}
+          </>
+        )}
       {checked ? (
         <div
           className={

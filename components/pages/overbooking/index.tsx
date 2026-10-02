@@ -195,8 +195,13 @@ const ListView = () => {
         datavalroom_types.push(rw?.value);
       });
       setdataform([...dataInput]);
-      router.query = { ...router.query, ['start_date']: datauser.business_date, ['end_date']: GetNextDay(datauser.business_date, 7), ['room_type']: datavalroom_types.toString() };
-      setData({ ...dataval, ...obj, ['start_date']: datauser.business_date, ['end_date']: GetNextDay(datauser.business_date, 7), ['room_type']: datavalroom_types.toString() });
+      // `business_date` rides inside the response `data` payload; `master` holds
+      // the option lists. Reading it off the root left start/end date empty, so
+      // the table always came back with no rows.
+      const businessDate = datauser?.data?.business_date ?? "";
+      const roomTypeValues = (datauser?.master?.room_types ?? []).map((rw: any) => rw?.value);
+      router.query = { ...router.query, ['start_date']: businessDate, ['end_date']: GetNextDay(businessDate, 7), ['room_type']: roomTypeValues.toString() };
+      setData({ ...dataval, ...obj, ['start_date']: businessDate, ['end_date']: GetNextDay(businessDate, 7), ['room_type']: roomTypeValues.toString() });
       router.replace({
         pathname: window.location.pathname,
         query: router.query,

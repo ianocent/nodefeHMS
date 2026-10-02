@@ -1,4 +1,3 @@
-import { IconHome } from "../components/common/icon/SidebarIcon";
 import * as React from "react";
 interface LayoutContextType {
   dataAuth: any;
@@ -21,22 +20,14 @@ const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [dataAuth, setdataAuth] = React.useState<string>("");
-  const [title, setTitle] = React.useState<string>("Dashboard Default");
+  const [title, setTitle] = React.useState<string>("Dashboard");
   const [activeSideBarMobile, setActiveSideBarMobile] = React.useState(false);
-  const [breadcumbs, setBreadcumbs] = React.useState([
-    {
-      label: <IconHome />,
-      href: "",
-    },
-    {
-      label: "Dashboard",
-      href: "",
-    },
-    {
-      label: "Default Dashboard",
-      href: "",
-    },
-  ]);
+  // Starts empty on purpose. The previous default was
+  // [<IconHome/>, "Dashboard", "Default Dashboard"], and the header only ever
+  // appended to it -- so any route reached before the header's effect ran (or
+  // while it was skipped) rendered those three stale crumbs, which is what made
+  // the header look stuck on "Reservation > Reservation > Choose property".
+  const [breadcumbs, setBreadcumbs] = React.useState<{ label: any; href: string }[]>([]);
   // const [dataAuth, setdataAuth] = React.useState<any>(false);
   return (
     <LayoutContext.Provider

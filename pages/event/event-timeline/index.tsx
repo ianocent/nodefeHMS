@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 import { FetchData, GetDecrypt, GetQueryStr } from "../../../components/helper";
 import { useRouter } from "next/router";
 import PaperBase from "../../../components/common/paper/PaperBase";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
 import Seo from "../../../components/common/seo";
 
 const EventTimeline = () => {
@@ -47,11 +46,15 @@ const EventTimeline = () => {
         true
       );
 
-      if (res?.code === 200) {
-        setDates(res.dates || []);
-        setTimelineData(res.timeline || []);
-        if (!startDate && res.default_start) setStartDate(res.default_start);
-        if (!endDate && res.default_end) setEndDate(res.default_end);
+      if (res?.code == 200) {
+        // success() nests the payload under `data`; the top level only has
+        // code/message. Reading res.dates directly always yielded undefined,
+        // so the timeline rendered permanently empty.
+        const d: any = res?.data || res;
+        setDates(d?.dates || []);
+        setTimelineData(d?.timeline || []);
+        if (!startDate && d?.default_start) setStartDate(d.default_start);
+        if (!endDate && d?.default_end) setEndDate(d.default_end);
       }
     } catch (err) {
       console.error("Error fetching timeline:", err);
@@ -99,7 +102,7 @@ const EventTimeline = () => {
   }, [timelineData]);
 
   return (
-    <LayoutComponent>
+    <>
       <Seo
         title={
           "Management " +
@@ -258,7 +261,7 @@ const EventTimeline = () => {
           </div>
         </div>
       </div>
-    </LayoutComponent>
+    </>
   );
 };
 

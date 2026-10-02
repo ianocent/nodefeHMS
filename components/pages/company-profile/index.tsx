@@ -5,6 +5,7 @@ import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import AddPage from "./form";
 import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import { GetDecrypt } from "../../helper";
 import { env } from "../../../next.config";
 
@@ -21,13 +22,29 @@ const CompanyProfile = () => {
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const accessToken = datalocal?.data?.access_token ?? "";
 
+  // Query params only exist after the router is ready. Without this flag the first
+  // render evaluated the RouteInit guard against the useState defaults, where
+  // `data` was still "" — and `"" !== null` is true, so <AddPage /> mounted for a
+  // frame and fired GET /cms/profile/company/create before the list table showed.
+  //
+  // router.query is the source of truth (not window.location.search) and the effect
+  // is keyed on its values, so in-page navigation — table-edit pushes
+  // `?parent=..&add=1`, `?..&view=1&data=..`, `?..&data=..` on the same pathname —
+  // re-reads the params instead of latching the first read.
+  const router = useRouter();
+  const qParent = router.query.parent;
+  const qAdd = router.query.add;
+  const qView = router.query.view;
+  const qData = router.query.data;
+  const [paramsReady, setParamsReady] = useState(false);
+
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    setparentid(urlParams.get("parent"));
-    setadd(urlParams.get("add"));
-    setview(urlParams.get("view"));
-    setData(urlParams.get("data"));
-  });
+    setparentid(typeof qParent === "string" ? qParent : "0");
+    setadd(typeof qAdd === "string" ? qAdd : "0");
+    setview(typeof qView === "string" ? qView : "0");
+    setData(typeof qData === "string" ? qData : "");
+    setParamsReady(true);
+  }, [qParent, qAdd, qView, qData]);
 
   const handlePrint = async () => {
     setLoadingPrint(true);
@@ -54,10 +71,24 @@ const CompanyProfile = () => {
   };
 
   function RouteInit() {
-    if (add == "1" || data !== null) {
-      return <AddPage />;
-    } else if (view == "1") {
+    // `router.isReady` covers the pre-hydration frame on auto-statically-optimised
+    // pages where router.query is still {}.
+    if (!router.isReady || !paramsReady) {
+      return null;
+    }
+    // Order matters. table-edit navigates with:
+    //   add   -> ?parent=..&add=1                 (no data)
+    //   add   -> ?parent=..&add=1&data=..&module= (data is the PARENT row id)
+    //   view  -> ?parent=..&view=1&data=..&module=
+    //   edit  -> ?parent=..&data=..&module=
+    // `view` has to be tested before `data`, otherwise a view link matches the
+    // `data` branch and opens the editable form instead of the read-only one.
+    if (view === "1") {
       return <AddPage isview={true} />;
+    } else if (add === "1") {
+      return <AddPage />;
+    } else if (data) {
+      return <AddPage />;
     } else {
       return (
         <div className="mt-2 min-w-full table-auto">

@@ -47,6 +47,7 @@ const AddView = (props: AddviewProps) => {
   const ref = useRef(null);
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
+  const [groupBlockError, setgroupBlockError] = useState<string | null>(null);
   const [isParentGIT, setisParentGIT] = useState(false);
   const [actAuto, setactAuto] = useState("-1");
   const [stsRsv, setstsRsv] = useState(-1);
@@ -116,7 +117,22 @@ const AddView = (props: AddviewProps) => {
       );
   
       if (response?.code === 200) {
-        toast.success("Dates updated successfully");
+        // The bulk handler validates each block now, so a batch can partially
+        // succeed. Reporting plain success here hid every rejection.
+        const failed = response?.data?.failed;
+        if (Array.isArray(failed) && failed.length > 0) {
+          toast.error(
+            `${response?.data?.updated ?? 0} updated, ${failed.length} rejected: ` +
+              failed
+                .map(
+                  (f: any) =>
+                    `${f?.folio_number ?? f?.folio_id} (${f?.message ?? "failed"})`
+                )
+                .join(", ")
+          );
+        } else {
+          toast.success("Dates updated successfully");
+        }
         GetDataFolion();
         setBulkData([]);
       } else {
@@ -443,7 +459,7 @@ const AddView = (props: AddviewProps) => {
         ""
       );
 
-      if (saveprocess?.code === "200") {
+        if (saveprocess?.code == 200) {
         setEdit(false);
         setValedit(-1);
         setPendingEditIndex(null);
@@ -468,7 +484,7 @@ const AddView = (props: AddviewProps) => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-[500px] z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-[500px] z-50 absolute bg-white"
         >
           <>
             <div className="w-full">
@@ -952,7 +968,11 @@ const AddView = (props: AddviewProps) => {
     // console.log("widylog", dataval);
     setloading(true);
     try {
-      let urisave = "/cms/reservation/update-room-parent-git";
+      // The parent folio id must be in the path — the handler identifies the
+      // GIT group from it. Without it every add/remove p-block call 400'd.
+      const parentFolioId = GetQueryStr("data");
+      let urisave =
+        "/cms/reservation/update-room-parent-git" + (parentFolioId ? "/" + parentFolioId : "");
       let mth = "PUT";
       // check if bulkData is empty
 
@@ -973,6 +993,10 @@ const AddView = (props: AddviewProps) => {
         setTimeout(() => {
           window.location.reload();
         }, 2000);
+      } else {
+        // Surface the rejection instead of silently doing nothing — a 400 here
+        // used to look identical to a success from the user's seat.
+        setgroupBlockError(saveprocess?.message ?? "Failed to update the group block");
       }
     } catch (error) {
       setloading(false);
@@ -1017,11 +1041,11 @@ const AddView = (props: AddviewProps) => {
   return (
     <>
       {Isremarks ? (
-        <div className="overlay">
+        <div className="overlay flex items-center justify-center p-4">
           <div
             ref={ref}
             className={
-              "w-[77%] relative max-h-[calc(100vh-140px)] bg-white z-50 top-[95px] left-[19%] "
+              "w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-50 "
             }
           >
             <div className=" overflow-y-auto">
@@ -1396,13 +1420,19 @@ const AddView = (props: AddviewProps) => {
             }}
           />
 
-          <div className="flex gap-4 mt-4 justify-end">
+          <div className="flex gap-4 mt-4 justify-end items-center">
+            {groupBlockError && (
+              <span className="text-sm text-red-600 mr-auto">{groupBlockError}</span>
+            )}
             <ButtonSubmit
               isBtnAdd={canCreate && canUpdate || canChangeRoom}
               label="Submit"
               isprimary={true}
               loading={loading}
-              onCreate={() => OnSaveParentGIT()}
+              onCreate={() => {
+                setgroupBlockError(null);
+                OnSaveParentGIT();
+              }}
             />
           </div>
           {/* hr */}
@@ -1479,8 +1509,8 @@ const AddView = (props: AddviewProps) => {
       )}
       {/* Modal Apply Changes */}
       {showApplyModal && (
-        <div className="overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl w-50% p-2">
+        <div className="overlay z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-4">
             <h3 className="text-lg font-semibold">Apply Changes</h3>
             <p className="text-gray-600">
               Want to applied for?

@@ -16,7 +16,8 @@ import {
   formatAmount,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { useSelector } from "react-redux";
@@ -88,7 +89,12 @@ const TableReservatuinView = (props: TableViewProps) => {
   const [dataval, setData] = useState<any>({});
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(true);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSelected, setisSelected] = useState<any>(-1);
   const [isidSelected, setisidSelected] = useState<any>(-1);
   const [isPopup, setIsPopUp] = useState(false);
@@ -464,6 +470,7 @@ const TableReservatuinView = (props: TableViewProps) => {
   };
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -551,10 +558,16 @@ const TableReservatuinView = (props: TableViewProps) => {
         setisDeleted(datajson?.permission?.delete);
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -568,7 +581,7 @@ const TableReservatuinView = (props: TableViewProps) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
 
-      let status = i ?? datavalsrc["status"][0]?.value;
+      let status = i ?? datavalsrc?.status?.[0]?.value;
 
       let pages = 1;
       if (page) {
@@ -585,7 +598,7 @@ const TableReservatuinView = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&name=" +
-          (datavalsrc["search"] ?? "") +
+          (datavalsrc?.search ?? "") +
           "&trash=" +
           status +
           "&" +
@@ -693,7 +706,7 @@ const TableReservatuinView = (props: TableViewProps) => {
   return (
     <>
       <div className="overlay hidden"></div>
-      {datatable?.code == "200" ? (
+      {datatable?.code == "200" && !loadError ? (
         <>
           {isAdvance ? (
             <>
@@ -871,7 +884,7 @@ const TableReservatuinView = (props: TableViewProps) => {
                               rest={{
                                 name: row?.key,
                                 placeholder: row?.label,
-                                value: datavalsrc[row?.key] ?? "",
+                                value: datavalsrc?.[row?.key] ?? "",
                                 type: types,
                                 onChange: (e) => {
                                   changeHandlerSrc(e, false, row?.key);
@@ -882,7 +895,7 @@ const TableReservatuinView = (props: TableViewProps) => {
                                 //GetDataTable(e.value);
                               }}
                               valueSel={
-                                datavalsrc[row?.key] ?? {
+                                datavalsrc?.[row?.key] ?? {
                                   value: "-1",
                                   label: "ALL",
                                 }
@@ -1759,27 +1772,37 @@ const TableReservatuinView = (props: TableViewProps) => {
                   </table>
                 </div>
               </>
+              ) : (
+                <>
+                  {loadError ? (
+                    <TableErrorState
+                      message={loadError}
+                      onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                    />
+                  ) : (
+                    <div className="mt-8 flex justify-center">Not Data</div>
+                  )}
+                </>
+              )}
+          </>
+        ) : (
+          <>
+            {isloading ? (
+              <>
+                <TableSkeleton rows={8} />
+              </>
+            ) : loadError ? (
+              <TableErrorState
+                message={loadError}
+                onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+              />
             ) : (
               <>
                 <div className="mt-8 flex justify-center">Not Data</div>
               </>
             )}
-        </>
-      ) : (
-        <>
-          {isloading ? (
-            <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
-        </>
-      )}
+          </>
+        )}
       {checked ? (
         <div
           className={

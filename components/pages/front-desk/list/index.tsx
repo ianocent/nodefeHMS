@@ -25,8 +25,9 @@ const ListView = (props: ReservationFitprp) => {
   const [loading, setloading] = useState(false);
 
   const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
+  // `add` and `view` were dead here: nothing read them, and `add` was populated
+  // from the "data" param, which invited the same "== 1" mistake that broke
+  // bar/holiday edit navigation. `parentid` IS used (see the form payload).
   const [dataval, setData] = useState<any>({});
   const [datavala, setDataa] = useState<any>({});
   const [datadetail, setDataDetail] = useState<any>({});
@@ -401,7 +402,7 @@ const ListView = (props: ReservationFitprp) => {
                 </>
               ))}
             </div>
-            <div className="col-span-4 flex gap-2">
+            <div className="col-span-12 flex justify-end gap-2">
               <ButtonSubmit
                 label="Cancel"
                 onCreate={() => {
@@ -469,8 +470,6 @@ const ListView = (props: ReservationFitprp) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const parent = urlParams.get("parent");
-    const add = urlParams.get("data");
-    const view = urlParams.get("view");
     const body = urlParams.get("body");
     const src = urlParams.get("src");
     if (src) {
@@ -480,8 +479,6 @@ const ListView = (props: ReservationFitprp) => {
       setData(JSON.parse(GetDecrypt(body)));
     }
     setparentid(parent);
-    setadd(add);
-    setview(view);
     GetDetailData(0, body);
   }, []);
   function filterCom() {
@@ -647,10 +644,10 @@ const ListView = (props: ReservationFitprp) => {
         }
       />
       {popup ? (
-        <div className="overlay">
+        <div className="overlay flex items-center justify-center p-4">
           <div
             ref={ref}
-            className="w-[30%] relative h-min-max bg-white z-20 top-[200px] left-[40%]"
+            className="w-full max-w-3xl max-h-[85vh] overflow-auto bg-white rounded-lg z-20"
           >
             {ContentPopUp(
               new URLSearchParams(window.location.search).get("key")
@@ -667,7 +664,14 @@ const ListView = (props: ReservationFitprp) => {
             uri={GLOBALURI}
             isEditTable={false}
             isTitle={false}
-            queryString={"&type=" + type + queryStr}
+            // Laravel gates the check-out filter on `$type == 'check_out' &&
+            // $request->group == 'check-out'` (FrontDeskController@index). Only
+            // `type` was ever sent, so that branch never ran and the screen fell
+            // back to "everything not cancelled" — which is why checked-in virtual
+            // folios showed up here instead of on the VR page.
+            queryString={
+              "&type=" + type + (type === "check_out" ? "&group=check-out" : "") + queryStr
+            }
             isAdvance={true}
             isBtnAdd={false}
             isBtnDelete={false}

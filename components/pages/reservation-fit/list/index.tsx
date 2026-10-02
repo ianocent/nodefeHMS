@@ -26,8 +26,9 @@ const ListView = (props: ReservationFitprp) => {
   const [loading, setloading] = useState(false);
 
   const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
+  // `add` and `view` were dead here: nothing read them, and `add` was populated
+  // from the "data" param, which invited the same "== 1" mistake that broke
+  // bar/holiday edit navigation. `parentid` IS used (see the form payload).
   const [dataval, setData] = useState<any>({});
   const [datavala, setDataa] = useState<any>({});
   const [datadetail, setDataDetail] = useState<any>({});
@@ -133,7 +134,10 @@ const ListView = (props: ReservationFitprp) => {
         [name + "_ori"]: e,
         [name]: ismulti ? valarr : e?.value,
       });
-      qStr = qStr + "&" + name + "=" + e?.value;
+      // For a multi-select, `e` is the whole selection array, so `e.value`
+      // stringified to "[object Object]" and the server never saw a status code.
+      // The backend expects a comma-separated list, e.g. `reservation,check_in`.
+      qStr = qStr + "&" + name + "=" + (ismulti ? valarr.toString() : e?.value);
     } else if (b == "checkbox") {
       if (ismulti) {
         if (e.target.checked == true) {
@@ -447,13 +451,8 @@ const ListView = (props: ReservationFitprp) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const parent = urlParams.get("parent");
-    const add = urlParams.get("data");
-    const view = urlParams.get("view");
-    const body = urlParams.get("body");
 
     setparentid(parent);
-    setadd(add);
-    setview(view);
     GetDetailData(0);
   }, []);
   function filterCom() {
@@ -615,7 +614,7 @@ const ListView = (props: ReservationFitprp) => {
         }
       />
       {/* {popup ? (
-        <div className="overlay">
+        <div className="overlay flex items-center justify-center p-4">
           <div
             ref={ref}
             className="w-[30%] relative h-min-max bg-white z-20 top-[200px] left-[40%]"

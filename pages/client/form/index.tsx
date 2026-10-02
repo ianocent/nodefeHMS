@@ -13,8 +13,6 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import ButtonSubmit from "../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../context/LayoutContext";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
-
 const AddView = () => {
   const router = useRouter();
   const layout = useContext(LayoutContext);
@@ -141,7 +139,7 @@ const AddView = () => {
   }, []);
 
   return (
-    <LayoutComponent>
+    <>
       <Seo title={"Management " + layout?.title} />
       <PaperBase>
         <div className="flex flex-col gap-4">
@@ -319,7 +317,7 @@ const AddView = () => {
           </div>
         </div>
       </PaperBase>
-    </LayoutComponent>
+    </>
   );
 };
 

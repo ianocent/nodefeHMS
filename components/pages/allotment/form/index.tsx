@@ -1,20 +1,17 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import PaperBase from "../../../common/paper/PaperBase";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import { useFormPermission } from "../../../../hooks/useFormPermission";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
+import TableView from "../../../common/table-edit";
 import {
   FetchData,
   GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
+  GetEncrypt
 } from "../../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../common/layout/LayoutComponent";
-import TableView from "../../../common/table-edit";
-import { useFormPermission } from "../../../../hooks/useFormPermission";
 interface AddviewProps {
   isview?: boolean;
 }
@@ -315,7 +312,7 @@ const AddView = (props: AddviewProps) => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             <div className="table-responsive w-full">

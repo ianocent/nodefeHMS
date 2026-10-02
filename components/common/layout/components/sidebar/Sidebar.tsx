@@ -121,11 +121,18 @@ const Sidebar = (props: sidebarprops) => {
       setdatamenu([]);
       setMenuLoaded(false);
     }
+  }, [isLogin]);
 
+  // Kept as a separate effect on purpose. The reset above flips `menuLoaded` back to
+  // false, and if the fetch lived in the same effect body it would read the stale
+  // `true` from this render's closure and skip GetMenus() entirely. Since the
+  // component no longer remounts on navigation (it lives in _app now), nothing else
+  // would ever retry -- the menu would stay empty until the next token refresh.
+  useEffect(() => {
     if (isDesktop === true && isLogin && !menuLoaded && datamenus.length === 0) {
       GetMenus();
     }
-  }, [isLogin, isDesktop]);
+  }, [isLogin, isDesktop, menuLoaded, datamenus.length]);
 
   const CallLogout = () => {
     sessionStorage.removeItem("sidebar_menus");
@@ -134,9 +141,12 @@ const Sidebar = (props: sidebarprops) => {
   return (
     <aside
       className={
-        path != "/choose-property"
+        // overflow-hidden keeps the faded-out labels clipped while collapsed (and during
+        // the width transition) instead of bleeding past the 55px rail.
+        "overflow-hidden " +
+        (path != "/choose-property"
           ? (!hide ? " !w-[55px] " : "") + " app-sidebar sticky "
-          : " !w-[55px] app-sidebar sticky"
+          : " !w-[55px] app-sidebar sticky")
       }
     >
       <div
@@ -191,34 +201,41 @@ const Sidebar = (props: sidebarprops) => {
       {path != "/choose-property" ? (
         <>
           {/* <SimpleBar className="main-sidebar " id="scroll"> */}
+          {/* `.main-sidebar` in globals.scss clips overflow-x; long labels scroll
+              themselves via `.sidebar-label` instead of widening the rail. */}
           <SimpleBar className="main-sidebar flex flex-col" id="scroll">
             <nav className="mt-2 flex-1">
               {datamenus.map((row: any, index: number) =>
                 row?.children.length == 0 ? (
-                  <a
+                  <Link
                     href={row?.link}
-                    className={`flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
+                    className={`sidebar-link flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
                       path.split("/")[1] == row?.link.replace("/", "")
                         ? " bg-[#4f4d4d] font-bold"
                         : ""
                     } text-white`}
                     key={row?.link + "-" + index}
                   >
-                    <div>
+                    <div className="shrink-0">
                       <img src={row?.icon} />
                     </div>
-                    {hide ? (
-                      <>
-                        <div className="capitalize">{row?.label}</div>
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                  </a>
+                    {/* Long titles ("Booking Engine Analytics") overflowed the 55px
+                        rail. Clipping + overflow-x-auto means the rail itself never
+                        grows a horizontal scrollbar, while the label becomes
+                        scrollable on hover so the full text stays reachable. */}
+                    <div
+                      title={row?.label}
+                      className={`sidebar-label capitalize transition-opacity ease-out ${
+                        hide ? "opacity-100 delay-150 duration-200" : "opacity-0 delay-0 duration-100"
+                      }`}
+                    >
+                      {row?.label}
+                    </div>
+                  </Link>
                 ) : (
                   <div key={row?.link + "-" + index}>
                     <div
-                      className={`cursor-pointer flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
+                      className={`sidebar-link cursor-pointer flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
                         path.split("/")[1] == row?.link.replace("/", "")
                           ? "bg-[#4f4d4d]"
                           : ""
@@ -229,12 +246,12 @@ const Sidebar = (props: sidebarprops) => {
                         setdatamenu([...tempSidebar]);
                       }}
                     >
-                      <div>
+                      <div className="shrink-0">
                         <img src={row?.icon} />
                       </div>
                       {hide ? (
                         <>
-                          <div className="capitalize">{row?.label}</div>
+                          <div className="sidebar-label capitalize">{row?.label}</div>
                           <i className="angle fe fe-chevron-right side-menu__angle"></i>
                         </>
                       ) : (
@@ -245,7 +262,7 @@ const Sidebar = (props: sidebarprops) => {
                       <div className={!hide ? " ps-[5px] " : "ps-6"}>
                         {row?.children.map((col: any, i: number) => {
                           return (
-                            <a
+                            <Link
                               // href={
                               //   (col?.link.split("?").length
                               //     ? col?.link.split("?")[0] +
@@ -259,26 +276,45 @@ const Sidebar = (props: sidebarprops) => {
                               //   col?.module
                               // }
                               href={col?.link}
-                              className={`flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
+                              // `sidebar-sub-link` (not `sidebar-link`): only the
+                              // nested entries get the hover walk. Top-level menus
+                              // like "Statistic" must stay put — their long children
+                              // ("Room Type Grouping", "Booking Engine Analytics") are
+                              // the ones that need to scroll, and sliding the parent
+                              // too made the whole column look broken.
+                              // Gap is set in globals.scss (`.sidebar-sub-link`) because
+                              // it has to change to 0.25rem on hover, right after the icon
+                              // collapses — a Tailwind `gap-*` utility of equal specificity
+                              // would win or lose depending on stylesheet order.
+                              className={`sidebar-sub-link flex items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] ${
                                 col?.active ? " bg-[#4f4d4d] " : ""
-                              } text-white${!hide ? " w-[45px] " : " "}`}
+                              } text-white transition-[width] duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)]${
+                                !hide ? " w-[45px] " : " "
+                              }`}
                               key={col?.link + "-" + i}
                             >
-                              <div>
-                                <img src={row?.icon} />
-                                <span className="text-[7px]">
-                                  {GetInitials(col?.label)}
-                                </span>
+                              {/* Collapses to zero width on hover (not just faded)
+                                  so the label can take the icon's place and walk the
+                                  full width without being clipped on the left. */}
+                              <div className="sidebar-sub-icon shrink-0 transition-all duration-200 ease-out overflow-hidden">
+                                <div className="flex items-center gap-1 w-max">
+                                  <img src={row?.icon} />
+                                  <span className="text-[7px]">{GetInitials(col?.label)}</span>
+                                </div>
                               </div>
 
-                              {hide ? (
-                                <>
-                                  <div className="capitalize">{col?.label}</div>
-                                </>
-                              ) : (
-                                <></>
-                              )}
-                            </a>
+                              {/* `title` gives the native tooltip as a backstop if a
+                                  name is ever long enough to hit the ellipsis. */}
+                              <div
+                                title={col?.label}
+                                className={`sidebar-sub-label capitalize transition-opacity ease-out ${
+                                  // hide === true means the rail is expanded.
+                                  hide ? "opacity-100 delay-150 duration-200" : "opacity-0 delay-0 duration-100"
+                                }`}
+                              >
+                                {col?.label}
+                              </div>
+                            </Link>
                           );
                         })}
                       </div>
@@ -288,22 +324,37 @@ const Sidebar = (props: sidebarprops) => {
               )}
               <a
                 href={"#"}
-                className={`flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] text-white`}
+                className={`sidebar-link flex gap-4 items-center px-4 py-2 hover:font-bold hover:bg-[#4f4d4d] text-white`}
                 key={"logout"}
                 onClick={() => {
                   CallLogout();
                 }}
               >
-                <div className="w-[24px] h-[24px]">
+                <div className="w-[24px] h-[24px] shrink-0">
                   <IconLogout />
                 </div>
-                <div className="capitalize">Logout</div>
+                {/* Was rendered unconditionally, so "Logout" stayed visible on the
+                    55px rail and was the widest label in the sidebar — it is what
+                    actually forced the horizontal scrollbar. Now it fades with the
+                    rest of the labels. */}
+                <div
+                  title="Logout"
+                  className={`capitalize transition-opacity ease-out ${
+                    hide ? "opacity-100 delay-150 duration-200" : "opacity-0 delay-0 duration-100"
+                  }`}
+                >
+                  Logout
+                </div>
               </a>
             </nav>
           </SimpleBar>
-          {/* <div className="sidebar-logo-footer p-3 border-t border-white/10"> */}
-          <div 
-            className="sidebar-logo-footer p-3 border-t border-white/10"
+          {/* `hide` is inverted: true means expanded. The top border only reads as a
+              deliberate separator at full width; collapsed to the 55px rail it was just
+              a short white line under Logout, so it is dropped in that state. */}
+          <div
+            className={`sidebar-logo-footer p-2 ${
+              hide ? "border-t border-white/10" : ""
+            }`}
             style={{ width: !hide ? '55px' : '15rem' }}
           >
             <img

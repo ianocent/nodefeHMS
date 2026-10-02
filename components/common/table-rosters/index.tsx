@@ -9,7 +9,8 @@ import {
   GetEncrypt,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { useSelector } from "react-redux";
@@ -80,7 +81,12 @@ const TableRosters = (props: TableViewProps) => {
   const [dataval, setData] = useState<any>({ roster_list_id: dataId });
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(true);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [datavalsrc, setDatasrc] = useState<any>({
     status: { value: "-1", label: "ALL" },
   });
@@ -229,6 +235,7 @@ const TableRosters = (props: TableViewProps) => {
 
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -239,7 +246,7 @@ const TableRosters = (props: TableViewProps) => {
       var srcval = urlParams.get("search_value")
         ? "&search_value=" + urlParams.get("search_value")
         : "";
-      let status = i ?? datavalsrc["status"]?.value;
+      let status = i ?? datavalsrc?.status?.value;
 
       let pages = 1;
       if (page) {
@@ -258,7 +265,7 @@ const TableRosters = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&search=" +
-          (datavalsrc["search"] ?? (search == null ? "" : search)) +
+          (datavalsrc?.search ?? (search == null ? "" : search)) +
           "&" +
           (queryString ?? "") +
           "" +
@@ -293,10 +300,16 @@ const TableRosters = (props: TableViewProps) => {
         });
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -573,7 +586,7 @@ const TableRosters = (props: TableViewProps) => {
 
   return (
     <>
-      {datatable?.code == "200" ? (
+      {datatable?.code == "200" && !loadError ? (
         <>
           <div className="flex gap-2 w-full justify-between mt-4">
             <div className="flex items-center gap-2 ml-3">
@@ -723,27 +736,37 @@ const TableRosters = (props: TableViewProps) => {
                 </table>
               </div>
             </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
-        </>
-      ) : (
-        <>
-          {isloading ? (
-            <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
-        </>
-      )}
+            ) : (
+              <>
+                {loadError ? (
+                  <TableErrorState
+                    message={loadError}
+                    onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                  />
+                ) : (
+                  <div className="mt-8 flex justify-center">Not Data</div>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {isloading ? (
+              <>
+                <TableSkeleton rows={8} />
+              </>
+            ) : loadError ? (
+              <TableErrorState
+                message={loadError}
+                onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+              />
+            ) : (
+              <>
+                <div className="mt-8 flex justify-center">Not Data</div>
+              </>
+            )}
+          </>
+        )}
 
       <PaginationTable
         vnext={dataUser?.pagging?.next}

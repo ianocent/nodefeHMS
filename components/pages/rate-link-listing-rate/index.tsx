@@ -75,6 +75,22 @@ const ListView = () => {
     // console.log("DATALOG", window.location.pathname.split("/"));
   });
   function RouteInit() {
+    const rateId = new URLSearchParams(window.location.search).get("data");
+    // Opened straight from the sidebar there is no rate in the URL, so both grids used to
+    // render a blank area with nothing to act on. Say what to do instead.
+    if (!rateId) {
+      return (
+        <div className="mt-6 mb-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+          <div className="font-semibold text-gray-700">
+            No Rate Code selected
+          </div>
+          <div className="mt-1 text-sm text-gray-500">
+            Open a Rate Code Detail first, then use the Rate Link tab to manage its
+            room-type links.
+          </div>
+        </div>
+      );
+    }
     return (
       <>
         {popup ? (

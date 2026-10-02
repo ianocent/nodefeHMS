@@ -1,6 +1,4 @@
-import React, { useEffect } from "react";
-import { IconSpiner } from "../icon/CardIcon";
-import { ToastContainer, toast } from "react-toastify";
+import { InlinePulse } from "../skeleton/Skeleton";
 
 interface ButtonSubmitProps {
   onCreate: () => void;
@@ -44,7 +42,8 @@ const ButtonSubmit = (props: ButtonSubmitProps) => {
         baseBtn
       }
     >
-      <IconSpiner />
+      {/* <IconSpiner /> */}
+      <InlinePulse />
     </button>
   ) : (
     <button

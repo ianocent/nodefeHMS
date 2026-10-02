@@ -12,8 +12,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { LayoutContext } from "../../context/LayoutContext";
 import InputMain from "../../components/common/input/InputMain";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
-
 const ListView = () => {
   const router = useRouter();
   const path = router.pathname;
@@ -100,7 +98,7 @@ const ListView = () => {
   }, []);
 
   return (
-    <LayoutComponent>
+    <>
       <Seo title={"Management " + layout?.title} />
       <PaperBase>
         {datatable?.permission?.add == 1 ? (
@@ -179,7 +177,7 @@ const ListView = () => {
           />
         </div>
       </PaperBase>
-    </LayoutComponent>
+    </>
   );
 };
 

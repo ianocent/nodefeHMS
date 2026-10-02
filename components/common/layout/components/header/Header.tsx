@@ -1,6 +1,6 @@
 import { LayoutContext } from "../../../../../context/LayoutContext";
 import { Breadcrumbs } from "@material-tailwind/react";
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Notification from "../menu/Notification";
 import StaahWebhookNotification from "../menu/StaahWebhookNotification";
 import Languange from "../menu/Languange";
@@ -8,15 +8,12 @@ import BussinesDate from "../menu/BusinessDate";
 import SearchHeader from "../menu/SearchHeader";
 import Email from "../menu/Email";
 import Profile from "../menu/Profile";
-import Link from "next/link";
 import { IconMenu } from "../../../icon/SidebarIcon";
 import {
   FetchData,
-  GetCapitalFirst,
   GetDecrypt,
-  GetPathUri,
-  GetQueryParam,
 } from "../../../../helper";
+import { buildBreadcrumbs, resolvePageTitle } from "./breadcrumbLabels";
 import router from "next/router";
 import { useSelector } from "react-redux";
 interface HeaderProps {
@@ -27,34 +24,32 @@ const Header = (props: HeaderProps) => {
   const { btnNav, hide } = props;
   const layout = useContext(LayoutContext);
   const path = router.pathname;
-  const [breadcrumb, setbreadcrumb] = useState(false);
-  const [pathleng, setpathleng] = useState(0);
+  // next.config.js rewrites each module's sub-routes onto a single page
+  // ("/rate-management/:path*" -> "/rate-management"), so router.pathname is
+  // constant while the user moves between tabs. asPath carries the real route,
+  // and the effect below keys on it -- keying on `path` meant the crumbs froze on
+  // whichever route happened to be visited first.
+  const asPath = router.asPath;
+  const [notifSum, setnotif] = useState(0);
+
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
-  const [notifSum, setnotif] = useState(0);
 
   useEffect(() => {
     GetNotif();
-    const title = GetQueryParam(0);
-    layout?.setTitle(GetCapitalFirst(title).replaceAll("-", " "));
-    // set url param to breadcrumbs
-    let breadcumbs = [];
-    let path = window.location.pathname;
-    let paths = path.split("/");
-    paths.map((row, index) => {
-      if (index > 0) {
-        breadcumbs.push({
-          label: GetCapitalFirst(row.replaceAll("-", " ")),
-          href: "",
-        });
-      }
-    });
-    layout?.setBreadcumbs(breadcumbs);
-    setpathleng(window.location.pathname.split("/").length);
-    setInterval(() => {
+    const routePath = asPath.split("?")[0];
+    layout?.setTitle(resolvePageTitle(routePath));
+    // Recomputed from the live path on every navigation, and replaced outright,
+    // so a shorter route can no longer inherit the previous route's crumbs.
+    layout?.setBreadcumbs(buildBreadcrumbs(routePath));
+    // Header is persistent now (mounted from _app), so this effect re-runs on every
+    // route change. The polling interval has to be torn down on cleanup, otherwise
+    // each navigation leaves another live 2-minute timer behind.
+    const timer = setInterval(() => {
       GetNotif();
     }, 120000);
-  }, [router.pathname]);
+    return () => clearInterval(timer);
+  }, [asPath]);
 
   const GetNotif = async () => {
     try {
@@ -80,6 +75,8 @@ const Header = (props: HeaderProps) => {
   return (
     <div
       className={
+        // Padding transition lives in .app-header (globals.scss) so it matches the
+        // sidebar timing and cannot be out-ranked by stylesheet order.
         "app-header" +
         (!hide
           ? " lg:!ps-[50px] "
@@ -110,62 +107,18 @@ const Header = (props: HeaderProps) => {
             
             <div className="flex flex-col justify-center !capitalize min-w-0 overflow-hidden">
               <h4 className="hidden md:block font-bold text-sm md:text-xl !capitalize truncate">
-                <>
-                  {window.location.pathname
-                    .split("/")
-                    .filter(
-                      (value, index, array) => array.indexOf(value) === index
-                    )
-                    .map((row, index) => (
-                      // <>
-                        <React.Fragment key={row + "-" + index}>
-                          {index == 2 &&
-                            pathleng <= 4 &&
-                            (row.toLocaleUpperCase() == "TYPE-PAYMENT"
-                              ? "PAYMENT TYPE"
-                              : row.toLocaleUpperCase() == "RATE"
-                              ? "RATE SETUP"
-                              : row.toLocaleUpperCase() == "BAR"
-                              ? "BAR SETUP"
-                              : row.toLocaleUpperCase() == "FIT"
-                              ? "RESERVATION FIT"
-                              : row.toLocaleUpperCase() == "GIT"
-                              ? "RESERVATION GIT"
-                              : row.toLocaleUpperCase() == "VR"
-                              ? "RESERVATION VIRTUAL"
-                              : row.toLocaleUpperCase() == "CODE-ITEM"
-                              ? "ITEM CODE"
-                              : row.toLocaleUpperCase() == "CODE-POST"
-                              ? "POST CODE"
-                              : row.toLocaleUpperCase() == "CODE-GLS"
-                              ? "GL CODE"
-                              : row.replaceAll("-", " ").toLocaleUpperCase())}
-                          {index == 1 &&
-                            pathleng <= 2 &&
-                            row.replaceAll("-", " ").toLocaleUpperCase()}
-                        </React.Fragment>
-                      // </>
-                    ))}
-                </>
+                {layout?.title}
               </h4>
               <div>
                 <Breadcrumbs placeholder={""} className="bg-white p-0">
-                  {layout?.breadcumbs.map((row, index) => (
+                  {layout?.breadcumbs.map((row: any, index: number) => (
                     <div
-                      key={row.label}
+                      key={row.label + "-" + index}
                       className={`${
                         index < layout.breadcumbs.length - 1 ? "opacity-60" : ""
                       }`}
                     >
-                      {row.label.toString().toLowerCase() == "type payment"
-                        ? "Payment Type"
-                        : row.label.toString().toLowerCase() == "code post"
-                        ? "Post Code"
-                        : row.label.toString().toLowerCase() == "code item"
-                        ? "Item Code"
-                        : row.label.toString().toLowerCase() == "code gls"
-                        ? "GL Code"
-                        : row.label}
+                      {row.label}
                     </div>
                   ))}
                 </Breadcrumbs>

@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { LayoutContext } from "../../../context/LayoutContext";
 import InputMain from "../../common/input/InputMain";
 import ButtonSubmit from "../../common/button/ButtonSubmit";
-import { IconSpiner } from "../../common/icon/CardIcon";
+import { PanelSkeleton } from "../../common/skeleton/Skeleton";
 interface DragProps {
   uri: any;
 }
@@ -23,6 +23,7 @@ const DragTblView = (props: DragProps) => {
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [isloading, setIsloading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [dataval, setData] = useState<any>({
     search: "",
@@ -102,6 +103,7 @@ const DragTblView = (props: DragProps) => {
   const GetDataTable = async (i?: any, page?: number) => {
     try {
       setIsloading(true);
+      setLoadError(null);
       let status = 0;
       if (i == 1) {
         status = 1;
@@ -130,20 +132,26 @@ const DragTblView = (props: DragProps) => {
         router,
         ""
       );
-      setdatatable(datajson);
-      if (datajson?.code == "200") {
-        setIsloading(false);
-        if (datajson?.search_data) {
-          setDatasrc(datajson?.search_data);
+        if (datajson?.code == "200") {
+          setdatatable(datajson);
+          setIsloading(false);
+          if (datajson?.search_data) {
+            setDatasrc(datajson?.search_data);
+          }
+        } else {
+          setIsloading(false);
+          setLoadError(
+            datajson === false
+              ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+              : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+          );
         }
-      } else {
+        return;
+      } catch (error) {
         setIsloading(false);
-      }
-      return;
-    } catch (error) {
-      setIsloading(false);
-      // console.log("err", error);
-      return;
+        setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
+        // console.log("err", error);
+        return;
     }
   };
   const onDeleted = async (id: any) => {
@@ -383,8 +391,10 @@ const DragTblView = (props: DragProps) => {
               next={next}
               prevJump={prevJump}
               nextJump={nextJump}
-              data={datatable}
-              loading={isloading}
+                data={datatable}
+                loading={isloading}
+                error={loadError}
+                onRetry={() => GetDataTable()}
               uri={uri}
               // refresDat={(drag) => {
               //   if (drag) {
@@ -397,9 +407,7 @@ const DragTblView = (props: DragProps) => {
             />
           ) : (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <PanelSkeleton rows={8} />
             </>
           )}
         </div>

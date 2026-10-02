@@ -7,6 +7,7 @@ import Seo from "../../common/seo";
 import { LayoutContext } from "../../../context/LayoutContext";
 import InputMain from "../../common/input/InputMain";
 import TableView from "../../common/table-edit";
+import TableErrorState from "../../common/table/TableErrorState";
 import TableDrag from "../../common/table-drag";
 import DragTblView from "./drag";
 import ModuleAdd from "./form";
@@ -25,9 +26,11 @@ const ModulePage = () => {
 
   const [initList, setInitList] = useState<any>({});
   const [initCreateUpdate, setInitCreateUpdate] = useState<any>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const GetInitList = async (uri: any) => {
     try {
+      setLoadError(null);
       let uris = uri.split("/");
       let tblid = GetQueryStr("tblid") ? "?tblid=" + GetQueryStr("tblid") : "";
       let getuuri =
@@ -49,9 +52,18 @@ const ModulePage = () => {
         setInitList(data);
         // console.log(data);
         layout.setBreadcumbs(data?.breadcrumbs);
+      } else {
+        // `uriTable` decides which table renders. Without it the page below
+        // renders nothing at all — blank, with no error and no retry.
+        setLoadError(
+          "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+        );
       }
       return;
     } catch (error) {
+      setLoadError(
+        "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+      );
       console.log(error);
       return;
     }
@@ -138,7 +150,13 @@ const ModulePage = () => {
           )}
         </>
       )}
-      {!GetQueryStr("data") && !GetQueryStr("add") && initList?.uriTable && (
+      {!GetQueryStr("data") && !GetQueryStr("add") && loadError && (
+        <TableErrorState
+          message={loadError}
+          onRetry={() => GetInitList(window.location.pathname)}
+        />
+      )}
+      {!GetQueryStr("data") && !GetQueryStr("add") && !loadError && initList?.uriTable && (
         <>
           <div className="grid grid-cols-12 h-fit gap-4 ">
             <div className="col-span-12 grid grid-cols-12 h-fit  gap-4">

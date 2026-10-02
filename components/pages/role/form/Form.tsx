@@ -644,6 +644,43 @@ const AddView = () => {
     }
   };
 
+  const normalizePermissionsPayload = (permissions: Record<string, any> = {}) => {
+    const normalized: Record<string, any> = {};
+
+    Object.entries(permissions).forEach(([groupKey, groupValue]) => {
+      if (!groupValue || typeof groupValue !== "object" || Array.isArray(groupValue)) return;
+
+      const childEntries: Record<string, any> = {};
+      Object.entries(groupValue as Record<string, any>).forEach(([menuKey, menuValue]) => {
+        if (!menuValue || typeof menuValue !== "object" || Array.isArray(menuValue)) return;
+
+        const normalizedMenu: Record<string, any> = {};
+        Object.entries(menuValue as Record<string, any>).forEach(([fieldKey, fieldValue]) => {
+          if (fieldKey === "transaction_actions") {
+            if (fieldValue && typeof fieldValue === "object" && !Array.isArray(fieldValue)) {
+              normalizedMenu.transaction_actions = fieldValue;
+            }
+            return;
+          }
+
+          if (["view", "add", "edit", "delete"].includes(fieldKey)) {
+            normalizedMenu[fieldKey] = fieldValue === true || fieldValue === 1 || fieldValue === "true" || fieldValue === "1";
+          }
+        });
+
+        if (Object.keys(normalizedMenu).length > 0) {
+          childEntries[menuKey] = normalizedMenu;
+        }
+      });
+
+      if (Object.keys(childEntries).length > 0) {
+        normalized[groupKey] = childEntries;
+      }
+    });
+
+    return normalized;
+  };
+
   const OnSave = async () => {
     try {
       let urisave = "/cms/role";
@@ -652,12 +689,13 @@ const AddView = () => {
         urisave = "/cms/role/" + idusr;
         mth = "PUT";
       }
+      const normalizedPermissions = normalizePermissionsPayload(data.permissions);
       const raw = JSON.stringify({
         name: data.name,
         code: data.code,
         status: data.status,
         dashboard: data.dashboard,
-        permissions: data.permissions,
+        permissions: normalizedPermissions,
       });
       const aesraw = GetEncrypt(raw);
       const saveprocess = await FetchData(
@@ -1239,7 +1277,7 @@ const AddView = () => {
     <>
       <Seo title={"Management " + layout?.title} />
       <PaperBase>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 pb-20">
 
           {/* Page title */}
           <div className="grid grid-cols-12 gap-4 h-fit border-b border-dashed pb-3">
@@ -1416,7 +1454,7 @@ const AddView = () => {
         </div>
 
         {/* Fixed bottom action bar */}
-        <div className="fixed w-full bg-white border-t border-gray-200 py-2 px-4 bottom-0 left-0 z-40">
+        <div className="fixed w-full bg-white border-t border-gray-200 py-2 px-4 bottom-0 left-0 z-40 shadow-[0_-2px_12px_rgba(15,23,42,0.08)]">
           <div className="lg:ms-[250px] flex justify-end px-4 gap-3">
             <ButtonSubmit
               onCreate={() => {

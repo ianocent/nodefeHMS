@@ -37,7 +37,7 @@ const useAuthRefresh = () => {
         true
       );
 
-      if (res?.code === "200") {
+      if (res?.code == 200) {
         const userData = res.data || res;
 
         if (userData?.permissions) {

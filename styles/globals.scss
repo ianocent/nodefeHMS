@@ -80,6 +80,48 @@
 
 @import "../public/assets/css/style.css";
 
+/* Keyboard focus (audit P0-1).
+   Replaces the vendored Madmin rule that shipped `ring-0 !important`, which removed
+   every focus indicator AND overrode the red error border the moment a field was
+   focused. Border colour stays non-important so `focus:!border-red` still wins. */
+[type="text"]:focus,
+input:where(:not([type])):focus,
+[type="email"]:focus,
+[type="url"]:focus,
+[type="password"]:focus,
+[type="number"]:focus,
+[type="date"]:focus,
+[type="datetime-local"]:focus,
+[type="month"]:focus,
+[type="search"]:focus,
+[type="tel"]:focus,
+[type="time"]:focus,
+[type="week"]:focus,
+[multiple]:focus,
+textarea:focus,
+select:focus {
+  @apply border-defaultborder dark:border-defaultborder/10;
+}
+
+[type="text"]:focus-visible,
+input:where(:not([type])):focus-visible,
+[type="email"]:focus-visible,
+[type="url"]:focus-visible,
+[type="password"]:focus-visible,
+[type="number"]:focus-visible,
+[type="date"]:focus-visible,
+[type="datetime-local"]:focus-visible,
+[type="month"]:focus-visible,
+[type="search"]:focus-visible,
+[type="tel"]:focus-visible,
+[type="time"]:focus-visible,
+[type="week"]:focus-visible,
+[multiple]:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply outline-none ring-2 ring-primary;
+}
+
 @import "react-perfect-scrollbar/dist/css/styles.css"; //(perfectscrollbar)
 h1 {
   font-size: large;
@@ -97,11 +139,13 @@ h1 {
   background-color: #232020;
   // background-color: rgb(17 28 67 / var(--tw-bg-opacity));
   /* font-family: Montserrat,sans-serif; */
-  transition-property: all;
+  // Only the width is animated: `all` forced layout-affecting properties (padding,
+  // border, background) through the transition too. The block also declared
+  // transition-duration twice (0.15s then 0.05s) so the later 50ms won, which read as
+  // a hard snap rather than a slide when leaving /choose-property.
+  transition-property: width;
+  transition-duration: 220ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.15s;
-  transition-duration: 0.05s;
-  transition-timing-function: linear;
 }
 
 .app-sidebar .main-sidebar-header {
@@ -117,11 +161,11 @@ h1 {
   border-bottom-color: hsla(0, 0%, 100%, 0.1);
   border-inline-end-color: hsla(0, 0%, 100%, 0.1);
   padding: 0.813rem 1.25rem;
-  transition-property: all;
+  // Same duration/easing as the sidebar body so the logo box glides with the sidebar
+  // instead of snapping ahead of it.
+  transition-property: width;
+  transition-duration: 220ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.15s;
-  transition-duration: 0.05s;
-  transition-timing-function: linear;
 }
 // .main-sidebar {
 //   position: relative;
@@ -136,6 +180,11 @@ h1 {
   margin-top: 3.72rem;
   height: calc(100vh - 3.72rem - 0px); /* 88px = tinggi logo footer */
   overflow: auto;
+  // Was `overflow: auto` on both axes. Menu labels are `whitespace-nowrap`, so a
+  // long title ("Booking Engine Analytics") pushed the content wider than the
+  // 55px collapsed rail and produced a second, horizontal scrollbar. Labels now
+  // clip themselves (see .sidebar-label), so only the vertical bar is needed.
+  overflow-x: hidden;
   padding-top: 0.5rem;
   padding-bottom: 0; /* hapus padding bottom */
 }
@@ -145,7 +194,11 @@ h1 {
   bottom: 0;
   width: 15rem;
   background-color: #232020;
-  transition: width 0.05s linear;
+  // Was 0.05s linear, which made the property-logo block snap shut at the same moment
+  // the sidebar started sliding. Matches the sidebar/header-box timing.
+  transition-property: width;
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .content {
@@ -202,11 +255,13 @@ h1 {
   /* border-bottom-color: rgb(var(--header-border-color)); */
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
-  transition-property: all;
+  // Same duplicate-duration bug as .app-sidebar: 0.15s then 0.1s, so the later 100ms
+  // won. Because this is a single-class rule it can also out-rank a Tailwind
+  // `transition-[padding]` utility depending on stylesheet order, so the timing lives
+  // here and the markup does not fight it.
+  transition-property: padding;
+  transition-duration: 220ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.15s;
-  transition-duration: 0.1s;
-  transition-timing-function: linear;
 }
 .headers-menu:hover {
   position: relative;
@@ -436,4 +491,110 @@ table {
 }
 [type="radio"] {
   border-color: #232020;
+}
+
+/* ---------------------------------------------------------------------
+   Sidebar label overflow
+   ---------------------------------------------------------------------
+   Menu titles are `whitespace-nowrap`, so a long name ("Booking Engine
+   Analytics") overflowed the 55px collapsed rail and produced a horizontal
+   scrollbar next to the vertical one. Labels clip themselves instead, leaving
+   the rail with exactly one scrollbar.
+
+   Only the NESTED entries (`.sidebar-sub-*`) get the icon-yields-row treatment.
+   Top-level menus stay put: a parent like "Statistic" merely has long children,
+   and rearranging the parent as well made the column look like it was drifting.
+   --------------------------------------------------------------------- */
+.sidebar-link {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sidebar-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-label::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* ---- nested entries: icon yields the row, label reads in full ---- */
+
+.sidebar-sub-link {
+  min-width: 0;
+  overflow: hidden;
+  gap: 0.5rem;
+}
+
+.sidebar-sub-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  // Safety net only. Once the icon collapses on hover the label inherits the
+  // whole 15rem row, so names like "Room Type Grouping" and "Booking Engine
+  // Analytics" render in full with no scrolling at all.
+  text-overflow: ellipsis;
+}
+
+// The icon box collapses to zero width so the label inherits the whole row.
+// Fading alone (the first attempt) left an empty gap that clipped the front of
+// the label, so the text started mid-word. The flex gap follows it down for the
+// same reason - otherwise the label still began 0.5rem in from a now-empty slot.
+.sidebar-sub-icon {
+  width: 1.75rem;
+}
+
+.sidebar-sub-link:hover {
+  gap: 0.25rem;
+}
+
+.sidebar-sub-link:hover .sidebar-sub-icon {
+  width: 0;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-sub-link:hover .sidebar-sub-icon {
+    width: 1.75rem;
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Autocomplete / lookup dropdown (guest search, company search, ...)
+   ---------------------------------------------------------------------
+   Every lookup popup used to carry `rounded-md` together with
+   `border-b border-r border-l` but no top border, so the rounded corners were
+   clipped by a square border on three sides and the panel read as a plain
+   white box. One class now owns the whole look so guest and company search
+   cannot drift apart again.
+   --------------------------------------------------------------------- */
+.ac-dropdown {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  overflow: hidden;
+}
+
+// The inner table supplies its own `shadow-lg`; a second one stacks with the
+// panel's and makes the list look blurry at the edges.
+.ac-dropdown table {
+  box-shadow: none;
+}
+
+// Header row is the darkest element in the popup, so rounding the top corners
+// there is what actually makes the panel look rounded.
+.ac-dropdown table thead td:first-child {
+  border-top-left-radius: 0.5rem;
+}
+.ac-dropdown table thead td:last-child {
+  border-top-right-radius: 0.5rem;
 }

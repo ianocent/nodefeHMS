@@ -4,7 +4,7 @@ import { useDropzone } from "react-dropzone";
 import { FetchData, GetDecrypt } from "../../helper";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import { IconSpiner } from "../icon/CardIcon";
+import { PanelSkeleton } from "../skeleton/Skeleton";
 
 export interface InputBaseProps {
   label: string;
@@ -82,7 +82,7 @@ const InputBase = (props: InputBaseProps) => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             {!loading ? (
@@ -193,7 +193,7 @@ const InputBase = (props: InputBaseProps) => {
               </div>
             ) : (
               <div className="flex w-full justify-center mt-2">
-                <IconSpiner />
+                <PanelSkeleton rows={2} />
               </div>
             )}
           </>
@@ -286,7 +286,7 @@ const InputBase = (props: InputBaseProps) => {
           className={
             `${widthCus} border  ${
               error ? "border-red focus:!border-red" : ""
-            } border-dashed focus:!border-blue focus:border-dashed rounded-md py-1 focus:outline-0 focus:outline-dashed focus:ring-transparent ` +
+            } border-dashed focus:border-dashed rounded-md py-1 ` +
             clasCus
           }
         />
@@ -298,7 +298,7 @@ const InputBase = (props: InputBaseProps) => {
             className={
               `${widthCus} border  ${
                 error ? "border-red focus:!border-red" : ""
-              } border-dashed focus:!border-blue focus:border-dashed rounded-md py-1 focus:outline-0 focus:outline-dashed focus:ring-transparent w-full ` +
+              } border-dashed focus:border-dashed rounded-md py-1 w-full ` +
               clasCus
             }
             onKeyUp={(e: any) => {
@@ -325,7 +325,7 @@ const InputBase = (props: InputBaseProps) => {
             className={
               `${widthCus} border  ${
                 error ? "border-red focus:!border-red" : ""
-              } border-dashed focus:!border-blue focus:border-dashed rounded-md py-1 focus:outline-0 focus:outline-dashed focus:ring-transparent ` +
+              } border-dashed focus:border-dashed rounded-md py-1 ` +
               clasCus +
               (rest.type == "text" && rest.name != "email"
                 ? " uppercase "

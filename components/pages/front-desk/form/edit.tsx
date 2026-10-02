@@ -1,22 +1,22 @@
 import { useRouter } from "next/router";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import Seo from "../../../common/seo";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  GetSelisihDay,
-  RouteChange,
-  removeItem,
-  GetNextDay,
-} from "../../../helper";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
-import TableView from "../../../common/table-edit";
+import Seo from "../../../common/seo";
 import TabMenuIcon from "../../../common/tabIcon/tab";
+import TableView from "../../../common/table-edit";
+import TableErrorState from "../../../common/table/TableErrorState";
+import {
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetNextDay,
+    GetQueryStr,
+    GetSelisihDay,
+    removeItem
+} from "../../../helper";
 const EditView = () => {
   const ModuleName = "Edit Reservation";
   const GLOBALURI = "/cms/reservation";
@@ -31,6 +31,7 @@ const EditView = () => {
   const [actAuto, setactAuto] = useState("-1");
   const [load, setisload] = useState(false);
   const [datadetail, setdatadetail] = useState<any>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [datprice, setdatprice] = useState<any>({});
   const [dataval, setData] = useState<any>({ type_reservation: "fit" });
 
@@ -774,9 +775,10 @@ const EditView = () => {
     setdataform([...dataInput]);
     // setError("");
   };
-  const GetDataDetail = async () => {
-    try {
-      let getuuri = GLOBALURI + "/" + GetQueryStr("data") + "/update";
+    const GetDataDetail = async () => {
+      try {
+        setLoadError(null);
+        let getuuri = GLOBALURI + "/" + GetQueryStr("data") + "/update";
       const data: any = await FetchData(
         getuuri,
         "GET",
@@ -920,10 +922,20 @@ const EditView = () => {
         });
 
         setdataform([...dataInput]);
+      } else {
+        // `datadetail.guest.guest_profile_id` gates the Guest Preference and
+        // Guest Notes panels below. Left unset they render nothing at all, so
+        // the sections silently vanish instead of reporting a failed load.
+        setLoadError(
+          "Gagal memuat data reservasi. Panel preferensi dan catatan tamu tidak dapat dimuat."
+        );
       }
 
       return;
     } catch (error) {
+      setLoadError(
+        "Gagal memuat data reservasi. Panel preferensi dan catatan tamu tidak dapat dimuat."
+      );
       console.log(error);
       return;
     }
@@ -1342,7 +1354,7 @@ const EditView = () => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             <div className="table-responsive w-full">
@@ -1495,8 +1507,8 @@ const EditView = () => {
       <Seo title={"Management " + layout?.title} />
       <div className="flex flex-col gap-4">
         {popup ? (
-          <div className="overlay">
-            <div className="w-[50%] relative h-[300px] bg-white z-20 top-[200px] left-[28%]"></div>
+          <div className="overlay flex items-center justify-center p-4">
+            <div className="w-[50%] max-w-3xl h-[300px] bg-white rounded-lg z-20"></div>
           </div>
         ) : (
           <></>
@@ -1655,6 +1667,11 @@ const EditView = () => {
                     isPageing={false}
                   />
                 </>
+              ) : loadError ? (
+                <TableErrorState
+                  message={loadError}
+                  onRetry={GetDataDetail}
+                />
               ) : (
                 <></>
               )}
@@ -1675,6 +1692,11 @@ const EditView = () => {
                     isPageing={false}
                   />
                 </>
+              ) : loadError ? (
+                <TableErrorState
+                  message={loadError}
+                  onRetry={GetDataDetail}
+                />
               ) : (
                 <></>
               )}

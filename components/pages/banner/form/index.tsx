@@ -1,24 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
 import {
-  FetchData,
-  FetchDataDocument,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-  GetQueryStr,
-  RouteChange,
+    FetchData,
+    FetchDataDocument,
+    GetDecrypt
 } from "../../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../common/layout/LayoutComponent";
-import TableView from "../../../common/table-edit";
-import { usePathname } from "next/navigation";
-import { toast } from "react-toastify";
 interface AddviewProps {
   isview?: boolean;
 }
@@ -190,6 +183,10 @@ const AddView = (props: AddviewProps) => {
         router,
         ""
       );
+
+      if (saveprocess === false) {
+        return;
+      }
 
       toast(mth === "POST" ? "Success save banner" : "Success edit banner", {
         autoClose: 3000,

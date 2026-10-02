@@ -15538,25 +15538,6 @@ input.gridjs-input {
   @apply ltr:float-right rtl:float-left -me-[1.5em] ms-0;
 }
 
-[type="text"]:focus,
-input:where(:not([type])):focus,
-[type="email"]:focus,
-[type="url"]:focus,
-[type="password"]:focus,
-[type="number"]:focus,
-[type="date"]:focus,
-[type="datetime-local"]:focus,
-[type="month"]:focus,
-[type="search"]:focus,
-[type="tel"]:focus,
-[type="time"]:focus,
-[type="week"]:focus,
-[multiple]:focus,
-textarea:focus,
-select:focus {
-  @apply border-defaultborder dark:border-defaultborder/10 ring-0 !important;
-}
-
 [type="checkbox"]:checked:hover,
 [type="checkbox"]:checked:focus,
 [type="radio"]:checked:hover,

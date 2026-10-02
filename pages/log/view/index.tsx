@@ -11,8 +11,6 @@ import {
 } from "../../../components/helper";
 import { useSelector } from "react-redux";
 import ButtonSubmit from "../../../components/common/button/ButtonSubmit";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
-
 const UserView = () => {
   const routers = useRouter();
   const [loading, setloading] = useState(false);
@@ -56,7 +54,7 @@ const UserView = () => {
     // alert(routers.query.id);
   }, []);
   return (
-    <LayoutComponent>
+    <>
       <Seo title="Management View User" />
       <PaperBase>
         <div className="flex flex-col gap-4">
@@ -144,7 +142,7 @@ const UserView = () => {
           />
         </div>
       </PaperBase>
-    </LayoutComponent>
+    </>
   );
 };
 

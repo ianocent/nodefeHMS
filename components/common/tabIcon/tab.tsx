@@ -79,6 +79,7 @@ const TabMenuIcon = (props: DatatabProps) => {
   };
   const [dataIcon, setdataIcon] = useState<any>([isNAudit ? {} : objIco]);
   const [dataIconAll, setdataIconAll] = useState<any>({});
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const [remarkval, setRemark] = useState<any>("");
   const [valReason, setvalReason] = useState<any>({});
   const [valRoom, setvalRoom] = useState<any>([]);
@@ -118,6 +119,7 @@ const TabMenuIcon = (props: DatatabProps) => {
   const OnSaveMsgRmk = async (key) => {
     // console.log("widylog", dataval);
     setloading(true);
+    setBulkError(null);
     try {
       setreloadPay(false);
       let urisave = "";
@@ -197,6 +199,18 @@ const TabMenuIcon = (props: DatatabProps) => {
             status_reservation: key,
             remark: remarkval,
           };
+        } else if (key == "check_in") {
+          // check-in has its own endpoint because it owns the room-availability
+          // guard, the clean-room guard, the allotment decrement and the
+          // room→occupied write. update-status only flips a column, so routing
+          // it there skipped every one of those.
+          urisave = "/cms/front-desk/check-in/" + GetQueryStr("data");
+          datapost = { remark: remarkval };
+        } else if (key == "check_out") {
+          // Likewise: check-out owns the auto-transfer pass, the settlement
+          // gate and the room→vacant/dirty write.
+          urisave = "/cms/front-desk/check-out/" + GetQueryStr("data");
+          datapost = { remark: remarkval };
         } else {
           datapost = { status_reservation: key, remark: remarkval };
         }
@@ -224,6 +238,22 @@ const TabMenuIcon = (props: DatatabProps) => {
         setpopup(false);
         if (saveprocess?.data?.door_lock?.ip_doorlock) {
           OnSaveSugestionsss("/cms/new-key", false);
+        }
+        // A bulk group action can partially succeed: some p-blocks pass the
+        // settlement gate and others do not. The old handler reported success
+        // for the whole batch, so rejected rooms looked checked out.
+        const failed = saveprocess?.data?.failed;
+        if (Array.isArray(failed) && failed.length > 0) {
+          setBulkError(
+            failed
+              .map(
+                (f: any) =>
+                  `${f?.folio_number ?? f?.folio_id ?? "folio"}: ${f?.message ?? "failed"}`
+              )
+              .join(" | ")
+          );
+        } else {
+          setBulkError(null);
         }
         // window.location.reload();
         ResetPath();
@@ -1272,7 +1302,16 @@ const TabMenuIcon = (props: DatatabProps) => {
             key == "confirm_reservation" ||
             key == "assign_room" ||
             key == "move_reservation" ? (
-              <ButtonSubmit
+              <>
+                {bulkError && (
+                  <div className="mb-2 w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    <p className="font-bold">
+                      Some blocks were not processed:
+                    </p>
+                    <p className="mt-1 break-words">{bulkError}</p>
+                  </div>
+                )}
+                <ButtonSubmit
                 isBtnAdd={canPerformTx}
                 label={
                   key == "check_in" ||
@@ -1311,7 +1350,8 @@ const TabMenuIcon = (props: DatatabProps) => {
                   }
                 }}
                 loading={loading}
-              />
+                />
+              </>
             ) : (
               <></>
             )}
@@ -1608,11 +1648,11 @@ const TabMenuIcon = (props: DatatabProps) => {
     return (
     <>
       {popup && String(id) === GetQueryStr("data") ? (
-        <div className="overlay">
+        <div className="overlay flex items-center justify-center p-4">
           <div
             ref={ref}
             className={
-              "w-[77%] relative max-h-[calc(100vh-140px)] bg-white z-20 top-[95px] left-[19%] "
+              "w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20 "
             }
           >
             <div className=" overflow-y-auto">

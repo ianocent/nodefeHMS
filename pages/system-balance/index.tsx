@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import ListView from "../../components/pages/system-balance";
 import Tabs from "../../components/common/tab";
@@ -30,15 +29,11 @@ const MasterPage = () => {
     return <ListView />;
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
-      <PaperBase>
+    <PaperBase>
         <Tabs active={path} idparent={parentid} />
 
         {RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

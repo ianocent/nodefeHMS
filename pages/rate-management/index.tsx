@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import CodeBilingPage from "../../components/pages/code-billing/index";
 import Tabs from "../../components/common/tab";
@@ -26,27 +25,22 @@ import { useRouter } from "next/router";
 
 const MasterPage = () => {
   const routers = useRouter();
-  const [path, setpath] = useState("");
-  const [pathdua, setpathdua] = useState("");
-  const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [ischildren, setischildren] = useState("1");
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const barid = urlParams.get("bar_id");
-    if (barid) {
-      setischildren(barid);
-    }
-    setparentid(parent);
-    setadd(add);
-    setpath(window.location.pathname.split("/")[2]);
-    console.log(window.location.pathname.split("/")[2]);
-    setpathdua(window.location.pathname.split("/")[3]);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+  // Every /rate-management/* URL is rewritten to this one page (next.config.js
+  // afterFiles: "/rate-management/:path*"), so router.pathname is constant and the
+  // real route lives in asPath. It used to be read from window.location inside a
+  // dependency-less useEffect and copied into state, which meant every navigation
+  // rendered once with the PREVIOUS route's state before the effect corrected it --
+  // visible as the rate-link tab content flashing while coming back to a rate code
+  // detail. Deriving during render removes that intermediate render entirely.
+  const [routePath, queryString] = routers.asPath.split("?");
+  const segments = routePath.split("/").filter(Boolean);
+  const q = new URLSearchParams(queryString ?? "");
+  const path = segments[1] ?? "";
+  const pathdua = segments[2] ?? "";
+  const parentid = q.get("parent") ?? "0";
+  const ischildren = q.get("bar_id") ?? "1";
+
   function RouteInit() {
     if (path == "bar") {
       if (pathdua == "rate-link-listing") {
@@ -111,14 +105,10 @@ const MasterPage = () => {
     }
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={path} idparent={parentid} ischildren={ischildren} />
         {path != "" ? RouteInit() : <></>}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

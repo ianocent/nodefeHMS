@@ -1,14 +1,13 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../context/LayoutContext";
+import { useFormPermission } from "../../../hooks/useFormPermission";
+import ButtonSubmit from "../../common/button/ButtonSubmit";
 import InputMain from "../../common/input/InputMain";
 import Seo from "../../common/seo";
 import { FetchData, GetDecrypt, GetEncrypt, NumberClear } from "../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../context/LayoutContext";
-import { usePathname } from "next/navigation";
-import { useFormPermission } from "../../../hooks/useFormPermission";
 interface AddviewProps {
   isview?: boolean;
   isPopup?: boolean;
@@ -137,7 +136,9 @@ const EmailSend = (props: AddviewProps) => {
 
       const raw = JSON.stringify(dataToPost);
       const aesraw = GetEncrypt(raw);
-      var redirects = isPopup ? "" : `${pathname}?parent=83`;
+      // Hardcoded 83 is the *Company* menu, not Email. Same wrong-menu-tree redirect that
+      // hid the Tabs strip after saving an Email Group / Email Template.
+      var redirects = isPopup ? "" : `${pathname}?parent=${parent || 83}`;
       const saveprocess = await FetchData(
         urisave,
         mth,

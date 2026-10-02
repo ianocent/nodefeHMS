@@ -561,11 +561,11 @@ const TableReport: React.FC<TableReportProps> = ({
   const LoaderPopup = ({ isOpen }) => {
     return (
       <div
-        className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ${
-          isOpen ? "block" : "hidden"
+        className={`fixed inset-0 items-center justify-center bg-black bg-opacity-50 p-4 ${
+          isOpen ? "flex" : "hidden"
         }`}
       >
-        <div className="bg-white p-6 rounded-lg shadow-lg">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
           <p className="text-center mb-4">Loading...</p>
           <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
             <div

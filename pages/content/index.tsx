@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import Tabs from "../../components/common/tab";
 import PaperBase from "../../components/common/paper/PaperBase";
@@ -52,15 +51,11 @@ const ContentPage = () => {
     }
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={path} idparent={parentid} ischildren={ischildren} />
 
         {RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default ContentPage;

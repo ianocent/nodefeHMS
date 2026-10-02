@@ -9,12 +9,12 @@ import ModalConfirmationComponent from "../../../common/modal/ModalConfirmation"
 import Seo from "../../../common/seo";
 import TableView from "../../../common/table-edit";
 import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  NumberClear,
-  formatAmount
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetQueryStr,
+    NumberClear,
+    formatAmount
 } from "../../../helper";
 interface AddviewProps {
   isview?: boolean;
@@ -621,6 +621,18 @@ const AddView = (props: AddviewProps) => {
       );
       if (saveprocess?.code == "200") {
         setloading(false);
+        const syncprocess = await FetchData(
+          "/cms/rate/" + idusr + "/sync-staah",
+          "POST",
+          GetEncrypt(JSON.stringify({})),
+          false,
+          datalocal?.data?.access_token,
+          router,
+          window.location.href
+        );
+        if (syncprocess?.code == 200) {
+          // sync ke Staah berhasil
+        }
       } else {
         setloading(false);
       }

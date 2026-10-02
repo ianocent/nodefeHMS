@@ -62,8 +62,8 @@ const MoveReservationModal = ({
         checkOut !== data.old_check_out;
 
     return (
-        <div className="overlay">
-            <div className="bg-white rounded-xl p-5 w-full max-w-2xl mx-auto mt-10 shadow-xl">
+        <div className="overlay flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-5 w-full max-w-2xl max-h-[90vh] overflow-auto shadow-xl">
 
                 {/* Header */}
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2">

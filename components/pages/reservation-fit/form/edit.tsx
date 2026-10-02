@@ -5,15 +5,16 @@ import { LayoutContext } from "../../../../context/LayoutContext";
 import { useFormPermission, useTransactionPermission } from "../../../../hooks/useFormPermission";
 import { env } from "../../../../next.config";
 import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { IconSpiner } from "../../../common/icon/CardIcon";
 import InputMain from "../../../common/input/InputMain";
 import MultiSelectBAse from "../../../common/input/MultiSelectBase";
 import ModalConfirmationComponent from "../../../common/modal/ModalConfirmation";
 import ModalNotedComponent from "../../../common/modal/ModalNoted";
 import Seo from "../../../common/seo";
+import { PanelSkeleton } from "../../../common/skeleton/Skeleton";
 import MoveRsv from "../../../common/tabIcon/move-rsv";
 import TabMenuIcon from "../../../common/tabIcon/tab";
 import TableView from "../../../common/table-edit";
+import TableErrorState from "../../../common/table/TableErrorState";
 import {
   FetchData,
   GetCurrentDate,
@@ -43,6 +44,7 @@ const EditView = () => {
   const [actAuto, setactAuto] = useState("-1");
   const [load, setisload] = useState(false);
   const [datadetail, setdatadetail] = useState<any>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [datadetailmaster, setdatadetailmaster] = useState<any>({});
   const [propertyId, setpropertyId] = useState<any>(null);
   const { canCreate, canUpdate } = useFormPermission(63);
@@ -342,7 +344,18 @@ const EditView = () => {
           label: "Room Status",
           name: "room_status",
           type: "text",
-          cols: "col-span-4",
+          cols: "col-span-2",
+          options: [{}],
+          value: "",
+          valueOri: "",
+          disable: true,
+          isColor: true,
+        },
+        {
+          label: "Clean Status",
+          name: "room_clean_status",
+          type: "text",
+          cols: "col-span-2",
           options: [{}],
           value: "",
           valueOri: "",
@@ -1108,9 +1121,10 @@ const EditView = () => {
     // console.log(dataInput);
     // setError("");
   };
-  const GetDataDetail = async () => {
-    try {
-      setisload(true);
+    const GetDataDetail = async () => {
+      try {
+        setLoadError(null);
+        setisload(true);
       let getuuri = GLOBALURI + "/" + GetQueryStr("data") + "/update";
       const data: any = await FetchData(
         getuuri,
@@ -1171,9 +1185,22 @@ const EditView = () => {
         //reservation
         dataform[1].data?.map((rw, i) => {
           if (rw?.name == "room_status") {
-            dataInput[1].data[i].valueOri = data?.data?.reservation[rw?.name];
+            // {value, label} on data.reservation, mirrored at the top level.
+            const rv = data?.data?.reservation?.[rw?.name] ?? data?.data?.[rw?.name];
+            const rvp = Array.isArray(rv) ? rv[0] : rv;
+            dataInput[1].data[i].valueOri = rvp;
             dataInput[1].data[i].value =
-              data?.data?.reservation[rw?.name]?.label;
+              typeof rvp === "string" ? rvp : rvp?.label ?? "";
+          } else if (rw?.name == "room_clean_status") {
+            // Laravel formatUpdate returns room_clean_status at the TOP level of
+            // the payload (Folio.php:3059) as a coloured pill array, not under
+            // `reservation` — reading only the nested key left it permanently
+            // blank. Accept either shape.
+            const cv = data?.data?.reservation?.[rw?.name] ?? data?.data?.[rw?.name];
+            const pill = Array.isArray(cv) ? cv[0] : cv;
+            dataInput[1].data[i].valueOri = pill;
+            dataInput[1].data[i].value =
+              typeof pill === "string" ? pill : pill?.label ?? "";
           } else if (rw?.name == "status_reservation") {
             dataInput[1].data[i].valueOri = data?.data?.reservation[rw?.name];
             dataInput[1].data[i].value =
@@ -1293,27 +1320,39 @@ const EditView = () => {
                     index
                   ]?.room_type_id_origin?.value;
               } else {
-                dataInput[2].items[index].data[i].valueOri =
+                // Same promotion caveat as "name-room": room_type_id_next is
+                // cleared once the pick is folded into room_type_id.
+                const rtNext =
                   data?.data?.reservation_items[index]?.room_type_id_next;
-                dataInput[2].items[index].data[i].value =
-                  data?.data?.reservation_items[
-                    index
-                  ]?.room_type_id_next?.label;
+                const rtCur =
+                  data?.data?.reservation_items[index]?.room_type_id_origin;
+                const rtShown =
+                  rtNext && rtNext.value
+                    ? rtNext
+                    : rtCur && rtCur.value
+                      ? rtCur
+                      : null;
+                dataInput[2].items[index].data[i].valueOri = rtShown;
+                dataInput[2].items[index].data[i].value = rtShown?.label ?? "";
                 dataInput[2].items[index].data[i].valueid =
-                  data?.data?.reservation_items[
-                    index
-                  ]?.room_type_id_next?.value;
+                  rtShown?.value ?? null;
                 dataInput[2].items[index].data[i].uri =
                   "/cms/room-type?reservation=1&check_in_date=[0]&check_out_date=[1]&rate_id=" +
                   data?.data?.reservation_items[index]?.rate_id?.value;
               }
             } else if (rw?.name == "name-room") {
-              dataInput[2].items[index].data[i].valueOri =
-                data?.data?.reservation_items[index]?.room_id_next;
-              dataInput[2].items[index].data[i].value =
-                data?.data?.reservation_items[index]?.room_id_next?.label;
-              dataInput[2].items[index].data[i].valueid =
-                data?.data?.reservation_items[index]?.room_id_next?.value;
+              // A picked room lands in room_id_next, but saveReservation then
+              // promotes it into room_id and clears the _next columns whenever
+              // the guest has not checked in yet (Folio.php:2548-2584). Reading
+              // only room_id_next therefore showed a blank Room field on reopen
+              // even though the room was saved — fall back to the current room.
+              const rNext = data?.data?.reservation_items[index]?.room_id_next;
+              const rCur = data?.data?.reservation_items[index]?.room_id_origin;
+              const rShown =
+                rNext && rNext.value ? rNext : rCur && rCur.value ? rCur : null;
+              dataInput[2].items[index].data[i].valueOri = rShown;
+              dataInput[2].items[index].data[i].value = rShown?.label ?? "";
+              dataInput[2].items[index].data[i].valueid = rShown?.value ?? null;
             } else if (rw?.name == "room_type_id") {
               dataInput[2].items[index].data[i].value =
                 data?.data?.reservation_items[
@@ -1439,17 +1478,27 @@ const EditView = () => {
 
         // check is parent git
         setIsParentGIT(data?.data?.is_parent_git);
-        setisVr(data?.data?.is_vr);
-        setIsisSubGit(data?.data?.is_sub_git);
-        setdataform([...dataInput]);
-      }
-      setisload(false);
-      return;
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-  };
+            setisVr(data?.data?.is_vr);
+            setIsisSubGit(data?.data?.is_sub_git);
+            setdataform([...dataInput]);
+          } else {
+            // `datadetail.guest.guest_profile_id` gates the Guest Preference and
+            // Guest Notes sections below. Left unset they render nothing at all,
+            // so the sections silently vanish instead of reporting a failed load.
+            setLoadError(
+              "Gagal memuat data reservasi. Panel preferensi dan catatan tamu tidak dapat dimuat."
+            );
+          }
+          setisload(false);
+          return;
+        } catch (error) {
+          setLoadError(
+            "Gagal memuat data reservasi. Panel preferensi dan catatan tamu tidak dapat dimuat."
+          );
+          console.log(error);
+          return;
+        }
+      };
   const AddReservation = () => {
     let dataInput = [...dataform];
     let index = dataInput[2].items.length;
@@ -1985,7 +2034,7 @@ const EditView = () => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           {!loading ? (
             <div className="table-responsive w-full">
@@ -2105,9 +2154,7 @@ const EditView = () => {
               )}
             </div>
           ) : (
-            <div className="mt-8 flex justify-center">
-              <IconSpiner />
-            </div>
+            <PanelSkeleton rows={8} />
           )}
         </div>
       </>
@@ -2135,14 +2182,11 @@ const EditView = () => {
         ""
       );
       if (saveprocess?.code == "200") {
-        // router.replace({
-        //   pathname: "/reservation/" + GetPathUri(2),
-        //   query: {
-        //     parent: GetQueryStr("parent"),
-        //     module: GetQueryStr("module"),
-        //     data: GetQueryStr("data"),
-        //   },
-        // });
+        // Go back to the list the form was opened from. Rebuilding the URL here
+        // looked tempting but leaks this page's params (add/data/datetbl/group/
+        // body/src/search_*) onto the list, and table-edit treats `pageload` as a
+        // page number — a Date.now() stamp makes it request page 1.79e12, i.e.
+        // an offset past the last row, so the list renders empty.
         history.back();
         setloading(false);
       } else {
@@ -2176,6 +2220,7 @@ const EditView = () => {
               <GuestAdd
                 isPopup={true}
                 nameinit={dataval["first_name-guest"] ?? ""}
+                OnCancelSv={() => setpopup(false)}
                 ActionSv={(id, fn, ln, ti, pn, em, gs, all) => {
                   // console.log("bbbbb", all);
                   ActSv(id, fn, ln, ti, pn, em, "guest", gs, [], all);
@@ -2369,9 +2414,9 @@ const EditView = () => {
   return (
     <>
       <Seo title={"Management " + layout?.title} />
-      <div className={(ispopupChange ? "block" : "hidden") + " overlay "}>
-        <div className="flex justify-center mt-20 ">
-          <div className="bg-white w-[600px] p-4">
+      <div className={ispopupChange ? "overlay flex items-center justify-center p-4" : "overlay hidden"}>
+        <div className="flex justify-center ">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl p-4">
             <div>
               <h4>Selected Change Folio </h4>
             </div>
@@ -2419,10 +2464,10 @@ const EditView = () => {
       <div className="flex flex-col gap-4">
         {popup ? (
           <>
-            <div className="overlay">
+            <div className="overlay flex items-center justify-center p-4">
               <div
                 ref={ref}
-                className="w-[75%] overflow-auto relative h-[650px] rounded-lg bg-gray-200 z-20 top-2 xl:top-[110px] left-[20%]"
+                className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
               >
                 {ContentPopUp(
                   new URLSearchParams(window.location.search).get("key"),
@@ -2664,19 +2709,25 @@ const EditView = () => {
                   Guest Preference
                 </button>
 
-                {datadetail?.guest?.guest_profile_id &&
-                  showSections.guestPreference && (
-                    <TableView
-                      uri="/cms/profile/guest-preference"
-                      queryString={
-                        "&guest_id=" + datadetail.guest.guest_profile_id
-                      }
-                      groups=""
-                      isEditTable={true}
-                      isTitle={true}
-                      isDeleted={false}
-                      isBtnAdd={true}
-                      isPageing={false}
+                  {datadetail?.guest?.guest_profile_id &&
+                    showSections.guestPreference && (
+                      <TableView
+                        uri="/cms/profile/guest-preference"
+                        queryString={
+                          "&guest_id=" + datadetail.guest.guest_profile_id
+                        }
+                        groups=""
+                        isEditTable={true}
+                        isTitle={true}
+                        isDeleted={false}
+                        isBtnAdd={true}
+                        isPageing={false}
+                      />
+                    )}
+                  {loadError && showSections.guestPreference && (
+                    <TableErrorState
+                      message={loadError}
+                      onRetry={GetDataDetail}
                     />
                   )}
               </div>
@@ -2696,19 +2747,25 @@ const EditView = () => {
                   Guest Notes
                 </button>
 
-                {datadetail?.guest?.guest_profile_id &&
-                  showSections.guestNotes && (
-                    <TableView
-                      uri="/cms/profile/guest-notes"
-                      queryString={
-                        "&guest_id=" + datadetail.guest.guest_profile_id
-                      }
-                      groups=""
-                      isEditTable={true}
-                      isTitle={true}
-                      isDeleted={false}
-                      isBtnAdd={true}
-                      isPageing={false}
+                  {datadetail?.guest?.guest_profile_id &&
+                    showSections.guestNotes && (
+                      <TableView
+                        uri="/cms/profile/guest-notes"
+                        queryString={
+                          "&guest_id=" + datadetail.guest.guest_profile_id
+                        }
+                        groups=""
+                        isEditTable={true}
+                        isTitle={true}
+                        isDeleted={false}
+                        isBtnAdd={true}
+                        isPageing={false}
+                      />
+                    )}
+                  {loadError && showSections.guestNotes && (
+                    <TableErrorState
+                      message={loadError}
+                      onRetry={GetDataDetail}
                     />
                   )}
               </div>
@@ -3476,9 +3533,7 @@ const EditView = () => {
             </div>
           </div>
         ) : (
-          <div className="mt-8 flex justify-center">
-            <IconSpiner />
-          </div>
+          <PanelSkeleton rows={8} />
         )}
       </div>
       {

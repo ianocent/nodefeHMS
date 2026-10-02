@@ -8,6 +8,51 @@ const AES_METHOD = "aes-256-cbc";
 const IV_LENGTH = 16;
 const passwords = env.passAes;
 
+// Laravel-style validation errors arrive as `{ field: "message" }` or
+// `{ field: ["msg1", "msg2"] }`, occasionally nested one level deeper
+// (`{ field: { sub: "msg" } }`). Flatten whichever shape shows up into
+// "field: message" lines so the toast names the offending field instead of
+// repeating the generic "Validation failed" the API sends.
+const flattenValidationErrors = (errors: any, prefix = ""): string[] => {
+  if (errors == null) return [];
+  if (typeof errors === "string") return [prefix ? `${prefix}: ${errors}` : errors];
+  if (Array.isArray(errors)) {
+    return errors.flatMap((e: any) => flattenValidationErrors(e, prefix));
+  }
+  if (typeof errors === "object") {
+    return Object.entries(errors).flatMap(([key, value]: [string, any]) =>
+      flattenValidationErrors(value, prefix ? `${prefix}.${key}` : key)
+    );
+  }
+  return [];
+};
+
+// `validation_error.<uri>` lets a form react to a 422 for its own endpoint
+// without every FetchData caller having to grow an onError callback. Forms
+// subscribe with window.addEventListener and read `detail.errors`.
+const VALIDATION_EVENT = "validation_error";
+
+export const formatValidationMessage = (
+  message: string | undefined | null,
+  errors: any,
+  maxLines = 5
+): string => {
+  const lines = flattenValidationErrors(errors);
+  if (lines.length === 0) return message || "Request failed";
+  const head = lines.slice(0, maxLines);
+  const rest = lines.length - head.length;
+  return (head.join("\n") + (rest > 0 ? `\n…and ${rest} more` : "")).trim();
+};
+
+export const onValidationError = (
+  handler: (payload: { uri: string; message: string; errors: any }) => void
+): (() => void) => {
+  if (typeof window === "undefined") return () => {};
+  const listener = (e: any) => handler(e?.detail);
+  window.addEventListener(VALIDATION_EVENT, listener);
+  return () => window.removeEventListener(VALIDATION_EVENT, listener);
+};
+
 export function GetCapitalFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -192,7 +237,18 @@ export const FetchData = async (
       const datatext = data;
       const datajson: any = JSON.parse(GetDecrypt(datatext));
       if (datajson?.code != "200") {
-        toast(datajson?.message, {
+        if (datajson?.errors && typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent(VALIDATION_EVENT, {
+              detail: {
+                uri,
+                message: datajson?.message,
+                errors: datajson?.errors,
+              },
+            })
+          );
+        }
+        toast(formatValidationMessage(datajson?.message, datajson?.errors), {
           autoClose: 6000,
           type: "error",
           position: "bottom-center",
@@ -359,7 +415,18 @@ export const FetchDataDocument = async (
     const data = isjson ? await response.json() : await response.text();
     const datajson: any = JSON.parse(GetDecrypt(data));
     if (datajson?.code != "200") {
-      toast(datajson?.message, {
+      if (datajson?.errors && typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent(VALIDATION_EVENT, {
+            detail: {
+              uri,
+              message: datajson?.message,
+              errors: datajson?.errors,
+            },
+          })
+        );
+      }
+      toast(formatValidationMessage(datajson?.message, datajson?.errors), {
         autoClose: 6000,
         type: "error",
         position: "bottom-center",
@@ -427,7 +494,20 @@ export const FetchDataDocument = async (
     }
   } catch (error) {
     console.log("debug", error);
-    return true;
+    if (!isNotToast) {
+      toast("Failed to connect to server", {
+        autoClose: 6000,
+        type: "error",
+        position: "bottom-center",
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+    return false;
   }
 };
 

@@ -454,7 +454,7 @@ const AddView = (props: AddviewProps) => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-[500px] z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-[500px] z-50 absolute bg-white"
         >
           <>
             <div className="table-responsive w-full">

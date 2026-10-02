@@ -1,4 +1,3 @@
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import PaperBase from "../../../components/common/paper/PaperBase";
 import { useRouter } from "next/router";
@@ -18,7 +17,11 @@ const CheckOutViewPage = () => {
   const [folio, setFolio] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const folioId = GetQueryStr("data");
+  const outstanding = parseFloat(
+    (folio?.balance ?? "0").toString().replace(/[^0-9.-]/g, "")
+  );
 
   const fetchFolio = async () => {
     if (!folioId || folioId === "0") return;
@@ -33,9 +36,9 @@ const CheckOutViewPage = () => {
         router,
         ""
       );
-      if (res?.code === "200") {
-        setFolio(res?.data);
-      }
+        if (res?.code == 200) {
+          setFolio(res?.data);
+        }
     } catch (err) {
       console.error(err);
     } finally {
@@ -53,12 +56,14 @@ const CheckOutViewPage = () => {
     if (!folio) return;
     setProcessing(true);
     try {
+      // Goes to the front-desk check-out endpoint, not update-status: this is
+      // the path that runs auto-transfer, enforces the settlement gate and
+      // releases the room. update-status bypassed all three.
       const raw = JSON.stringify({
-        status_reservation: "check_out",
-        reason: "Check Out via front desk",
+        remark: "Check Out via front desk",
       });
       const res = await FetchData(
-        "/cms/reservation/update-status/" + folio.id,
+        "/cms/front-desk/check-out/" + folio.id,
         "POST",
         raw,
         false,
@@ -66,39 +71,32 @@ const CheckOutViewPage = () => {
         router,
         ""
       );
-      if (res?.code === "200") {
+      if (res?.code == 200) {
         router.back();
+      } else {
+        setError(res?.message ?? "Check out failed");
       }
     } catch (err) {
       console.error(err);
+      setError("Check out failed");
     } finally {
       setProcessing(false);
     }
   };
 
   if (loading) {
-    return (
-      <LayoutComponent>
-        <PaperBase>
+    return (<PaperBase>
           <div className="p-4 text-center">Loading...</div>
-        </PaperBase>
-      </LayoutComponent>
-    );
+        </PaperBase>);
   }
 
   if (!folio) {
-    return (
-      <LayoutComponent>
-        <PaperBase>
+    return (<PaperBase>
           <div className="p-4 text-center text-gray-500">No folio selected</div>
-        </PaperBase>
-      </LayoutComponent>
-    );
+        </PaperBase>);
   }
 
-  return (
-    <LayoutComponent>
-      <PaperBase>
+  return (<PaperBase>
         <div className="p-4">
           <div className="flex justify-between items-center border-b pb-4 mb-4">
             <h1 className="text-xl font-bold">Check Out View</h1>
@@ -147,14 +145,20 @@ const CheckOutViewPage = () => {
               <span
                 className={
                   "text-xl font-bold " +
-                  (parseFloat(folio?.balance?.replace(/[^0-9.-]/g, "") || "0") > 0
-                    ? "text-red-600"
-                    : "text-green-600")
+                  (outstanding > 0 ? "text-red-600" : "text-green-600")
                 }
               >
                 {folio?.balance || "0"}
               </span>
             </div>
+            {outstanding > 0 && (
+              <p className="mt-2 text-sm text-red-600">
+                Payment is required before this folio can be checked out.
+              </p>
+            )}
+            {error && (
+              <p className="mt-2 text-sm text-red-600">{error}</p>
+            )}
           </div>
 
           <div className="flex gap-4 justify-end pt-4 border-t">
@@ -164,14 +168,19 @@ const CheckOutViewPage = () => {
               onCreate={() => router.back()}
             />
             <ButtonSubmit
-              label={processing ? "Processing..." : "Confirm Check Out"}
+              label={
+                processing
+                  ? "Processing..."
+                  : outstanding > 0
+                  ? "Payment Required"
+                  : "Confirm Check Out"
+              }
+              disabled={processing || outstanding > 0}
               onCreate={handleCheckOut}
             />
           </div>
         </div>
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default CheckOutViewPage;

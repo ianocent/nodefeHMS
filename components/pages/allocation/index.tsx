@@ -16,7 +16,7 @@ import {
 } from "../../../components/helper";
 import { useSelector } from "react-redux";
 import ButtonAddList from "../../../components/common/button/ButtonAddList";
-import { IconSpiner } from "../../../components/common/icon/CardIcon";
+import { TableSkeleton } from "../../../components/common/skeleton/Skeleton";
 
 
 import { user } from "@nextui-org/theme";
@@ -250,9 +250,7 @@ const ListView = () => {
       <div className="mt-2 min-w-full table-auto">
         {loading ? (
            <>
-           <div className="mt-8 flex justify-center">
-             <IconSpiner />
-            </div>
+           <TableSkeleton rows={8} />
           </>
         ) : (
           <TableView

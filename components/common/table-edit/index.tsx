@@ -21,7 +21,8 @@ import {
   GetPathUri,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { useSelector } from "react-redux";
@@ -123,7 +124,11 @@ const TableView = (props: TableViewProps) => {
   const [dataval, setData] = useState<any>({});
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(false);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
   const [isSelected, setisSelected] = useState<any>(-1);
   const [isidSelected, setisidSelected] = useState<any>(-1);
   const [isPopup, setIsPopUp] = useState(false);
@@ -146,6 +151,7 @@ const TableView = (props: TableViewProps) => {
   const [btnsearchs, setbtnsearchs] = useState<boolean>(false);
   const [loadbtn, setlaodbtn] = useState<boolean>(false);
   const [hideFrist, sethideFrist] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [actMenu, setActMenu] = useState<any>({});
   const [pageDat, setPageDat] = useState<any>("0");
@@ -379,22 +385,26 @@ const TableView = (props: TableViewProps) => {
     });
   };
   const ValueSetEdit = (row) => {
-    datatable?.table?.map((rw, index) => {
-      if (rw?.type == "select") {
-        var obj = {
-          [rw?.key]: row[rw?.key]?.value,
-        };
+    // Populate edit form state with both raw and "_ori" values so InputMain
+    // can receive either the primitive value or the select object.
+    const obj: any = {};
+    (datatable?.table ?? []).forEach((rw: any) => {
+      const key = rw?.key;
+      const val = row?.[key];
+      if (rw?.type == "select" || rw?.type == "select_multiple") {
+        // keep original select object for valueSel, and primitive for direct usages
+        obj[`${key}_ori`] = val ?? null;
+        obj[key] = val && typeof val === "object" && "value" in val ? val.value : val;
+      } else if (rw?.type == "checkbox" || rw?.type == "checkbox_multi") {
+        obj[key] = val ?? false;
+        obj[`${key}_ori`] = val ?? null;
+      } else if (rw?.type == "date") {
+        obj[key] = val ?? row?.[key];
       } else {
-        var obj = {
-          [rw?.key]: row[rw?.key],
-        };
+        obj[key] = val;
       }
-
-      setData((dataval) => ({
-        ...dataval,
-        ...obj,
-      }));
     });
+    setData((dataval) => ({ ...dataval, ...obj }));
   };
   const onCheckAll = (e: any) => {
     let valarr = [];
@@ -415,6 +425,8 @@ const TableView = (props: TableViewProps) => {
   const FinalPOstDat = () => {
     var obj = {};
     for (var key in dataval) {
+      // Skip UI-only keys: _ori (select object), _disabled (field lock flags)
+      if (key.endsWith("_ori") || key.endsWith("_disabled")) continue;
       obj[key] = dataval[key];
       datatable?.table?.map((row: any, index: number) => {
         if (row?.key == key && row?.type == "number") {
@@ -628,6 +640,7 @@ const TableView = (props: TableViewProps) => {
   };
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -719,10 +732,16 @@ const TableView = (props: TableViewProps) => {
         setpath2(window.location.pathname.split("/")[2]);
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -736,7 +755,7 @@ const TableView = (props: TableViewProps) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
 
-      let status = i ?? datavalsrc["status"][0]?.value;
+      let status = i ?? datavalsrc?.status?.[0]?.value;
 
       let pages = 1;
       if (page) {
@@ -753,7 +772,7 @@ const TableView = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&name=" +
-          (datavalsrc["search"] ?? "") +
+          (datavalsrc?.search ?? "") +
           "&trash=" +
           status +
           "&" +
@@ -844,6 +863,9 @@ const TableView = (props: TableViewProps) => {
     } else {
     }
   };
+  // Refetch on every mount/navigation into this table, including when the
+  // query string is byte-identical (returning from an edit via the same
+  // ?parent=..&module=.. URL used to leave the pre-edit rows on screen).
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const getidparent = urlParams.get("parent");
@@ -858,8 +880,6 @@ const TableView = (props: TableViewProps) => {
     } else {
       GetDataTable();
     }
-    // console.log("dbg", window.location.pathname);
-    // }, [router.query, router.pathname, add]);
   }, [window.location.search, window.location.pathname, add]);
 
   useEffect(() => {
@@ -897,10 +917,10 @@ const TableView = (props: TableViewProps) => {
     <>
       <div
         key={titlePopupTbl}
-        className={(popupIntbl ? "block" : "hidden") + " overlay "}
+        className={popupIntbl ? "overlay flex items-center justify-center p-4 animate-fade-in" : "overlay hidden"}
       >
-        <div className="flex justify-center mt-20 ">
-          <div className="bg-white w-[600px] p-4">
+        <div className="flex justify-center ">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl p-4">
             <div>
               <h4>Information {titlePopupTbl}</h4>
             </div>
@@ -921,8 +941,8 @@ const TableView = (props: TableViewProps) => {
       </div>
 
       {datatable?.code == "200" ? (
-        <>
-          {isAdvance || isEditTable ? (
+        <div className="w-full">
+          {isAdvance ? (
             <>
               <TabMenuIcon
                 actMenu={actMenu?.actions}
@@ -1085,7 +1105,7 @@ const TableView = (props: TableViewProps) => {
                               rest={{
                                 name: row?.key,
                                 placeholder: row?.label,
-                                value: datavalsrc[row?.key] ?? row?.value ?? "",
+                                value: datavalsrc?.[row?.key] ?? row?.value ?? "",
                                 type: types,
                                 onChange: (e) => {
                                   changeHandlerSrc(e, false, row?.key);
@@ -1097,8 +1117,8 @@ const TableView = (props: TableViewProps) => {
                                 //GetDataTable(e.value);
                               }}
                               valueSel={
-                                datavalsrc[row?.key]
-                                  ? datavalsrc[row?.key]
+                                datavalsrc?.[row?.key]
+                                  ? datavalsrc?.[row?.key]
                                   : row?.key == "status"
                                   ? {
                                       value: "1",
@@ -1172,7 +1192,7 @@ const TableView = (props: TableViewProps) => {
 
           {/* <pre style={{fontSize: 14}}>{JSON.stringify(datatable?.permission, null, 2)}</pre> */}
 
-          {datatable?.table ? (
+          {datatable?.table && !loadError ? (
             <>
               <>{insertHTML && insertHTML()}</>
               <div
@@ -1240,9 +1260,17 @@ const TableView = (props: TableViewProps) => {
                             className={
                               (headRow == 2 && row?.colspan ? " text-center " : "") +
                               " text-white px-2 py-1 font-medium text-xs cursor-pointer hover:bg-[#3a3535] transition-colors" +
+                              // Columns holding long free text (guest name, company)
+                              // declare `max_width` from the backend. The table is
+                              // `table-auto` + `whitespace-nowrap`, so without a cap a
+                              // long value stretched the column and pushed the rest
+                              // off-screen. Inline width, not a utility class, because
+                              // a class name built at runtime gets purged by Tailwind.
+                              (row?.max_width ? " truncate" : "") +
                               (i === 0 && !checked && !checkedRadio && !((actionCol && isdeleted) || (actionCol && isview) || (actionCol && isAdvance) || (actionCol && isedit)) ? " rounded-tl-lg" : "") +
                               (i === (datatable?.table?.filter((r: any) => !r?.row || r?.row == 1).length - 1) ? " rounded-tr-lg" : "")
                             }
+                            style={row?.max_width ? { maxWidth: row.max_width } : undefined}
                             onClick={() => {
                               if (!row?.is_header_double_click) {
                                 clickSort(row);
@@ -1748,8 +1776,12 @@ const TableView = (props: TableViewProps) => {
                             }
                           }}
                           onClick={() => {
+                            const pathAtClick = window.location.pathname;
                             setTimeout(() => {
                               if (isAdvance && isClickAbled) {
+                                if (window.location.pathname != pathAtClick) {
+                                  return;
+                                }
                                 setisSelected(index);
                                 setisidSelected(row?.id);
                                 setdatadet(row);
@@ -1757,7 +1789,7 @@ const TableView = (props: TableViewProps) => {
                                 setActMenu(row);
                                 if (!GetQueryStr("key")) {
                                   router.replace({
-                                    pathname: window.location.pathname,
+                                    pathname: pathAtClick,
                                     query: {
                                       parent: GetQueryStr("parent"),
                                       data: row?.id,
@@ -1774,7 +1806,7 @@ const TableView = (props: TableViewProps) => {
                                         GetQueryStr("search_field") ??
                                         GetQueryStr("search_field_v"),
                                       search: GetQueryStr("search"),
-                                      path_v: window.location.pathname,
+                                      path_v: pathAtClick,
                                     },
                                   });
                                 }
@@ -1976,29 +2008,41 @@ const TableView = (props: TableViewProps) => {
                                   item?.customClass == "w-nowwarp"
                                     ? "whitespace-nowrap"
                                     : ""
-                                } relative`}
+                                } ${item?.max_width ? "truncate" : ""} relative`}
+                                style={item?.max_width ? { maxWidth: item.max_width } : undefined}
                                 key={item.key + "-" + a}
-                                onClick={() => {
+                                onClick={(e) => {
                                   if (item?.is_link) {
+                                    e.stopPropagation();
+                                    const linkQuery = {
+                                      parent: idparent,
+                                      add: 1,
+                                      data: row?.id,
+                                      datetbl: row?.id,
+                                      time: new Date().getTime(),
+                                      card: NAuditCode,
+                                      pageload: pageDat,
+                                      group: Lastpath,
+                                      body: GetQueryStr("body") ?? null,
+                                      src: GetQueryStr("src") ?? null,
+                                      search_value:
+                                        GetQueryStr("search_value") ??
+                                        GetQueryStr("search_v"),
+                                      search_field:
+                                        GetQueryStr("search_field") ??
+                                        GetQueryStr("search_field_v"),
+                                      search: GetQueryStr("search"),
+                                      path_v: window.location.pathname,
+                                    };
                                     if (item?.uri) {
                                       router.push({
                                         pathname: item?.uri,
-                                        query: {
-                                          parent: idparent,
-                                          add: 1,
-                                          data: row?.id,
-                                          datetbl: row?.id,
-                                        },
+                                        query: linkQuery,
                                       });
                                     } else {
                                       router.replace({
                                         pathname: window.location.pathname,
-                                        query: {
-                                          parent: idparent,
-                                          add: 1,
-                                          data: row?.id,
-                                          datetbl: row?.id,
-                                        },
+                                        query: linkQuery,
                                       });
                                     }
                                   } else if (item?.is_popup) {
@@ -2428,18 +2472,6 @@ const TableView = (props: TableViewProps) => {
                             ) : (
                               <></>
                             )}
-                              {/* <ButtonSubmit
-                                ClassPrimary=" bg-[#8844dd] !text-white rounded-md"
-                                ClassCustome="px-2 my-2"
-                                label="Save"
-                                onCreate={() => {
-                                  if (!loadbtn) {
-                                    setlaodbtn(true);
-                                    onSave(row?.id);
-                                  }
-                                }}
-                                loading={loadbtn}
-                              /> */}
                             </div>
                           </td>
 
@@ -2695,24 +2727,34 @@ const TableView = (props: TableViewProps) => {
             </>
           ) : (
             <>
-              <div className="mt-8 flex justify-center">Not Data</div>
+              {loadError ? (
+                <TableErrorState
+                  message={loadError}
+                  onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                />
+              ) : (
+                <div className="mt-8 flex justify-center">Not Data</div>
+              )}
             </>
           )}
-        </>
+        </div>
       ) : (
-        <>
+        <div className="w-full">
           {isloading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
+          ) : loadError ? (
+            <TableErrorState
+              message={loadError}
+              onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+            />
           ) : (
             <>
               <div className="mt-8 flex justify-center">Not Data</div>
             </>
           )}
-        </>
+        </div>
       )}
       {checked ? (
         <div

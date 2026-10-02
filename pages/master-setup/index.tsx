@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import PaperBase from "../../components/common/paper/PaperBase";
 import Tabs from "../../components/common/tab";
 import City from "../../components/pages/city/index";
@@ -24,6 +23,36 @@ import AddPage from "../../components/pages/room-type/form";
 import StaahOtaMapping from "../../components/pages/staah-ota-mapping";
 import DynamicRate from "../dynamic-rate";
 
+// `?module=` comes from menus.visibility, which is free text and can disagree with
+// the path it is attached to (menus 1121 stored "country" on a market-segment url,
+// so the page rendered an empty Country table instead of the segment list).
+// These modules own fixed paths, so a module that cannot own the current path is
+// stale and the generic SetupPage group renderer takes over from the path alone.
+const MODULE_PATH_SEGMENTS: Record<string, string[]> = {
+  "code-billing": ["billing-code"],
+  "code-gls": ["code-gls"],
+  "code-item": ["code-item"],
+  "code-post": ["code-post"],
+  "type-payment": ["type-payment"],
+  "staah-ota-mapping": ["staah-ota-mapping"],
+  "dynamic-rate": ["dynamic-rate"],
+  "pos-matrix-sales": ["pos-matrix-sales", "pos-matrix-saless"],
+  "room-type": ["room-type"],
+  "room-type-main": ["main"],
+  "country": ["country"],
+  "city": ["city"],
+  "room": ["room"],
+  "room-reservation": ["reservation"],
+  "room-inventory": ["inventory"],
+};
+
+function resolveModule(moduleUri: string | null, lastPath: string): string {
+  if (!moduleUri) return lastPath;
+  const ownedSegments = MODULE_PATH_SEGMENTS[moduleUri];
+  if (ownedSegments && !ownedSegments.includes(lastPath)) return "master-setup";
+  return moduleUri;
+}
+
 const MasterPage = () => {
   const routers = useRouter();
   const [path, setpath] = useState("");
@@ -39,6 +68,8 @@ const MasterPage = () => {
     let moduleUri = urlParams.get("module");
     if (!moduleUri) {
       moduleUri = Lastpath;
+    } else {
+      moduleUri = resolveModule(moduleUri, Lastpath);
     }
     setparentid(parent);
     // setlastPath(Lastpath);
@@ -90,15 +121,11 @@ const MasterPage = () => {
     }
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={GetPathUri(1)} idparent={parentid} />
 
         {module != null && RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

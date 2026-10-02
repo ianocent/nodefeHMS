@@ -1,18 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../../components/common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import InputMain from "../../../../components/common/input/InputMain";
 import Seo from "../../../../components/common/seo";
 import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  NumberClear,
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    NumberClear,
 } from "../../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../../context/LayoutContext";
-import { usePathname } from "next/navigation";
 interface AddviewProps {
   isview?: boolean;
   isPopup?: boolean;
@@ -128,7 +127,13 @@ const AddView = (props: AddviewProps) => {
 
       const raw = JSON.stringify(dataToPost);
       const aesraw = GetEncrypt(raw);
-      var redirects = isPopup ? "" : `${pathname}?parent=83`;
+      // `parent` came from the URL instead of a hardcoded 83. 83 is the *Company* menu
+      // (/profile/company/main, child_type form), so after saving an Email Group the
+      // redirect sent the app to the wrong menu tree: Tabs fetched menu 83's children,
+      // palcedat became "form" with no `data` in the URL, so showMenu was set to false
+      // and the tab strip vanished. The Email menu is 1127. Falls back to the old value
+      // only if the URL somehow carried no parent.
+      var redirects = isPopup ? "" : `${pathname}?parent=${parent || 83}`;
       const saveprocess = await FetchData(
         urisave,
         mth,
@@ -140,7 +145,9 @@ const AddView = (props: AddviewProps) => {
       );
       if (saveprocess?.code == "200") {
         setloading(false);
-        ActionSv(
+        // Optional prop (ActionSv?:) and neither EmailGroup nor any other caller passes
+        // it, so this used to throw "ActionSv is not a function" on every successful save.
+        ActionSv?.(
           saveprocess?.data?.id,
           saveprocess?.data?.name,
           [

@@ -40,11 +40,15 @@ const EventTimeline = () => {
         true
       );
 
-      if (res?.code === 200) {
-        setDates(res.dates || []);
-        setTimelineData(res.timeline || []);
-        if (!startDate && res.default_start) setStartDate(res.default_start);
-        if (!endDate && res.default_end) setEndDate(res.default_end);
+      if (res?.code == 200) {
+        // success() nests the payload under `data`; the top level only has
+        // code/message. Reading res.dates directly always yielded undefined,
+        // so the timeline rendered permanently empty.
+        const d: any = res?.data || res;
+        setDates(d?.dates || []);
+        setTimelineData(d?.timeline || []);
+        if (!startDate && d?.default_start) setStartDate(d.default_start);
+        if (!endDate && d?.default_end) setEndDate(d.default_end);
       }
     } catch (err) {
       console.error("Error fetching timeline:", err);

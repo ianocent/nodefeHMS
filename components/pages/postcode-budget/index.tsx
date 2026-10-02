@@ -6,7 +6,7 @@ import {
   GetEncrypt,
   GetQueryStr,
 } from "../../helper";
-import { IconSpiner } from "../../common/icon/CardIcon";
+import { TableSkeleton } from "../../common/skeleton/Skeleton";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { FetchData } from "../../helper";
@@ -68,9 +68,7 @@ const ListView = () => {
         </div>
         <legend>{dataDate}</legend>
         {loading ? (
-           <div className="mt-8 flex justify-center">
-           <IconSpiner />
-          </div>
+           <TableSkeleton rows={8} />
          ) : (
         dataDate != "-1" ? (
           <>

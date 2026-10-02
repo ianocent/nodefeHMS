@@ -2,7 +2,6 @@ import { useRouter } from "next/router";
 import React, { useContext, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import Seo from "../../components/common/seo";
 import TableView from "../../components/common/table-edit";
 import { FetchData, GetDecrypt } from "../../components/helper";
@@ -349,7 +348,7 @@ const ListView = () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <LayoutComponent>
+    <>
       <Seo
         title={GLOBAL_URI.replaceAll("/cms/", " ").replaceAll("-", " ")}
       />
@@ -732,7 +731,7 @@ const ListView = () => {
           />
         </div>
       </div>
-    </LayoutComponent>
+    </>
   );
 };
 

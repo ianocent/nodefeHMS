@@ -6,6 +6,7 @@ import { FetchData, GetDecrypt, GetEncrypt, RouteChange } from "../../helper";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogin, setDatas } from "../../../redux/auth/authSlice";
 import { color } from "framer-motion";
+import { PropertyCardSkeleton } from "../../common/skeleton/Skeleton";
 
 const PropertyListView = () => {
   const router = useRouter();
@@ -13,6 +14,14 @@ const PropertyListView = () => {
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [datatable, setdatatable] = useState<any>([{}]);
+  // `datatable` starts as `[{}]`, so `datatable?.data` is undefined and the grid
+  // would render empty for a frame before the real cards landed. Gate on the
+  // request instead and paint property-shaped skeletons.
+  const [loading, setloading] = useState(true);
+  // Dipakai begitu card diklik. Tanpa ini kartu masih tampil utuh selama
+  // round-trip `/cms/property/auth/<id>` + kompilasi chunk `/dashboard`, jadi
+  // list terlihat "nge-glitch" muncul lagi sebelum layar benar-benar pindah.
+  const [choosing, setchoosing] = useState(false);
 
   const LinkRed = async (uri: string, img: string, names: string) => {
     //router.push(uri);
@@ -34,9 +43,12 @@ const PropertyListView = () => {
       datajson.NameProperty = names;
       dispatch(setLogin(GetEncrypt(JSON.stringify(datajson))));
 
-      RouteChange(router, "/dashboard", false);
+      // `replace`, bukan `push`: choose-property itu gerbang sekali-jalang, jadi
+      // tombol Back tidak boleh memantulkan user ke daftar property ini.
+      router.replace("/dashboard");
     } else {
       //RouteChange(router, "/dashboard", false);
+      setchoosing(false);
       if (datajson?.code == "400") {
       }
     }
@@ -65,6 +77,10 @@ const PropertyListView = () => {
     } catch (error) {
       // console.log("err", error);
       return;
+    } finally {
+      // Always clear the skeletons, including on an error or a non-200 response —
+      // otherwise the page would stay grey forever.
+      setloading(false);
     }
   };
   
@@ -124,7 +140,15 @@ const PropertyListView = () => {
   };
 
   const CARDS_PER_PAGE = 6; // 2 baris × 3 kolom
-  const PropertyCard = ({ row, onClick }: { row: any; onClick: () => void }) => {
+  const PropertyCard = ({
+    row,
+    onClick,
+    index = 0,
+  }: {
+    row: any;
+    onClick: () => void;
+    index?: number;
+  }) => {
     const accentColor = row?.color || getColorFromString(row?.name || row?.id || "default");
     const [isHovered, setIsHovered] = useState(false);
 
@@ -133,12 +157,15 @@ const PropertyListView = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={onClick}
+        // h-full biar semua card stretch sesuai row height
+        // animate-pop-in = overshoot yang membawa mata dari skeleton ke card asli;
+        // stagger per index biar grid-nya cascade, bukan slam bareng.
+        className="bg-white border rounded-xl overflow-hidden flex flex-col h-full transition-all duration-300 cursor-pointer animate-pop-in origin-top"
         style={{
           borderColor: isHovered ? accentColor : "#f3f4f6",
           boxShadow: isHovered ? `0 4px 20px ${accentColor}40` : "none",
+          animationDelay: `${Math.min(index, 8) * 60}ms`,
         }}
-        // h-full biar semua card stretch sesuai row height
-        className="bg-white border rounded-xl overflow-hidden flex flex-col h-full transition-all duration-300 cursor-pointer"
       >
         {/* Logo area — flex-1 biar menyesuaikan sisa ruang, min-h biar ga kempes */}
         <div
@@ -196,17 +223,26 @@ const PropertyListView = () => {
         
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-rows-2 gap-4 flex-1 min-h-0">
-          {currentData.map((row: any, index: number) => (
-            <PropertyCard
-              key={index}
-              row={row}
-              onClick={() => LinkRed(row?.id, row?.image, row?.name)}
-            />
-          ))}
+          {loading || choosing
+            ? Array.from({ length: CARDS_PER_PAGE }).map((_, i) => (
+                <PropertyCardSkeleton key={i} />
+              ))
+            : currentData.map((row: any, index: number) => (
+                <PropertyCard
+                  key={row?.id ?? index}
+                  row={row}
+                  index={index}
+                  onClick={() => {
+                    if (choosing) return;
+                    setchoosing(true);
+                    LinkRed(row?.id, row?.image, row?.name);
+                  }}
+                />
+              ))}
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {totalPages > 1 && !choosing && (
           <div className="flex items-center justify-center gap-4 pt-2">
             <button
               onClick={() => setCurrentPage(p => Math.max(0, p - 1))}

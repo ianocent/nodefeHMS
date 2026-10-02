@@ -2,7 +2,6 @@
 
 import colors from "tailwindcss/colors";
 const withMT = require("@material-tailwind/react/utils/withMT");
-const colors = require("tailwindcss/colors");
 const plugin = require("tailwindcss/plugin");
 
 module.exports = withMT({
@@ -160,6 +159,15 @@ module.exports = withMT({
       "spin-slow": "spin 3s linear infinite",
       "slow-ping": "ping 2s linear infinite",
       "animate-wase": "wase 4s linear infinite",
+      shimmer: "shimmer 1.6s ease-in-out infinite",
+      "fade-in": "fade-in 0.3s ease-out both",
+      "fade-in-up": "fade-in-up 0.35s ease-out both",
+      "fade-in-down": "fade-in-down 0.35s ease-out both",
+      "fade-in-left": "fade-in-left 0.35s ease-out both",
+      "fade-in-right": "fade-in-right 0.35s ease-out both",
+      "fade-out": "fade-out 0.2s ease-in both",
+      "scale-in": "scale-in 0.2s ease-out both",
+      "pop-in": "pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
     },
     keyframes: {
       particles: {
@@ -233,6 +241,47 @@ module.exports = withMT({
         to: {
           transform: "rotate(360deg)",
         },
+      },
+      // Skeleton placeholder sweep — the highlight travels across the block.
+      shimmer: {
+        "0%": {
+          transform: "translateX(-100%)",
+        },
+        "100%": {
+          transform: "translateX(100%)",
+        },
+      },
+      "fade-in": {
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      },
+      "fade-out": {
+        from: { opacity: 1 },
+        to: { opacity: 0 },
+      },
+      "fade-in-up": {
+        from: { opacity: 0, transform: "translate3d(0, 12px, 0)" },
+        to: { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      },
+      "fade-in-down": {
+        from: { opacity: 0, transform: "translate3d(0, -12px, 0)" },
+        to: { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      },
+      "fade-in-left": {
+        from: { opacity: 0, transform: "translate3d(-16px, 0, 0)" },
+        to: { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      },
+      "fade-in-right": {
+        from: { opacity: 0, transform: "translate3d(16px, 0, 0)" },
+        to: { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      },
+      "scale-in": {
+        from: { opacity: 0, transform: "scale(0.96)" },
+        to: { opacity: 1, transform: "scale(1)" },
+      },
+      "pop-in": {
+        "0%": { opacity: 0, transform: "scale(0.95) translateY(10px)" },
+        "100%": { opacity: 1, transform: "scale(1) translateY(0)" },
       },
     },
   },

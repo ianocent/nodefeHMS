@@ -1,16 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
-import InputMain from "../../../../components/common/input/InputMain";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
+import InputMain from "../../../../components/common/input/InputMain";
 import Seo from "../../../../components/common/seo";
-import { LayoutContext } from "../../../../context/LayoutContext";
 import {
     FetchData,
     GetDecrypt,
     GetEncrypt,
 } from "../../../../components/helper";
+import { LayoutContext } from "../../../../context/LayoutContext";
 
 interface RoomTypeRow {
     room_type_id: string;
@@ -520,13 +520,16 @@ const AddView = () => {
 
                         <div className="col-span-12">
                             <fieldset className="border min-w-full">
-                                <legend className="ml-2 font-semibold">Specific Rooms</legend>
-                                {/* DIGANTI: overflow-x-auto menjadi overflow-visible */}
-                                <div className="m-2 overflow-visible">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="bg-gray-100 text-left">
-                                                <th className="p-2 w-1/2">Room Type</th>
+                                    <legend className="ml-2 font-semibold">Specific Rooms</legend>
+                                   {/* DIGANTI: overflow-x-auto menjadi overflow-visible */}
+                                   <div className="m-2 overflow-visible">
+                                       <table className="w-full text-sm">
+                                           <thead>
+                                               <tr className="bg-gray-100 text-left">
+                                                   {/* This grid edits rooms_detail / room_id, i.e. room
+                                                       units. It was labelled "Room Type", which is
+                                                       the header of the other grid above it. */}
+                                                   <th className="p-2 w-1/2">Room Unit</th>
                                                 <th className="p-2 w-24">Qty</th>
                                                 <th className="p-2 w-24 text-center">Required</th>
                                                 <th className="p-2 w-16"></th>

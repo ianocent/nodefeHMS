@@ -13,7 +13,6 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import ButtonSubmit from "../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../context/LayoutContext";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
 import { TagsInput } from "react-tag-input-component";
 
 const AddView = () => {
@@ -69,22 +68,11 @@ const AddView = () => {
     mandatory_check_in_ori: [],
   });
 
-  const mandatoryCheckInOptions = [
-    { value: "card_type", label: "Card Type" },
-    { value: "card_number", label: "Card Number" },
-    { value: "id_expired", label: "ID Expired Date" },
-    { value: "email", label: "Email" },
-    { value: "gender", label: "Gender" },
-    { value: "birth_date", label: "Birth Date" },
-    { value: "nationality", label: "Nationality" },
-    { value: "status", label: "Status" },
-    { value: "phone", label: "Phone" },
-    { value: "mobile_phone", label: "Mobile Phone" },
-    { value: "address", label: "Address" },
-    { value: "city", label: "City" },
-    { value: "country", label: "Country" },
-    { value: "postal_code", label: "Postal Code" },
-  ];
+  // Values MUST be guest_profiles column names — the check-in gate reads them
+  // straight off the guest row. Comes from the backend master so the list can
+  // never drift from the check-in validation again.
+  const mandatoryCheckInOptions: any[] =
+    dataoption?.master?.mandatory_check_in_options ?? [];
 
   const [idusr, setidusr] = useState("0");
 
@@ -164,9 +152,12 @@ const AddView = () => {
         router,
         ""
       );
+      // Read the option list off this same response — `mandatoryCheckInOptions`
+      // is still empty at this point on the first load.
+      const mandatoryOptions: any[] = datauser?.master?.mandatory_check_in_options ?? [];
       const selectedMandatory = datauser?.data?.mandatory_check_in || [];
       const mandatoryOri = selectedMandatory.map((val: string) => {
-        return mandatoryCheckInOptions.find(opt => opt.value === val) || { value: val, label: val };
+        return mandatoryOptions.find((opt: any) => opt.value === val) || { value: val, label: val };
       });
 
       let dataobj = {
@@ -336,7 +327,7 @@ const AddView = () => {
   }, []);
 
   return (
-    <LayoutComponent>
+    <>
       <Seo title={"Management " + layout?.title} />
       <PaperBase>
         <div className="flex flex-col gap-4">
@@ -1025,7 +1016,7 @@ const AddView = () => {
           </div>
         </div>
       </PaperBase>
-    </LayoutComponent>
+    </>
   );
 };
 

@@ -8,6 +8,7 @@ import useAuthRefresh from "../hooks/useAuthRefresh";
 import { GetDecrypt } from "../components/helper";
 import { initPushNotification } from "../services/pushNotification";
 import { Capacitor } from "@capacitor/core";
+import LayoutComponent from "../components/common/layout/LayoutComponent";
 
 const makeStore = () => store;
 const wrapper = createWrapper(makeStore);
@@ -49,7 +50,11 @@ function AppContent({ Component, pageProps }) {
     }
   }, [isLogin]);
 
-  return <Component {...pageProps} />;
+  const getLayout =
+    (Component as any).getLayout ??
+    ((page: React.ReactNode) => <LayoutComponent>{page}</LayoutComponent>);
+
+  return getLayout(<Component {...pageProps} />);
 }
 
 export default MyApp;

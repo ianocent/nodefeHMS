@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import CodeBilingPage from "../../components/pages/code-billing/index";
 import Tabs from "../../components/common/tab";
@@ -35,20 +34,16 @@ const MasterPage = () => {
       return <ReservationFit />;
     } else if (path == "vr") {
       return <ReservationFit />;
-    }else{
+    } else {
       return <ReservationFit />;
     }
   }
   return (
-    <LayoutComponent>
-      {/* <CrmView /> */}
       <PaperBase>
         <Tabs active={path} idparent={parentid} ischildren={ischildren} />
 
         {RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default MasterPage;

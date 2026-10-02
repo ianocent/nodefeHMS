@@ -4,6 +4,7 @@ import React, { useContext, useEffect, useState } from "react";
 import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import AddPage from "./form";
+import { useRouter } from "next/router";
 
 const ListView = () => {
   const GLOBALURI = "/cms/profile/guest";
@@ -12,23 +13,37 @@ const ListView = () => {
   const [add, setadd] = useState("0");
   const [view, setview] = useState("0");
   const [data, setData] = useState("");
+  // See components/pages/company-profile — the first render used to evaluate the
+  // RouteInit guard against the useState default "" where `"" !== null` is true,
+  // so <AddPage /> flashed for a frame and fired GET /cms/profile/guest/create
+  // before the list table appeared.
+  const router = useRouter();
+  const qParent = router.query.parent;
+  const qAdd = router.query.add;
+  const qView = router.query.view;
+  const qData = router.query.data;
+  const [paramsReady, setParamsReady] = useState(false);
+
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const data = urlParams.get("data");
-    const view = urlParams.get("view");
-    setparentid(parent);
-    setadd(add);
-    setData(data);
-    setview(view);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+    setparentid(typeof qParent === "string" ? qParent : "0");
+    setadd(typeof qAdd === "string" ? qAdd : "0");
+    setData(typeof qData === "string" ? qData : "");
+    setview(typeof qView === "string" ? qView : "0");
+    setParamsReady(true);
+  }, [qParent, qAdd, qView, qData]);
+
   function RouteInit() {
-    if (add == "1" || data !== null) {
-      return <AddPage />;
-    } else if (view == "1") {
+    if (!router.isReady || !paramsReady) {
+      return null;
+    }
+    // `view` before `data`: table-edit links to view as `?view=1&data=..`, which
+    // the `data` branch would otherwise capture and open as an editable form.
+    if (view === "1") {
       return <AddPage isview={true} />;
+    } else if (add === "1") {
+      return <AddPage />;
+    } else if (data) {
+      return <AddPage />;
     } else {
       return (
         <div className="mt-2 min-w-full table-auto">

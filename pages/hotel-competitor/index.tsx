@@ -9,7 +9,6 @@ import InputMain from "../../components/common/input/InputMain";
 import ButtonSubmit from "../../components/common/button/ButtonSubmit";
 import Tabs from "../../components/common/tab";
 import PaperBase from "../../components/common/paper/PaperBase";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import {
   FetchData,
   GetCapitalFirst,
@@ -95,17 +94,13 @@ const RoomStatistic = () => {
   }
 
   return (
-    <>
-      <LayoutComponent>
-        {/* <CrmView /> */}
+    <>{/* <CrmView /> */}
         <Tabs
           active={window.location.pathname}
           idparent={GetQueryStr("parent")}
           ischildren={true}
         />
-        <PaperBase>{RouteInit()}</PaperBase>
-      </LayoutComponent>
-    </>
+        <PaperBase>{RouteInit()}</PaperBase></>
   );
 };
 

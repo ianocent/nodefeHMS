@@ -20,7 +20,7 @@ import { useSelector } from "react-redux";
 import ButtonSubmit from "../button/ButtonSubmit";
 import { LayoutContext } from "../../../context/LayoutContext";
 import ModalNotedComponent  from "../modal/ModalNoted";
-import { IconSpiner } from "../icon/CardIcon";
+import { PanelSkeleton } from "../skeleton/Skeleton";
 
 import { Value } from "sass";
 import TabMenuIcon from "./tab";
@@ -87,7 +87,7 @@ const DoorLock = (props: AddviewProps) => {
   const loadingIcon = () => {
     return (
       <div className="flex justify-center items-center">
-        <IconSpiner />
+        <PanelSkeleton rows={3} />
       </div>
     );
   }

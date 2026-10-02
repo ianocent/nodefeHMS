@@ -16,8 +16,8 @@ const TextareaBase = (props: TextareaBaseProps) => {
       <textarea
         {...rest}
         className={`border uppercase  ${
-          error ? "border-red focus:border-red" : ""
-        } focus:!border-blue border-dashed focus:border-dashed rounded py-1 px-3 focus:outline-0 border-[#949eb7]focus:outline-dashed rounded-md focus:ring-transparent `}
+          error ? "border-red focus:!border-red" : ""
+        } border-dashed focus:border-dashed rounded-md py-1 px-3 border-[#949eb7] `}
       ></textarea>
     </div>
   );

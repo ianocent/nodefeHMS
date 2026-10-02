@@ -21,6 +21,7 @@ const ListView = () => {
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [isloading, setIsloading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [dataval, setData] = useState<any>({
     search: "",
@@ -38,6 +39,7 @@ const ListView = () => {
   const GetDataTable = async (i?: any, page?: number) => {
     try {
       setIsloading(true);
+      setLoadError(null);
       let status = 0;
       if (i == 1) {
         status = 1;
@@ -63,15 +65,21 @@ const ListView = () => {
         router,
         ""
       );
-      setdatatable(datajson);
       if (datajson?.code == "200") {
+        setdatatable(datajson);
         setIsloading(false);
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       // console.log("err", error);
       return;
     }
@@ -175,8 +183,10 @@ const ListView = () => {
             next={next}
             prevJump={prevJump}
             nextJump={nextJump}
-            data={datatable}
-            loading={isloading}
+              data={datatable}
+              loading={isloading}
+              error={loadError}
+              onRetry={() => GetDataTable()}
             uri={"/cms/approval"}
           />
         </div>

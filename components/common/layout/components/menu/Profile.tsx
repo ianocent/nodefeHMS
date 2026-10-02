@@ -243,7 +243,7 @@ const Profile = () => {
         ""
       );
   
-      if (response?.code === "200") {
+        if (response?.code == 200) {
         handleOpenTask();
         // Optional: reset form
         setTaskData({
@@ -614,7 +614,7 @@ const Profile = () => {
             <button
               onClick={() => {
                 if (datalocal?.data?.is_shift) {
-                  window.location.assign("/endshift?parent=");
+                  router.push("/endshift?parent=");
                 } else {
                   StartShift();
                 }
@@ -667,7 +667,7 @@ const Profile = () => {
               <button
                 onClick={() => {
                   if (datalocal?.data?.is_shift) {
-                    window.location.assign("/endshift?parent=");
+                    router.push("/endshift?parent=");
                   } else {
                     StartShift();
                   }

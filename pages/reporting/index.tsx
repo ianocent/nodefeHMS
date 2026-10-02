@@ -1,4 +1,3 @@
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import React, { useEffect, useState } from "react";
 import Tabs from "../../components/common/tab";
 import PaperBase from "../../components/common/paper/PaperBase";
@@ -164,17 +163,13 @@ const Reporting = () => {
       }
     }
   }
-  return (
-    <LayoutComponent>
-      <PaperBase>
+  return (<PaperBase>
         <div className="overflow-x-auto">
           <Tabs active={path} idparent={parentid} ischildren={ischildren} />
         </div>
 
         {data.length >= 0 && RouteInit()}
-      </PaperBase>
-    </LayoutComponent>
-  );
+      </PaperBase>);
 };
 
 export default Reporting;

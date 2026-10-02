@@ -1,26 +1,30 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../common/paper/PaperBase";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
 import Seo from "../../../common/seo";
-import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-} from "../../../helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../common/layout/LayoutComponent";
 import TableView from "../../../common/table-edit";
+import {
+    FetchData,
+    GetDecrypt,
+    GetEncrypt
+} from "../../../helper";
 interface AddviewProps {
   isview?: boolean;
 }
 const AddView = (props: AddviewProps) => {
   const { isview = false } = props;
-  const GLOBALURI = "/cms/profile/guest";
   const router = useRouter();
+  // This one form is shared by all three phone-book-group tabs
+  // (/concierge/phone-book-group, /group-2, /group-3). It used to hardcode
+  // "/cms/profile/guest" - copy-pasted from the Guest form - so creating or editing a
+  // Phone Group POSTed to the Guest endpoint and never produced a phone book group.
+  // Derive the group from the current route instead.
+  const path = router.asPath.split("?")[0];
+  const groupNo = path.includes("group-2") ? 2 : path.includes("group-3") ? 3 : 1;
+  const GLOBALURI = `/cms/concierge/phone-book-group-${groupNo}`;
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
 
@@ -368,8 +372,8 @@ const AddView = (props: AddviewProps) => {
         </div> */}
 
         <div className="grid grid-cols-12 h-fit gap-4 ">
-          <div className="col-span-12 grid grid-cols-12 h-fit  gap-2">
-            <div className="col-span-4 ">
+            <div className="col-span-12 grid grid-cols-12 h-fit  gap-2">
+              <div className="col-span-12 ">
               <fieldset className="border">
                 <legend className="ml-2">Main</legend>
                 <div className="grid grid-cols-12 h-fit gap-4 ml-2 mb-4 mt-4 mr-2">
@@ -428,93 +432,6 @@ const AddView = (props: AddviewProps) => {
                     );
                   })}
                 </div>
-              </fieldset>
-            </div>
-            <div className="col-span-8 ">
-              <fieldset className="border min-w-full table-auto">
-                <legend className="ml-2 ">Request Notes</legend>
-                <div className="m-2 ">
-                  <TableView
-                    uri="/cms/profile/guest-notes"
-                    queryString={
-                      "&guest_id=" +
-                      new URLSearchParams(window.location.search).get("data")
-                    }
-                    groups=""
-                    isEditTable={true}
-                    isTitle={false}
-                    isDeleted={true}
-                  />
-                </div>
-              </fieldset>
-              <fieldset className="border min-w-full table-auto">
-                <legend className="ml-2 ">Guest History</legend>
-                <div className="m-2 ">
-                  <TableView
-                    uri="/cms/profile/guest-history"
-                    queryString={
-                      "&guest_id=" +
-                      new URLSearchParams(window.location.search).get("data")
-                    }
-                    groups=""
-                    isEditTable={true}
-                    isTitle={false}
-                    isDeleted={true}
-                  />
-                </div>
-              </fieldset>
-
-              <fieldset className="border min-w-full table-auto p-5">
-                <legend className="ml-2 ">Personal/Preference</legend>
-                <fieldset className="border min-w-full table-auto">
-                  <legend className="ml-2 ">Loyalty Card</legend>
-                  <div className="m-2 ">
-                    <TableView
-                      uri="/cms/profile/guest-loyalty-card"
-                      queryString={
-                        "&guest_id=" +
-                        new URLSearchParams(window.location.search).get("data")
-                      }
-                      groups=""
-                      isEditTable={true}
-                      isTitle={false}
-                      isDeleted={true}
-                    />
-                  </div>
-                </fieldset>
-                <fieldset className="border min-w-full table-auto">
-                  <legend className="ml-2 ">Family Member</legend>
-                  <div className="m-2 ">
-                    <TableView
-                      uri="/cms/profile/guest-family-member"
-                      queryString={
-                        "&guest_id=" +
-                        new URLSearchParams(window.location.search).get("data")
-                      }
-                      groups=""
-                      isEditTable={true}
-                      isTitle={false}
-                      isDeleted={true}
-                    />
-                  </div>
-                </fieldset>
-
-                <fieldset className="border min-w-full table-auto">
-                  <legend className="ml-2 ">Preference</legend>
-                  <div className="m-2 ">
-                    <TableView
-                      uri="/cms/profile/guest-preference"
-                      queryString={
-                        "&guest_id=" +
-                        new URLSearchParams(window.location.search).get("data")
-                      }
-                      groups=""
-                      isEditTable={true}
-                      isTitle={false}
-                      isDeleted={true}
-                    />
-                  </div>
-                </fieldset>
               </fieldset>
             </div>
           </div>

@@ -3,7 +3,8 @@ import favicon from "../../../public/favicon.ico";
 import ListViewModel from "../../pages/user/list/ListPostViewModel";
 import { useRouter } from "next/router";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "./TableErrorState";
 import InputMain from "../input/InputMain";
 import { useSelector } from "react-redux";
 
@@ -34,6 +35,8 @@ interface TableViewProps {
   uriapprove?: string;
   urireject?: string;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   prevJump: () => void;
   prev: () => void;
   nextJump: () => void;
@@ -45,6 +48,8 @@ const TableView = (props: TableViewProps) => {
   const {
     data,
     loading = false,
+    error = null,
+    onRetry,
     uri,
     prevJump,
     prev,
@@ -81,7 +86,7 @@ const TableView = (props: TableViewProps) => {
 
   return (
     <>
-      {data?.code == "200" ? (
+      {data?.code == "200" && !error ? (
         <>
           {data?.table ? (
             <>
@@ -239,10 +244,10 @@ const TableView = (props: TableViewProps) => {
         <>
           {loading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
+          ) : error ? (
+            <TableErrorState message={error} onRetry={onRetry} />
           ) : (
             <>
               <div className="mt-8 flex justify-center">Not Data</div>

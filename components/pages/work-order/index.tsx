@@ -1,6 +1,7 @@
 import ButtonAddList from "../../common/button/ButtonAddList";
 import PaperBase from "../../common/paper/PaperBase";
 import React, { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import AddPage from "./form";
@@ -10,25 +11,19 @@ import { useSelector } from "react-redux";
 const WorkOrder = () => {
   const GLOBALURI = "/cms/housekeeping/work-order";
   const groups = "";
-  const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
-  const [data, setdata] = useState("0");
+  // Derived from the URL rather than copied into state by a dependency-less effect.
+  // `data` was seeded with "0", which is a truthy string, so the guard
+  // `add == "1" || data` matched on the very first render and mounted <AddPage /> --
+  // firing GET /work-order/create and flashing the form fields before the effect
+  // corrected `data` to null and the table view took over.
+  const [, queryString] = useRouter().asPath.split("?");
+  const q = new URLSearchParams(queryString ?? "");
+  const add = q.get("add") ?? "0";
+  const view = q.get("view") ?? "0";
+  const data = q.get("data");
   const [dataSumary, setdataSumary] = useState<any>({});
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const data = urlParams.get("data");
-    const view = urlParams.get("view");
-    setparentid(parent);
-    setadd(add);
-    setview(view);
-    setdata(data);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
   function RouteInit() {
     if (add == "1" || data) {
       return <AddPage />;

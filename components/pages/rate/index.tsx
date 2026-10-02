@@ -1,6 +1,7 @@
 import ButtonAddList from "../../common/button/ButtonAddList";
 import PaperBase from "../../common/paper/PaperBase";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
+import { useRouter } from "next/router";
 import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import AddPage from "./form";
@@ -8,19 +9,13 @@ import AddPage from "./form";
 const ListView = () => {
   const GLOBALURI = "/cms/rate";
   const groups = "";
-  const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const view = urlParams.get("view");
-    setparentid(parent);
-    setadd(add);
-    setview(view);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+  // Derived from the URL instead of copied into state by a dependency-less effect:
+  // the state version rendered one frame with the previous query, so returning to a
+  // rate code detail briefly rendered the list (add still "0") before the effect ran.
+  const [, queryString] = useRouter().asPath.split("?");
+  const q = new URLSearchParams(queryString ?? "");
+  const add = q.get("add") ?? "0";
+  const view = q.get("view") ?? "0";
   function RouteInit() {
     if (add == "1") {
       return <AddPage />;

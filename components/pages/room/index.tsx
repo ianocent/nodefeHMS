@@ -1,6 +1,7 @@
 import ButtonAddList from "../../../components/common/button/ButtonAddList";
 import PaperBase from "../../../components/common/paper/PaperBase";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
+import { useRouter } from "next/router";
 import Seo from "../../../components/common/seo";
 import TableView from "../../../components/common/table-edit";
 import ViewPage from "./view";
@@ -9,24 +10,16 @@ import AddPage from "./form";
 const ListView = () => {
   const GLOBALURI = "/cms/room";
   const groups = "";
-  const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
-  const [data, setdata] = useState("0");
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const data = urlParams.get("data");
-    const view = urlParams.get("view");
-    setparentid(parent);
-    setadd(add);
-    setview(view);
-    setdata(data);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+  // `data` used to be seeded with "0", a truthy string, so `add == "1" || data && view != "1"`
+  // matched on the first render and mounted the form before the dependency-less effect
+  // corrected the value. Derived from the URL instead, so there is no wrong render.
+  const [, queryString] = useRouter().asPath.split("?");
+  const q = new URLSearchParams(queryString ?? "");
+  const add = q.get("add") ?? "0";
+  const view = q.get("view") ?? "0";
+  const data = q.get("data");
   function RouteInit() {
-    if (add == "1" || data && view != "1") {
+    if (add == "1" || (data && view != "1")) {
       return <AddPage />;
     } else if (view == "1") {
       return <AddPage isview={true} />;

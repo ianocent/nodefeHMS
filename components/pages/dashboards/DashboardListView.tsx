@@ -15,7 +15,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import ModalNotedComponent from "../../common/modal/ModalNoted";
-import { IconSpiner } from "../../common/icon/CardIcon";
+import { DashboardCardSkeleton } from "../../common/skeleton/Skeleton";
 import { IconHome } from "../../common/icon/SidebarIcon";
 import MapBase from "../../common/map/MapBase";
 import { AnyAaaaRecord } from "dns";
@@ -37,6 +37,13 @@ const DashboardListView = () => {
   const [data, setData] = useState<any>([{}]);
   const [property, setProperty] = useState<any>({});
   const [listDashboard, setListDashboard] = useState<any>({});
+  // Raw card config from /cms/get-dashboard, held separately so the grid can
+  // render a skeleton per configured card while each detail is still loading.
+  const [cardShapes, setCardShapes] = useState<any[]>([]);
+  // Per-card completion flag. Inferred state (does listDashboard[i] exist?) is not
+  // enough: a detail request that errors or returns an empty payload leaves that
+  // slot empty forever, so its skeleton never disappears. Track settlement instead.
+  const [settled, setSettled] = useState<Record<number, boolean>>({});
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setloading] = useState(true);
@@ -62,6 +69,11 @@ const DashboardListView = () => {
       ""
     );
     if (datauser?.code == "200") {
+      // Shapes first, then the grid can lay out one placeholder per card.
+      setCardShapes(Array.isArray(datauser.data) ? datauser.data : []);
+      setProperty(datauser?.property);
+      setSettled({});
+      setListDashboard({});
       setloading(false);
       await Promise.all(
         datauser.data.map((key, index) =>
@@ -74,28 +86,46 @@ const DashboardListView = () => {
           )
         )
       );
-      
-      setProperty(datauser?.property);
+    } else {
+      setCardShapes([]);
+      setloading(false);
     }
   };
 
   const GetDashboardDetail = async (startDate: any,endDate:any,dateLog:any,code:any,index:any) => {
-    let query = code?.type || code;
-    query = query + "?dateLog=" + dateLog + "&start_date=" + startDate + "&end_date=" + endDate;
+    let obj: any[] = [];
+    try {
+      const detailCode = (() => {
+        if (typeof code === "string" || typeof code === "number") return String(code);
+        if (code && typeof code === "object") {
+          return String(code?.value ?? code?.code ?? code?.type ?? code?.id ?? "");
+        }
+        return "";
+      })();
 
-    let getuuri = "/cms/get-dashboard/" + query;
-    const datauser: any = await FetchData(
-      getuuri,
-      "GET",
-      "",
-      false,
-      datalocal?.data?.access_token,
-      router,
-      ""
-    );
-    let obj = [];
-    if (datauser?.code == "200") {
-      datauser.data.map((row: any) => {
+      if (!detailCode) {
+        setSettled((prev) => ({ ...prev, [index]: true }));
+        return;
+      }
+
+      const params = new URLSearchParams({
+        dateLog: String(dateLog ?? ""),
+        start_date: String(startDate ?? ""),
+        end_date: String(endDate ?? ""),
+      });
+
+      const getuuri = `/cms/get-dashboard/${encodeURIComponent(detailCode)}?${params.toString()}`;
+      const datauser: any = await FetchData(
+        getuuri,
+        "GET",
+        "",
+        false,
+        datalocal?.data?.access_token,
+        router,
+        ""
+      );
+      if (datauser?.code == "200") {
+        datauser.data.map((row: any) => {
         if (row?.type == "number") {
           obj.push({
             title: row?.label,
@@ -120,27 +150,26 @@ const DashboardListView = () => {
             is_total: row?.is_total,
           });
         } else if (row?.type == "chart") {
+          // `list` has to be { data: series[], date: string[] }. Both readers are
+          // guarded because a mismatched payload used to throw here and took the
+          // whole card down with "e.data.map is not a function" -- the chart then
+          // silently never rendered. Degrading to an empty series keeps the card
+          // frame visible instead.
+          const chartList = row?.list ?? {};
+          const chartSeries = Array.isArray(chartList.data) ? chartList.data : [];
+          const chartDates = Array.isArray(chartList.date) ? chartList.date : [];
+
           obj.push({
-            series: row?.list.data.map((r: any, index: any) => {
-              return {
-                name: r?.name,
-                data: r?.data.map((rw: any) => rw?.data),
-              };
-            }),
-            // [
-            //   {
-            //     name: row?.label,
-            //     data: row?.list.map((r: any) => r?.data),
-            //     // format money
-  
-            //   },
-            // ],
+            series: chartSeries.map((r: any) => ({
+              name: r?.name,
+              data: Array.isArray(r?.data) ? r.data.map((rw: any) => rw?.data) : [],
+            })),
             options: {
               dataLabels: {
                 enabled: false,
               },
               xaxis: {
-                categories: row?.list.date.map((r: any) => r),
+                categories: chartDates.map((r: any) => r),
               },
               yaxis: {
                 labels: {
@@ -371,6 +400,13 @@ const DashboardListView = () => {
         ...listDashboard,
         [index]: obj[0]
       }));
+    }
+    } catch (e) {
+      console.error("Dashboard detail failed", code, e);
+    } finally {
+      // Always release the slot, even on error/empty payload, otherwise the
+      // skeleton for this card stays on screen indefinitely.
+      setSettled((prev) => ({ ...prev, [index]: true }));
     }
 
   };
@@ -654,19 +690,19 @@ const DashboardListView = () => {
         }}
       />
       {popup ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[92px] animate-fade-in">
           <div
             ref={ref}
-            className="w-full max-w-3xl max-h-[85vh] bg-white rounded-lg flex flex-col"
+            className="w-full max-w-3xl max-h-[calc(100vh-112px)] bg-white rounded-xl shadow-xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex justify-center py-3 px-4 border-b shrink-0">
               <h4 className="font-semibold text-base">{titlePopupData}</h4>
             </div>
 
-            {/* Body — scroll di sini */}
-            <div className="flex-1 overflow-auto p-4">
-              <TableView groups={""} uri={uriPopupData} isEditTable={false} />
+            {/* Body — scroll di sini. pb-8 menjaga baris terakhir tidak tertutup navbar */}
+            <div className="flex-1 overflow-auto p-4 pb-8">
+              <TableView groups={""} uri={uriPopupData} isEditTable={false} queryString="limit=10" />
             </div>
 
             {/* Footer */}
@@ -690,22 +726,66 @@ const DashboardListView = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-12 w-full gap-4 md:gap-6">
           {loading ? (
-            <div className="col-span-12 mt-8 flex justify-center">
-              <IconSpiner />
-            </div>
+            <>
+              {/* Shapes are unknown until /cms/get-dashboard answers; keep a
+                  plausible card-sized placeholder grid so the page does not
+                  collapse to a single block. */}
+              {[6, 6, 4, 4, 4, 8].map((span, i) => (
+                <DashboardCardSkeleton
+                  key={i}
+                  span={span}
+                  type={i % 3 === 0 ? "chart" : "number"}
+                />
+              ))}
+            </>
           ) : (
             <>
-              {Object.values(listDashboard).length > 0 && Object.values(listDashboard).map((row: any, index: any) => {
-                  // const colSpan = `col-span-1 md:col-span-${row?.span ?? 12} xl:col-span-${row?.span ?? 12}`;
-                  const effectiveSpan = 
-                    (row?.type === "notification-list" || row?.type === "guest-request-list" || row?.type === "donut")
-                      ? 6
-                      : (row?.span ?? 12);
-                  const colSpan = `col-span-1 md:col-span-${effectiveSpan} xl:col-span-${effectiveSpan}`;
-                  const boxClasses = `h-full rounded-xl bg-white shadow flex flex-col overflow-hidden min-w-0`;
-                  const boxBodyClasses = `px-6 pb-6`;
+              {/* Skeletons and Real Cards in a single loop to maintain DOM position */}
+              {cardShapes.map((shape: any, i: any) => {
+                const row = listDashboard[i];
+                const shapeType = shape?.type || "number";
+                const span =
+                  shapeType === "notification-list" ||
+                  shapeType === "guest-request-list" ||
+                  shapeType === "donut"
+                    ? 6
+                    : (shape?.span ?? 12);
+                    
+                if (!settled?.[i]) {
+                  return (
+                    <DashboardCardSkeleton
+                      key={`card-${i}`}
+                      span={span}
+                      type={shapeType}
+                    />
+                  );
+                }
 
-                  const formatIDR = (val: any): string => {
+                // Request finished but produced no renderable row: either the
+                // payload was empty or its `type` is not one this component knows
+                // how to draw. `settled` is what tracks completion, so gating the
+                // skeleton on `!row` as well left these cards shimmering forever.
+                if (!row) {
+                  return null;
+                }
+
+                const originalIndex = i;
+                const effectiveSpan = 
+                  (row?.type === "notification-list" || row?.type === "guest-request-list" || row?.type === "donut")
+                    ? 6
+                    : (row?.span ?? 12);
+                const colSpan = `col-span-1 md:col-span-${effectiveSpan} xl:col-span-${effectiveSpan}`;
+                // `animate-pop-in` is the overshoot that carries the eye over from the
+                // card skeleton to the real widget. Safe on the card: nested TableView
+                // popups are already clipped by `overflow-hidden`, so the transform
+                // adds no clipping of its own.
+                const boxClasses = `h-full rounded-xl bg-white shadow flex flex-col overflow-hidden min-w-0 animate-pop-in origin-top`;
+                // Stagger so a whole grid cascades in instead of slamming on the same
+                // frame. `both` fill-mode keeps later cards invisible until their delay.
+                const boxStyle = { animationDelay: `${Math.min(i, 8) * 60}ms` };
+                const boxBodyClasses = `px-6 pb-6`;
+
+                const formatIDR = (val: any): string => {
                     if (val == null || val === "") return "0,00";
                     const clean = String(val).replace(/[^\d,-]/g, "").replace(",", ".");
                     const num = parseFloat(clean);
@@ -720,11 +800,25 @@ const DashboardListView = () => {
                     return isNaN(num) ? "0" : num.toString();
                   };
 
+// Card nilai besar (Manual Posting / MTD / YTD Revenue) punya lebar
+                // tetap di grid span-3. "8.530.956.567,70" pada text-3xl rapi atau
+                // terpotong di tengah angka, jadi font diturunkan per panjang string
+                // supaya semua digit tetap terbaca dalam satu baris.
+                // Hanya kelas yang ditulis literal di sini agar Tailwind memotongnya.
+                const amountFontClass = (text: string): string => {
+                  const n = (text || "").length;
+                  if (n <= 9) return "text-xl md:text-2xl lg:text-3xl";
+                  if (n <= 12) return "text-lg md:text-xl lg:text-2xl";
+                  if (n <= 15) return "text-base md:text-lg lg:text-xl";
+                  if (n <= 19) return "text-sm md:text-base lg:text-lg";
+                  return "text-xs md:text-sm lg:text-base";
+                };
+
                   switch (row?.type) {
                     case "chart":
                       return (
-                        <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                          <div className={`${boxClasses} !m-0 flex flex-col h-full`}>
+                        <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                          <div className={`${boxClasses} !m-0 flex flex-col h-full`} style={boxStyle}>
                             <div className="rounded-xl relative flex items-center justify-between px-6 pt-6 text-sm font-semibold text-gray-700">{row?.title}</div>
                             <div className="box-body px-6 pb-6 w-full overflow-hidden">
                               <ReactApexChart
@@ -742,8 +836,8 @@ const DashboardListView = () => {
                     case "table-dashboard":
                     case "number":
                       return (
-                        <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                          <div className={boxClasses}>
+                        <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                          <div className={boxClasses} style={boxStyle}>
                             <div className="rounded-xl relative flex items-center justify-between px-6 pt-6 text-sm font-semibold text-gray-700">
                               {row.title}
                             </div>
@@ -827,8 +921,8 @@ const DashboardListView = () => {
 
                     case "chart-bar":
                       return (
-                        <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                        <div className={`${boxClasses} !m-0 flex flex-col h-full`}>
+                        <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                        <div className={`${boxClasses} !m-0 flex flex-col h-full`} style={boxStyle}>
                             <div className="rounded-xl relative flex items-center justify-between px-6 pt-6 text-sm font-semibold text-gray-700">{row?.title}</div>
                             <div className="box-body px-6 pb-6">
                               <ReactApexChart
@@ -845,13 +939,13 @@ const DashboardListView = () => {
 
                       case "number-only":
                         return (
-                          <div key={index} className={`${colSpan} flex flex-col gap-4 md:gap-5`}>
+                          <div key={`real-${originalIndex}`} className={`${colSpan} flex flex-col gap-4 md:gap-5`}>
                             {(row?.title || []).map((title: string, idx: number) => {
                               const raw = row?.value?.[idx] || "0";
                               const formatted = formatIDR(raw);
 
                               return (
-                                <div key={idx} className={`${boxClasses} min-h-[135px] md:min-h-[160px]`}>
+                                <div key={`real-${originalIndex}-${idx}`} className={`${boxClasses} min-h-[135px] md:min-h-[160px]`} style={boxStyle}>
                                   <div className="px-5 pt-5 text-sm font-semibold text-gray-700">
                                     {title}
                                   </div>
@@ -862,7 +956,10 @@ const DashboardListView = () => {
                                         __html: svgType(row?.svg || "money"),
                                       }}
                                     />
-                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-right sm:text-right flex-1 break-words leading-tight">
+                                    <h2
+                                      className={`${amountFontClass(formatted)} font-bold text-gray-800 text-right flex-1 min-w-0 whitespace-nowrap tabular-nums leading-tight`}
+                                      title={formatted}
+                                    >
                                       {formatted}
                                     </h2>
                                   </div>
@@ -896,8 +993,8 @@ const DashboardListView = () => {
                         };
 
                         return (
-                          <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                            <div className={`${boxClasses} flex flex-col h-full`}>
+                          <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                            <div className={`${boxClasses} flex flex-col h-full`} style={boxStyle}>
                               <div className="px-6 pt-6 pb-2 text-sm font-semibold text-gray-700">
                                 {row?.title}
                               </div>
@@ -939,8 +1036,8 @@ const DashboardListView = () => {
 
                     case "table":
                       return (
-                        <div key={index} className={`${colSpan}`}>
-                          <div className={boxClasses}>
+                        <div key={`real-${originalIndex}`} className={`${colSpan}`}>
+                          <div className={boxClasses} style={boxStyle}>
                             <div className="rounded-xl relative flex items-center justify-between px-6 pt-6 text-sm font-semibold text-gray-700">
                               {row.title}
                             </div>
@@ -958,8 +1055,8 @@ const DashboardListView = () => {
 
                     case "maps":
                       return (
-                        <div key={index} className={`${colSpan}`}>
-                          <div className={boxClasses}>
+                        <div key={`real-${originalIndex}`} className={`${colSpan}`}>
+                          <div className={boxClasses} style={boxStyle}>
                             <div className="relative px-6 pt-6 text-sm font-semibold text-gray-700">
                               {row?.title}
                             </div>
@@ -972,8 +1069,8 @@ const DashboardListView = () => {
 
                       case "notification-list":
                         return (
-                          <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                            <div className={boxClasses}>
+                          <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                            <div className={boxClasses} style={boxStyle}>
                               <div className="px-6 pt-6 pb-2 text-sm font-semibold text-gray-700 flex justify-between items-center">
                                 <span>{row.title}</span>
                                 {row.count > 0 && (
@@ -1073,8 +1170,8 @@ const DashboardListView = () => {
                           const listItems = row?.items || row?.data || [];
 
                           return (
-                            <div key={index} className={`${colSpan} mb-4 xl:mb-0`}>
-                              <div className={boxClasses}>
+                            <div key={`real-${originalIndex}`} className={`${colSpan} mb-4 xl:mb-0`}>
+                              <div className={boxClasses} style={boxStyle}>
                                 <div className="px-6 pt-6 pb-2 text-sm font-semibold text-gray-700 flex justify-between items-center">
                                   <span>{row.title || (isGuestRequest ? "Guest Requests" : "Notifications")}</span>
                                   {row.count > 0 && (

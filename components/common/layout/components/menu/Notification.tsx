@@ -5,15 +5,17 @@ import {
   MenuList,
 } from "@material-tailwind/react";
 import React from "react";
+import { useRouter } from "next/router";
 interface notifProps {
   notif: any;
 }
 const Notification = (props: notifProps) => {
+  const router = useRouter();
   return (
     <>
       <div
         onClick={() => {
-          window.location.assign("/module/notification");
+          router.push("/module/notification");
         }}
         className=" cursor-pointer w-[36px] h-[36px] flex items-center justify-center bg-[#F4F7F9] rounded-full"
       >

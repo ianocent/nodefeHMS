@@ -10,7 +10,7 @@ import {
   RouteChange,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
 import InputMain from "../input/InputMain";
 import { useSelector } from "react-redux";
 import { IconAcccourdion } from "../icon/SidebarIcon";
@@ -1125,9 +1125,7 @@ const TableView = (props: TableViewProps) => {
         <>
           {loading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
           ) : (
             <>

@@ -2,7 +2,8 @@ import React, { SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { FetchData, GetDecrypt, GetEncrypt } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import { useSelector } from "react-redux";
 
 interface TableViewProps {
@@ -52,7 +53,12 @@ const TableMergeGuest = (props: TableViewProps) => {
   const [editActive, seteditActive] = useState(-1);
   const [datavalMulti, setDataMulti] = useState<any>({});
   const [overflow, setoverflow] = useState(true);
-  const [isloading, setIsloading] = useState<boolean>(false);
+  // Starts as true on purpose: the first paint happens before the mount effect runs,
+  // so with `false` the empty branch renders "Not Data" for a frame and then snaps to
+  // the skeleton once the fetch starts. Every one of these tables fetches on mount, so
+  // the skeleton is always followed by real data.
+  const [isloading, setIsloading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [datavalsrc, setDatasrc] = useState<any>({
     status: { value: "-1", label: "ALL" },
   });
@@ -127,6 +133,7 @@ const TableMergeGuest = (props: TableViewProps) => {
 
   const GetDataTable = async (i?: any, page?: number, isloadmore?: boolean) => {
     setIsloading(true);
+    setLoadError(null);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const sort = urlParams.get("sort") ?? "";
@@ -137,7 +144,7 @@ const TableMergeGuest = (props: TableViewProps) => {
       var srcval = urlParams.get("search_value")
         ? "&search_value=" + urlParams.get("search_value")
         : "";
-      let status = i ?? datavalsrc["status"]?.value;
+      let status = i ?? datavalsrc?.status?.value;
 
       let pages = 1;
       if (page) {
@@ -154,7 +161,7 @@ const TableMergeGuest = (props: TableViewProps) => {
           "&page=" +
           pages +
           "&search=" +
-          (datavalsrc["search"] ?? (search == null ? "" : search)) +
+          (datavalsrc?.search ?? (search == null ? "" : search)) +
           "&" +
           (queryString ?? "") +
           "" +
@@ -188,10 +195,16 @@ const TableMergeGuest = (props: TableViewProps) => {
         });
       } else {
         setIsloading(false);
+        setLoadError(
+          datajson === false
+            ? "Permintaan gagal diproses server, atau koneksi ke server terputus. Data tidak dapat dimuat."
+            : "Server membalas dengan format yang tidak dikenali. Data tidak dapat dimuat."
+        );
       }
       return;
     } catch (error) {
       setIsloading(false);
+      setLoadError("Terjadi kesalahan tak terduga saat memuat data.");
       console.log("err", error);
       return;
     }
@@ -199,20 +212,20 @@ const TableMergeGuest = (props: TableViewProps) => {
 
   const previn = () => {
     if (datatable?.pagging?.prev) {
-      GetDataTable(datavalsrc["status"][0].value, datatable?.pagging?.prev);
+      GetDataTable(datavalsrc?.status?.[0]?.value, datatable?.pagging?.prev);
     }
   };
 
   const nextin = () => {
     if (datatable?.pagging?.next) {
-      GetDataTable(datavalsrc["status"][0].value, datatable?.pagging?.next);
+      GetDataTable(datavalsrc?.status?.[0]?.value, datatable?.pagging?.next);
     }
   };
 
   const prevJumpin = () => {
     if (datatable?.pagging?.prev_jump) {
       GetDataTable(
-        datavalsrc["status"][0].value,
+        datavalsrc?.status?.[0]?.value,
         datatable?.pagging?.prev_jump
       );
     }
@@ -221,7 +234,7 @@ const TableMergeGuest = (props: TableViewProps) => {
   const nextJumpin = () => {
     if (datatable?.pagging?.next_jump) {
       GetDataTable(
-        datavalsrc["status"][0].value,
+        datavalsrc?.status?.[0]?.value,
         datatable?.pagging?.next_jump
       );
     }
@@ -253,7 +266,7 @@ const TableMergeGuest = (props: TableViewProps) => {
 
   return (
     <>
-      {datatable?.code == "200" ? (
+      {datatable?.code == "200" && !loadError ? (
         <>
           {datatable?.table ? (
             <>
@@ -426,7 +439,14 @@ const TableMergeGuest = (props: TableViewProps) => {
             </>
           ) : (
             <>
-              <div className="mt-8 flex justify-center">Not Data</div>
+              {loadError ? (
+                <TableErrorState
+                  message={loadError}
+                  onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+                />
+              ) : (
+                <div className="mt-8 flex justify-center">Not Data</div>
+              )}
             </>
           )}
         </>
@@ -434,10 +454,13 @@ const TableMergeGuest = (props: TableViewProps) => {
         <>
           {isloading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
+          ) : loadError ? (
+            <TableErrorState
+              message={loadError}
+              onRetry={() => GetDataTable(datavalsrc?.status?.value)}
+            />
           ) : (
             <>
               <div className="mt-8 flex justify-center">Not Data</div>

@@ -7,19 +7,10 @@ import TableView from "../../common/table-edit";
 const YieldManagement = () => {
   const GLOBALURI = "/cms/yield";
   const groups = "";
-  const [parentid, setparentid] = useState("0");
-  const [add, setadd] = useState("0");
-  const [view, setview] = useState("0");
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const parent = urlParams.get("parent");
-    const add = urlParams.get("data");
-    const view = urlParams.get("view");
-    setparentid(parent);
-    setadd(add);
-    setview(view);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+  // No query-param state: this screen only ever renders the table (Laravel is the
+  // same). It used to read `add` from the "data" param, which was misleading —
+  // nothing consumed it, and the name invited the same "== 1" mistake that broke
+  // bar/holiday edit navigation.
   function RouteInit() {
     return (
       <div className="mt-2 min-w-full table-auto">

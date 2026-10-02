@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import TableView from "../../../components/common/table-edit";
 import Seo from "../../../components/common/seo";
 import PaperBase from "../../../components/common/paper/PaperBase";
-import LayoutComponent from "../../../components/common/layout/LayoutComponent";
 import AddView from "./form/index";
 
 const HousekeepingSetup = () => {
@@ -35,13 +34,9 @@ const HousekeepingSetup = () => {
 
   return (
     <>
-      <Seo title="Housekeeping Setup" />
-      <LayoutComponent>
-        <PaperBase>
+      <Seo title="Housekeeping Setup" /><PaperBase>
           {RouteInit()}
-        </PaperBase>
-      </LayoutComponent>
-    </>
+        </PaperBase></>
   );
 };
 

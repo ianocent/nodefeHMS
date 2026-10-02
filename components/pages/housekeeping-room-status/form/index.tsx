@@ -1,24 +1,21 @@
 // housekeeping_roomstatus.tsx
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../../components/common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import InputMain from "../../../../components/common/input/InputMain";
 import Seo from "../../../../components/common/seo";
 import {
-  FetchData,
-  GetCurrentDate,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-  GetQueryStr,
+    FetchData,
+    GetCurrentDate,
+    GetDecrypt,
+    GetEncrypt,
+    GetQueryStr
 } from "../../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../../components/common/layout/LayoutComponent";
-import TableView from "../../../common/table-edit";
-import { redirect, usePathname } from "next/navigation";
 import { useTransactionPermission } from "../../../../hooks/useFormPermission";
+import TableView from "../../../common/table-edit";
 interface AddviewProps {
   isview?: boolean;
   isPopup?: boolean;

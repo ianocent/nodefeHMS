@@ -1,23 +1,22 @@
 import { useRouter } from "next/router";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { LayoutContext } from "../../../../context/LayoutContext";
-import Seo from "../../../common/seo";
-import ButtonSubmit from "../../../common/button/ButtonSubmit";
-import {
-  FetchData,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  GetSelisihDay,
-  RouteChange,
-  removeItem,
-  GetNextDay,
-} from "../../../helper";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { LayoutContext } from "../../../../context/LayoutContext";
+import ButtonSubmit from "../../../common/button/ButtonSubmit";
 import InputMain from "../../../common/input/InputMain";
-import TableView from "../../../common/table-edit";
-import TabMenuIcon from "../../../common/tabIcon/tab";
 import ModalConfirmationComponent from "../../../common/modal/ModalConfirmation";
+import Seo from "../../../common/seo";
+import TabMenuIcon from "../../../common/tabIcon/tab";
+import TableView from "../../../common/table-edit";
+import {
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetNextDay,
+    GetQueryStr,
+    GetSelisihDay,
+    removeItem
+} from "../../../helper";
 
 const EditView = () => {
   const ModuleName = "Edit Reservation";
@@ -1525,7 +1524,7 @@ const EditView = () => {
       <>
         <div
           ref={ref}
-          className="p-2 rounded-md w-full z-50 border-black border-b-[1px] border-r-[1px] border-l-[1px] absolute bg-white"
+          className="ac-dropdown p-2 w-full z-50 absolute bg-white"
         >
           <>
             <div className="table-responsive w-full">
@@ -1677,8 +1676,8 @@ const EditView = () => {
       <Seo title={"Management " + layout?.title} />
       <div className="flex flex-col gap-4">
         {popup ? (
-          <div className="overlay">
-            <div className="w-[50%] relative h-[300px] bg-white z-20 top-[200px] left-[28%]"></div>
+          <div className="overlay flex items-center justify-center p-4">
+            <div className="w-[50%] max-w-3xl h-[300px] bg-white rounded-xl shadow-xl z-20"></div>
           </div>
         ) : (
           <></>

@@ -1,20 +1,20 @@
 // end shift
-import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Seo from "../../../components/common/seo";
 import TableView from "../../../components/common/table-edit";
 import {
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryStr,
-  FetchData,
-  Logout,
+    FetchData,
+    GetDecrypt,
+    GetEncrypt,
+    GetQueryStr,
+    Logout,
 } from "../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
+import { useFormPermission } from "../../../hooks/useFormPermission";
+import { setLogin } from "../../../redux/auth/authSlice";
 import ButtonSubmit from "../../common/button/ButtonSubmit";
 import ModalPinComponent from "../../common/modal/ModalPin";
-import { setLogin } from "../../../redux/auth/authSlice";
-import { useFormPermission } from "../../../hooks/useFormPermission";
 
 const ListView = () => {
   const URL = "/cms/shift-confirmation";

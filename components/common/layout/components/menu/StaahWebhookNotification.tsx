@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { FetchData, GetDecrypt } from "../../../../helper/index";
 import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 
 const StaahWebhookNotification = () => {
+  const router = useRouter();
   const [pendingCount, setPendingCount] = useState(0);
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
@@ -40,7 +42,7 @@ const StaahWebhookNotification = () => {
   return (
     <div
       onClick={() => {
-        window.location.assign("/module/staah-reservation");
+        router.push("/module/staah-reservation");
       }}
       className="cursor-pointer w-[36px] h-[36px] flex items-center justify-center bg-[#F4F7F9] rounded-full relative"
       title="Staah Webhook Reservations"

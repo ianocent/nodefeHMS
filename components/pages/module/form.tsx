@@ -1,17 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import ButtonSubmit from "../../common/button/ButtonSubmit";
-import ButtonCreate from "../../common/button/ButtonCreate";
+import FileInputBase from "../../common/input/FileInputBase";
 import InputBase from "../../common/input/InputBase";
 import MultiSelectBAse from "../../common/input/MultiSelectBase";
-import { forEach } from "jszip";
 import RichEditorBase from "../../common/input/RichEditorBase";
-import TextareaBase from "../../common/input/TextareaBase";
-import FileInputBase from "../../common/input/FileInputBase";
-import { FetchData, GetDecrypt, GetEncrypt, GetQueryStr } from "../../helper";
-import { useSelector } from "react-redux";
-import { useRouter } from "next/router";
-import TableView from "../../common/table-edit";
 import InputField from "../../common/input/SelectAsycn";
+import TextareaBase from "../../common/input/TextareaBase";
+import TableView from "../../common/table-edit";
+import { FetchData, GetDecrypt, GetEncrypt, GetQueryStr } from "../../helper";
 interface AddProps {
   data: any;
 }

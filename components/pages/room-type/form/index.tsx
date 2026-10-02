@@ -1,25 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
-import PaperBase from "../../../../components/common/paper/PaperBase";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import InputMain from "../../../../components/common/input/InputMain";
 import Seo from "../../../../components/common/seo";
 import {
-  FetchData,
-  formatAmount,
-  GetCurrentDate,
-  GetDecrypt,
-  GetEncrypt,
-  GetQueryParam,
-  GetQueryStr,
+    FetchData,
+    formatAmount,
+    GetDecrypt,
+    GetEncrypt
 } from "../../../../components/helper";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import ButtonSubmit from "../../../../components/common/button/ButtonSubmit";
 import { LayoutContext } from "../../../../context/LayoutContext";
-import LayoutComponent from "../../../../components/common/layout/LayoutComponent";
-import TableView from "../../../common/table-edit";
-import { redirect, usePathname } from "next/navigation";
-import { toast } from "react-toastify";
-import TableRosters from "../../../common/table-rosters";
 interface AddviewProps {
   isview?: boolean;
   isPopup?: boolean;

@@ -140,7 +140,25 @@ const ListView = () => {
     }
   }, [GetQueryStr("data")]);
   function RouteInit() {
-    if (add == "1") {
+    const subPath = GetPathUri(3);
+    // A 4th path segment (/reservation/fit/reservation, /other-guest, /room, ...)
+    // is a detail route, and it is only ever reached with an existing `data` id.
+    // table-edit's is_link cells append `add=1` to that push, which used to be
+    // silently stripped by a second router.replace and then short-circuited to
+    // the blank Add form once the URL stopped double-updating. `add` only means
+    // "new record" on the 3-segment list path, so detail routes win here.
+    const isDetailRoute =
+      !!GetQueryStr("data") &&
+      [
+        "reservation",
+        "other-guest",
+        "room",
+        "transaction",
+        "additional-item",
+        "security-audit",
+      ].includes(subPath);
+
+    if (add == "1" && !isDetailRoute) {
       if (GetQueryStr("key") == "edit") {
         return <EditPage />;
       } else {
@@ -156,21 +174,21 @@ const ListView = () => {
       }
     } else if (view == "1") {
       return <AddPage isType={GetPathUri(2)} isview={true} />;
-    } else if (GetPathUri(3) == "reservation") {
+    } else if (subPath == "reservation") {
       if (GetPathUri(2) == "day-use") {
         return <EditDayUse />;
       } else {
         return <EditPage />;
       }
-    } else if (GetPathUri(3) == "other-guest") {
+    } else if (subPath == "other-guest") {
       return <Guest />;
-    } else if (GetPathUri(3) == "room") {
+    } else if (subPath == "room") {
       return <Room />;
-    } else if (GetPathUri(3) == "transaction") {
+    } else if (subPath == "transaction") {
       return <Transaction />;
-    } else if (GetPathUri(3) == "additional-item") {
+    } else if (subPath == "additional-item") {
       return <AdditionalItem />;
-    } else if (GetPathUri(3) == "security-audit") {
+    } else if (subPath == "security-audit") {
       const urlParams = new URLSearchParams(window.location.search);
       return (
         <SecurityAuditListView

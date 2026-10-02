@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import Seo from "../../components/common/seo";
 import { FetchData, GetDecrypt } from "../../components/helper";
 import { useSelector } from "react-redux";
-import LayoutComponent from "../../components/common/layout/LayoutComponent";
 import FormStaahOta from "../../components/pages/staah-ota-mapping/form/form";
 
 const StaahMapping = () => {
@@ -128,7 +127,7 @@ const StaahMapping = () => {
   };
 
   return (
-    <LayoutComponent>
+    <>
       <Seo title={"Management Staah OTA Mapping"} />
 
       <div className="flex items-end justify-end w-full gap-2">
@@ -231,7 +230,7 @@ const StaahMapping = () => {
           </div>
         </div>
       )}
-    </LayoutComponent>
+    </>
   );
 };
 

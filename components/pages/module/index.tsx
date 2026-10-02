@@ -7,6 +7,7 @@ import Seo from "../../common/seo";
 import { LayoutContext } from "../../../context/LayoutContext";
 import InputMain from "../../common/input/InputMain";
 import TableView from "../../common/table-edit";
+import TableErrorState from "../../common/table/TableErrorState";
 import TableDrag from "../../common/table-drag";
 import DragTblView from "./drag";
 import ModuleAdd from "./form";
@@ -24,6 +25,7 @@ const ModulePage = () => {
   const layout = useContext(LayoutContext);
 
   const [initList, setInitList] = useState<any>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [initCreateUpdate, setInitCreateUpdate] = useState<any>({});
 
   // Pull from Staah state
@@ -48,9 +50,10 @@ const [showPullModal, setShowPullModal] = useState(false);
   const [rcRateId, setRcRateId] = useState("");
   const [rcViewMode, setRcViewMode] = useState<"matrix" | "table">("matrix");
 
-  const GetInitList = async (uri: any) => {
-    try {
-      let uris = uri.split("/");
+    const GetInitList = async (uri: any) => {
+      try {
+        setLoadError(null);
+        let uris = uri.split("/");
       let tblid = GetQueryStr("tblid") ? "?tblid=" + GetQueryStr("tblid") : "";
       let getuuri =
         GLOBALURILIST +
@@ -67,17 +70,26 @@ const [showPullModal, setShowPullModal] = useState(false);
         router,
         ""
       );
-      if (data?.code == "200") {
-        setInitList(data);
-        // console.log(data);
-        layout.setBreadcumbs(data?.breadcrumbs);
+        if (data?.code == "200") {
+          setInitList(data);
+          // console.log(data);
+          layout.setBreadcumbs(data?.breadcrumbs);
+        } else {
+          // `uriTable` decides which table renders. Without it the block below
+          // renders nothing at all — blank, with no error and no retry.
+          setLoadError(
+            "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+          );
+        }
+        return;
+      } catch (error) {
+        setLoadError(
+          "Gagal memuat konfigurasi daftar. Tabel tidak dapat ditampilkan."
+        );
+        console.log(error);
+        return;
       }
-      return;
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-  };
+    };
   const GetInitCreateUpdate = async (uri: any, id: any) => {
     try {
       let uris = uri.split("/");
@@ -114,6 +126,10 @@ const [showPullModal, setShowPullModal] = useState(false);
         ""
       );
       if (data?.code == "200") {
+        // Base reference (hmsFrontend) assigns the WHOLE envelope, not `.data`.
+        // Laravel puts `form` at the top level and often sends no `data` key at
+        // all (StaahInterfaceController@create/@edit), so unwrapping `.data`
+        // left `initCreateUpdate` undefined and the whole form region blank.
         setInitCreateUpdate(data);
       }
       return;
@@ -659,7 +675,13 @@ const [showPullModal, setShowPullModal] = useState(false);
           )}
         </>
       )}
-      {GetQueryStr("module") == "tableedit" || (!GetQueryStr("data") && !GetQueryStr("add") && initList?.uriTable ) ? (
+      {!GetQueryStr("data") && !GetQueryStr("add") && loadError && (
+        <TableErrorState
+          message={loadError}
+          onRetry={() => GetInitList(window.location.pathname)}
+        />
+      )}
+      {(GetQueryStr("module") == "tableedit" || (!GetQueryStr("data") && !GetQueryStr("add") && initList?.uriTable )) && !loadError ? (
         <>
           <div className="grid grid-cols-12 h-fit gap-4 ">
             <div className="col-span-12 grid grid-cols-12 h-fit  gap-4">

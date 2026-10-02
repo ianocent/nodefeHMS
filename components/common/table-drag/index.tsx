@@ -10,7 +10,8 @@ import {
   RouteChange,
 } from "../../helper";
 import PaginationTable from "../pagination/PaginationTable";
-import { IconSpiner } from "../icon/CardIcon";
+import { TableSkeleton } from "../skeleton/Skeleton";
+import TableErrorState from "../table/TableErrorState";
 import InputMain from "../input/InputMain";
 import { useSelector } from "react-redux";
 import { IconAcccourdion } from "../icon/SidebarIcon";
@@ -28,6 +29,8 @@ interface TableViewProps {
   uriapprove?: string;
   urireject?: string;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   isBtnView?: boolean;
   isBtnEdit?: boolean;
   isBtnDelete?: boolean;
@@ -44,6 +47,8 @@ const TableView = (props: TableViewProps) => {
   const {
     data,
     loading = false,
+    error = null,
+    onRetry,
     uri,
     prevJump,
     prev,
@@ -328,7 +333,7 @@ const TableView = (props: TableViewProps) => {
 
   return (
     <>
-      {tableBody?.length > 0 ? (
+      {tableBody?.length > 0 && !error ? (
         <>
           {tableBody.length > 0 || loading ? (
             <>
@@ -1203,20 +1208,24 @@ const TableView = (props: TableViewProps) => {
                 </table>
               </div>
             </>
-          ) : (
-            <>
-              <div className="mt-8 flex justify-center">Not Data</div>
-            </>
-          )}
+            ) : (
+              <>
+                {error ? (
+                  <TableErrorState message={error} onRetry={onRetry} />
+                ) : (
+                  <div className="mt-8 flex justify-center">Not Data</div>
+                )}
+              </>
+            )}
         </>
       ) : (
         <>
           {loading ? (
             <>
-              <div className="mt-8 flex justify-center">
-                <IconSpiner />
-              </div>
+              <TableSkeleton rows={8} />
             </>
+          ) : error ? (
+            <TableErrorState message={error} onRetry={onRetry} />
           ) : (
             <>
               <div className="mt-8 flex justify-center">Not Data</div>

@@ -1,5 +1,5 @@
-import React from "react";
-import { IconSpiner } from "../icon/CardIcon";
+import { InlinePulse } from "../skeleton/Skeleton";
+// import { IconSpiner } from "../icon/CardIcon";
 interface ButtonAddInputProps {
   activeStep: number;
   stepper: number;
@@ -56,7 +56,8 @@ const ButtonAddInput = (props: ButtonAddInputProps) => {
                     : "bg-[#E0E0E0] px-4 py-2 rounded-md"
                 }
               >
-                <IconSpiner />
+                {/* <IconSpiner /> */}
+                <InlinePulse />
                 {"Loading..."}
               </button>
             ) : (

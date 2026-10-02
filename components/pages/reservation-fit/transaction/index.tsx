@@ -21,7 +21,6 @@ import { parse } from "next/dist/build/swc";
 import { env } from "../../../../next.config";
 import ModalNotedComponent from "../../../common/modal/ModalNoted";
 import { useFormPermission, useTransactionPermission } from "../../../../hooks/useFormPermission";
-import ModalPinComponent from "../../../common/modal/ModalPin";
 interface TrxProps {
   isbtnIcon?: boolean;
   isbtnPrint?: boolean;
@@ -90,27 +89,47 @@ const TrxPageView = (props: TrxProps) => {
   const canConsolidate = useTransactionPermission("consolidate");
   const canVoid = useTransactionPermission("void");
   const collectPerm = [canConsolidate, canManualPosting, canPaidOut, canPayment, canRefund,  canSplit, canTransfer, canVoid];
-  const [isVoidPinOpen, setIsVoidPinOpen] = useState(false);
-  const onCheckVoidPin = async (pin: string) => {
-    try {
-      const saveprocess = await FetchData(
-        `/cms/check-value?key=pin_endshift&value=${pin}`,
-        "GET",
-        "",
-        false,
-        datalocal?.data?.access_token,
-        router,
-        ""
-      );
-      if (saveprocess?.code == "200") {
-        setIsVoidPinOpen(false);
-        showPopup("void", "Void");
-      } else {
-        // PIN salah — ModalPinComponent handle error-nya sendiri
-        console.log("PIN void salah", saveprocess);
-      }
-    } catch (error) {
-      console.log("error check void pin", error);
+
+  // ── Supervisor approval for destructive operations ──
+  //
+  // Void and refund restate recognised revenue and pay money back, so the
+  // server requires an approver who is not the operator and whose PIN matches
+  // their `pin_void_approve`. The approval is collected BEFORE the operation
+  // popup and re-verified server-side at write time — the old flow asked for
+  // `pin_endshift` (the operator's own shift-close PIN) and then proceeded
+  // regardless, which gated nothing.
+  const [approvalAction, setApprovalAction] = useState<null | "void" | "refund">(
+    null
+  );
+  const [approverId, setApproverId] = useState("");
+  const [approverPin, setApproverPin] = useState("");
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [approval, setApproval] = useState<{
+    approved_by?: string;
+    approval_pin?: string;
+  }>({});
+
+  const openApproval = (action: "void" | "refund") => {
+    setApproverId("");
+    setApproverPin("");
+    setApprovalError(null);
+    setApprovalAction(action);
+  };
+
+  const submitApproval = () => {
+    const id = approverId.trim();
+    const pin = approverPin.trim();
+    if (!id || !pin) {
+      setApprovalError("Supervisor ID and PIN are both required.");
+      return;
+    }
+    setApproval({ approved_by: id, approval_pin: pin });
+    const action = approvalAction;
+    setApprovalAction(null);
+    if (action === "void") {
+      showPopup("void", "Void");
+    } else if (action === "refund") {
+      showPopup("refund", "Refund");
     }
   };
 
@@ -450,13 +469,25 @@ const TrxPageView = (props: TrxProps) => {
     setdataform([...dataInput]);
     // setError("");
   };
-  function showPopup(type, title) {
-    if (
+  // Operations that act on selected transaction rows rather than typed form
+  // fields. They are meaningless — and rejected by the backend — with no
+  // selection, so Save stays disabled until at least one row is picked.
+  const isRowDrivenOp =
+    typeadd === "void" ||
+    typeadd === "transfer" ||
+    typeadd === "consolidate" ||
+    typeadd === "split" ||
+    typeadd === "refund";
+
+  function showPopup(type, title) {    if (
       type == "consolidate" ||
       type == "void" ||
       type == "transfer" ||
       type == "split" ||
-      type == "consolidate"
+      // Refund picks the payment being reversed. Without this the operator typed
+      // a free amount, which produced an unlinked credit with no reference to
+      // money that was actually received.
+      type == "refund"
     ) {
       // console.log("test");
       GetDatattbl(type);
@@ -803,14 +834,14 @@ const TrxPageView = (props: TrxProps) => {
                     label="Void"
                     onCreate={() => {
                       if (!canVoid) return;
-                      setIsVoidPinOpen(true);
+                      openApproval("void");
                     }}
                   />
                   <ButtonSubmit
                     isBtnAdd={canRefund}
                     label="Refund"
                     onCreate={() => {
-                      showPopup("refund", "Refund");
+                      openApproval("refund");
                     }}
                   />
                   <ButtonSubmit
@@ -2396,7 +2427,8 @@ const TrxPageView = (props: TrxProps) => {
               {typeadd != "consolidate" &&
               typeadd != "void" &&
               typeadd != "transfer" &&
-              typeadd != "split" ? (
+              typeadd != "split" &&
+              typeadd != "refund" ? (
                 <>
                   {dataform[0]?.data?.map((row: any, index) => (
                     <>
@@ -2585,7 +2617,8 @@ const TrxPageView = (props: TrxProps) => {
                 </>
               )}
 
-              <div className="col-span-12 flex gap-2">
+            <div className="col-span-12 flex justify-end gap-2">
+
                 <ButtonSubmit
                   label="Cancel"
                   onCreate={() => {
@@ -2607,6 +2640,7 @@ const TrxPageView = (props: TrxProps) => {
                     clickSave(true);
                   }}
                   loading={loading}
+                  disabled={isRowDrivenOp && dataval.length === 0}
                 />
               </div>
             </div>
@@ -2663,7 +2697,10 @@ const TrxPageView = (props: TrxProps) => {
       typeadd != "void" &&
       typeadd != "transfer" &&
       typeadd != "consolidate" &&
-      typeadd != "split"
+      typeadd != "split" &&
+      // Refund reverses selected payments, so it needs `idx` like the other
+      // row-driven operations — not the flattened form fields.
+      typeadd != "refund"
     ) {
       dataform[0]?.data?.map((rw, i) => {
         if (rw?.type == "select-multi") {
@@ -2678,6 +2715,12 @@ const TrxPageView = (props: TrxProps) => {
       //console.log("consol", datapush);
       objpost = datapush;
       objpost.idx = dataval;
+    }
+    // Void and refund are re-verified server-side against the approver's
+    // pin_void_approve; sending the same value twice is intentional.
+    if (typeadd === "void" || typeadd === "refund") {
+      objpost.approved_by = approval.approved_by;
+      objpost.approval_pin = approval.approval_pin;
     }
     return objpost;
   };
@@ -2729,6 +2772,11 @@ const TrxPageView = (props: TrxProps) => {
         params = "/consolidate";
       } else if (typeadd == "split") {
         params = "/split";
+      } else if (typeadd == "refund") {
+        // MUST go to /refund. Falling through to POST /cms/transaction created a
+        // brand-new PLUS row with no void_code and no link to the payment, so
+        // the original payment stayed live and the folio gained a credit.
+        params = "/refund";
       }
 
       let folioID = GetQueryStr("sub_data")
@@ -2838,10 +2886,10 @@ const TrxPageView = (props: TrxProps) => {
         </div>
       </div>
       {popup ? (
-        <div className="overlay">
+        <div className="overlay flex items-center justify-center p-4">
           <div
             ref={ref}
-            className="w-[60%] overflow-auto relative h-[600px] bg-white rounded-lg z-20 top-[100px] left-[25%]"
+            className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
           >
             {ContentPopUp(
               new URLSearchParams(window.location.search).get("key")
@@ -2852,37 +2900,66 @@ const TrxPageView = (props: TrxProps) => {
         <>{isPrint ? <>{GuestTrx(GetQueryStr("data"))}</> : RouteInit()}</>
       )}
 
-      {isVoidPinOpen && (
-        <div className="overlay">
-          <div className="w-[20%] overflow-auto relative bg-white rounded-lg z-20 p-2 items-center justify-center left-[40%] top-[40%]">
+      {approvalAction && (
+        <div className="overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-sm overflow-auto bg-white rounded-xl shadow-xl z-20 p-4">
             <div className="p-2 font-bold border-b mb-4">
-              <h1>Void Authorization</h1>
+              <h1>
+                {approvalAction === "void"
+                  ? "Void Authorization"
+                  : "Refund Authorization"}
+              </h1>
               <p className="text-sm text-gray-500 font-normal mt-1">
-                Insert PIN to Continue Void Transaction
+                {approvalAction === "void"
+                  ? "A supervisor must authorize this void. It cannot be your own ID."
+                  : "A supervisor must authorize this refund. It cannot be your own ID."}
               </p>
             </div>
-            <ModalPinComponent
-              label="Insert PIN"
-              onCheck={(pin: string) => {
-                onCheckVoidPin(pin);
-              }}
-            />
-            <div className="flex justify-end mt-4">
+            <div className="flex flex-col gap-3">
+              <label className="text-xs text-gray-500">
+                Supervisor ID
+                <input
+                  autoFocus
+                  type="text"
+                  value={approverId}
+                  onChange={(e) => setApproverId(e.target.value)}
+                  placeholder="Supervisor user id"
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="text-xs text-gray-500">
+                Supervisor PIN
+                <input
+                  type="password"
+                  value={approverPin}
+                  onChange={(e) => setApproverPin(e.target.value)}
+                  placeholder="Approval PIN"
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                />
+              </label>
+              {approvalError && (
+                <p className="text-xs text-red-600">{approvalError}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
               <ButtonSubmit
                 label="Cancel"
                 isprimary={false}
-                onCreate={() => setIsVoidPinOpen(false)}
+                onCreate={() => setApprovalAction(null)}
               />
+              <ButtonSubmit label="Authorize" onCreate={submitApproval} />
             </div>
           </div>
         </div>
       )}
       {modalPaymentPrint && (
-        <div
-          ref={ref}
-          className="w-[60%] overflow-auto absolute bg-white z-20 top-[100px] left-[25%] p-4 rounded-lg"
-        >
-          {ModalPaymentPrintComp("")}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            ref={ref}
+            className="w-full max-w-md max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20 p-4"
+          >
+            {ModalPaymentPrintComp("")}
+          </div>
         </div>
       )}
       <ModalNotedComponent
