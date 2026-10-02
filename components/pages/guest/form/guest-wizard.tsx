@@ -136,12 +136,17 @@ const DOCUMENT_STEP: GuestStep = {
   fields: [
     {
       name: "card_type",
-      label: "NRIC",
+      // Was labelled "NRIC" with optionsKey "nrics" (NRIC / Passport / Other).
+      // The master key is still `nrics`, but its values are now KTP / Paspor / SIM
+      // / KITAS to match config('cms.nric') and the reservation folio detail form.
+      // Calling the field "NRIC" was misleading: NRIC is the Singapore national ID,
+      // and none of the values are actually NRIC.
+      label: "Card Type",
       type: "select-multi",
       cols: "col-span-12 lg:col-span-4",
       optionsKey: "nrics",
     },
-    { name: "card_number", label: "Insert ID", type: "text", cols: "col-span-12 lg:col-span-5" },
+    { name: "card_number", label: "ID Number", type: "text", cols: "col-span-12 lg:col-span-5" },
     { name: "card_expiry", label: "ID Expiry", type: "date", cols: "col-span-12 lg:col-span-3" },
     { name: "image", label: "Upload Identity", type: "image", cols: "col-span-12" },
   ],

@@ -1176,7 +1176,19 @@ const EditView = () => {
 
           if (rw?.dataopt) {
             if (i != 16 && i != 7) {
-              dataInput[0].data[i].options = data?.master[rw?.dataopt];
+              // Fall back to the field's declared `options` (always an array) when
+              // the master payload has no entry for this dataopt. Assigning
+              // `undefined` here left `options` undefined, and the select renderer
+              // calls `options.map(...)` -> "e.options.map is not a function",
+              // which broke the whole form on open instead of just an empty
+              // dropdown. Master data is fetched per property, so a key can be
+              // legitimately missing.
+              const masterOpts = data?.master?.[rw?.dataopt];
+              dataInput[0].data[i].options = Array.isArray(masterOpts) && masterOpts.length > 0
+                ? masterOpts
+                : Array.isArray(rw?.options)
+                ? rw.options
+                : [];
             }
           }
           dataInput[0].data[i].isMandatory = mandatoryFields.includes(rw?.name);
