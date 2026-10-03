@@ -2623,20 +2623,29 @@ const TableView = (props: TableViewProps) => {
                                       valuename={item?.key}
                                       disabled={dataval[item.key + "_disabled"]}
                                     />
-                                  ) : item.type == "fileimage" ? (
-                                    <>
-                                      <div
-                                        className="w-10"
-                                        dangerouslySetInnerHTML={{
-                                          __html: dataval[item.key].includes(
-                                            "data:image"
-                                          )
-                                            ? "<img src='" +
-                                              dataval[item.key] +
-                                              "'/>"
-                                            : dataval[item.key],
-                                        }}
-                                      ></div>
+                                    ) : item.type == "fileimage" ? (
+                                      <>
+                                        <div
+                                          className="w-10"
+                                          dangerouslySetInnerHTML={{
+                                            // `dataval[key]` is null whenever the row has
+                                            // no image yet (newly added row, or a
+                                            // nullable column like event_layouts.image).
+                                            // Calling .includes on it threw
+                                            // "Cannot read properties of null" and took
+                                            // the whole page down to the Next.js error
+                                            // boundary, so the empty case has to render
+                                            // something inert instead.
+                                            __html:
+                                              typeof dataval[item.key] == "string" &&
+                                              dataval[item.key].includes("data:image")
+                                                ? "<img src='" +
+                                                  dataval[item.key] +
+                                                  "'/>"
+                                                : (dataval[item.key] ?? ""),
+                                          }}
+                                        ></div>
+
                                       <InputMain
                                         typeInput="base"
                                         label={"-"}

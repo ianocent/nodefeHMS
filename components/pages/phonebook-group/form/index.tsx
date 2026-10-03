@@ -32,9 +32,9 @@ const AddView = (props: AddviewProps) => {
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [dataval, setData] = useState<any>({});
   const [datavaled, setDataEd] = useState<any>({});
-  const [dataform, setdataform] = useState([
+  const [dataform, setdataform] = useState<any>([
     {
-      name: "Guest",
+      name: "Phone Book Group",
       data: [
         {
           label: "Active",
@@ -43,150 +43,17 @@ const AddView = (props: AddviewProps) => {
           cols: "col-span-12",
         },
         {
-          label: "Short Code",
-          name: "short_code",
+          label: "Name",
+          name: "name",
           type: "text",
           cols: "col-span-12",
         },
         {
-          label: "First Name",
-          name: "guest_name",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Last Name",
-          name: "last_name",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Title",
-          name: "title",
-          type: "select",
-          cols: "col-span-12",
-          options: [{}],
-        },
-        {
-          label: "NRIC",
-          name: "card_type",
-          type: "select",
-          cols: "col-span-4",
-          options: [{}],
-        },
-        {
-          label: "Insert ID",
-          name: "card_number",
-          type: "text",
-          cols: "col-span-8",
-        },
-        {
-          label: "Email",
-          name: "email",
-          type: "email",
-          cols: "col-span-12",
-        },
-        {
-          label: "ID Expiry",
-          name: "card_expiry",
-          type: "date",
-          cols: "col-span-12",
-        },
-        {
-          label: "Status",
-          name: "status",
-          type: "select",
-          cols: "col-span-12",
-          options: [{}],
-        },
-        {
-          label: "Gender",
-          name: "gender",
-          type: "select",
-          cols: "col-span-12",
-          options: [{}],
-        },
-        {
-          label: "Nationality",
-          name: "nationality_id",
-          type: "select",
-          cols: "col-span-12",
-          options: [{}],
-        },
-        {
-          label: "Birth of Date",
-          name: "birth_of_date",
-          type: "date",
-          cols: "col-span-12",
-        },
-        {
-          label: "Subscribe",
-          name: "is_subscribe",
-          type: "checkbox",
-          cols: "col-span-12",
-        },
-        {
-          label: "Guest Stay",
-          name: "stay",
-          type: "number",
-          cols: "col-span-12",
-        },
-        {
-          label: "Telephone",
-          name: "telp",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Mobile Phone",
-          name: "mobile_phone",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Fax",
-          name: "fax",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Address",
-          name: "address",
-          type: "textarea",
-          cols: "col-span-12",
-        },
-        {
-          label: "Region",
-          name: "region",
+          label: "Parent Group",
+          name: "parent_id",
           type: "select",
           cols: "col-span-12",
           options: [],
-        },
-        {
-          label: "City",
-          name: "city_id",
-          type: "select",
-          cols: "col-span-12",
-          options: [],
-        },
-        {
-          label: "Postal Code",
-          name: "postal_code",
-          type: "text",
-          cols: "col-span-12",
-        },
-        {
-          label: "Country",
-          name: "country_id",
-          type: "select",
-          cols: "col-span-12",
-          options: [],
-        },
-        {
-          label: "Car Registration Number",
-          name: "car_reg_number",
-          type: "text",
-          cols: "col-span-12",
         },
       ],
     },
@@ -282,16 +149,24 @@ const AddView = (props: AddviewProps) => {
       );
 
       setDataEd(datauser?.data);
-      let dataInput = [...dataform];
-      dataInput[0].data[4].options = datauser?.master?.titles;
-      dataInput[0].data[5].options = datauser?.master?.nrics;
-      dataInput[0].data[9].options = datauser?.master?.statusGuest;
-      dataInput[0].data[10].options = datauser?.master?.genders;
-      dataInput[0].data[11].options = datauser?.master?.countries;
-      dataInput[0].data[19].options = datauser?.master?.regions;
-      dataInput[0].data[20].options = datauser?.master?.cities;
-      dataInput[0].data[22].options = datauser?.master?.countries;
-      setdataform([...dataInput]);
+
+      // Parent Group only applies to level 2 and 3 (the backend validates it as
+      // required there), and its options come from the level above. A group
+      // saved without `group` set is invisible in every tab, so the form and
+      // the list have to agree on which level this page is.
+      const parentOptions = (datauser?.master?.parent_groups ?? []).map(
+        (row: any) => ({ value: row.id, label: row.name })
+      );
+      const dataInput = [...dataform];
+      dataInput[0].data = dataInput[0].data
+        .filter((row: any) => groupNo > 1 || row.name !== "parent_id")
+        .map((row: any) =>
+          row.name === "parent_id" ? { ...row, options: parentOptions } : row
+        );
+      if (groupNo === 1) {
+        delete dataval.parent_id;
+      }
+      setdataform(dataInput);
 
       return;
     } catch (error) {
