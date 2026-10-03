@@ -8,6 +8,11 @@ import SeoRoom from "../../components/pages/seo-room";
 import RoomPax from "../../components/pages/room-pax";
 import Cancellationrule from "../../components/pages/cancellation-rule";
 import CancellationruleDate from "../../components/pages/cancellation-rule-date";
+import LifestyleFacility from "../../components/pages/lifestyle-facility";
+import LifestyleTerm from "../../components/pages/lifestyle-terms";
+import LoyaltyReward from "../../components/pages/loyalty-reward";
+import RewardRedemption from "../../components/pages/reward-redemption";
+import GuestPointTransaction from "../../components/pages/guest-point-transaction";
 
 const ContentPage = () => {
   const [path, setpath] = useState("");
@@ -46,6 +51,16 @@ const ContentPage = () => {
       return <CancellationruleDate />;
     } else if (path == "cancelation-rule") {
       return <Cancellationrule />;
+    } else if (path == "lifestyle-facility") {
+      return <LifestyleFacility />;
+    } else if (path == "lifestyle-terms") {
+      return <LifestyleTerm />;
+    } else if (path == "loyalty-reward") {
+      return <LoyaltyReward />;
+    } else if (path == "reward-redemption") {
+      return <RewardRedemption />;
+    } else if (path == "guest-point-transaction") {
+      return <GuestPointTransaction />;
     } else {
       return <div></div>;
     }

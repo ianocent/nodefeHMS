@@ -191,7 +191,10 @@ const AddView = (props: AddviewProps) => {
         urisave,
         mth,
         formData,
-        true,
+        // Multipart upload -> the API answers AES-encrypted text/plain, so this must
+        // stay false; true makes FetchDataDocument JSON.parse the ciphertext and the
+        // save dies with "Failed to connect to server".
+        false,
         datalocal?.data?.access_token,
         router,
         ""

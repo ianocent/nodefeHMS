@@ -160,11 +160,15 @@ const AddView = (props: AddviewProps) => {
       const transformedData = transformData(dataval);
 
       const formData = new FormData();
-      for (const key in dataval) {
-        if (key === "image" && dataval[key] instanceof File) {
-          formData.append("image", dataval[key]);
-        } else {
-          formData.append(key, dataval[key]);
+      // `transformedData` unwraps the {value,label} objects the select components
+      // hand back (e.g. status). Iterating `dataval` instead sent the literal string
+      // "[object Object]" for every select field, which the backend stored verbatim.
+      for (const key in transformedData) {
+        const value = transformedData[key];
+        if (key === "image" && value instanceof File) {
+          formData.append("image", value);
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value as any);
         }
       }
 
@@ -178,7 +182,12 @@ const AddView = (props: AddviewProps) => {
         urisave,
         mth,
         formData,
-        true,
+        // Multipart upload -> the API answers AES-encrypted text/plain, so
+        // response.text() + GetDecrypt is required. Passing true made FetchDataDocument
+        // call response.json() on the ciphertext, which threw
+        // `Unexpected token 'b', "b353cbd1b0"...` and surfaced as
+        // "Failed to connect to server".
+        false,
         datalocal?.data?.access_token,
         router,
         ""
