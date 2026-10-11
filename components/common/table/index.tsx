@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { env } from "../../../next.config";
 import favicon from "../../../public/favicon.ico";
 import ListViewModel from "../../pages/user/list/ListPostViewModel";
 import { useRouter } from "next/router";
@@ -190,6 +191,17 @@ const TableView = (props: TableViewProps) => {
                               typeof row[item.key] == "number"
                                 ? item?.type == "date"
                                   ? GFormatDate(row[item.key])
+                                  : item?.type == "fileimage"
+                                  ? (
+                                    row[item.key] ? (
+                                      <img 
+                                        src={typeof row[item.key] === 'string' && row[item.key].startsWith('/storage') ? env.uriApi.replace('/api', '') + row[item.key] : row[item.key]} 
+                                        className="h-10 object-contain" 
+                                        alt="img"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/apps/cross.png'; }}
+                                      />
+                                    ) : '-'
+                                  )
                                   : (item?.is_button_logout 
                                     ? 
                                     <button

@@ -5,6 +5,7 @@ import Seo from "../../../components/common/seo";
 import TableView from "../../../components/common/table-edit";
 import AddPage from "./form";
 import { GetQueryStr } from "../../helper";
+import { useRouter } from "next/router";
 
 const ListView = () => {
   const GLOBALURI = "/cms/room-type";
@@ -12,16 +13,23 @@ const ListView = () => {
   const [parentid, setparentid] = useState("0");
   const [add, setadd] = useState("0");
   const [view, setview] = useState("0");
+  const router = useRouter();
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const parent = urlParams.get("parent");
-    const add = urlParams.get("add");
-    const view = urlParams.get("view");
+    const addParam = urlParams.get("add");
+    const viewParam = urlParams.get("view");
+    const dataParam = urlParams.get("data");
+
+    if (addParam === "1" && dataParam && parent !== "48") {
+      router.replace(`/master-setup/room-type/main?parent=48&add=1&data=${dataParam}&module=room-type-main`);
+    }
+
     setparentid(parent);
-    setadd(add);
-    setview(view);
-    // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+    setadd(addParam);
+    setview(viewParam);
+  }, [router.asPath]);
+
   function RouteInit() {
     let Lastpath = window.location.pathname.split("/").pop();
     if (GetQueryStr("add") == "1") {

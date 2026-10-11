@@ -29,6 +29,17 @@ const SidebarMobile = () => {
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [menuLoaded, setMenuLoaded] = useState(false);
 
+  // Same resolution as the desktop sidebar: an API-relative path gets `uriApi`
+  // prefixed, an absolute URL or data-URI is used as-is (prefixing those yields
+  // "http://host:3001http://host:3001/..." and the logo disappears).
+  const propertyLogoSrc = (() => {
+    const v = String(datalocal?.image || datalocal?.imgProperty || "");
+    if (!v) return "";
+    if (/^(https?:)?\/\//i.test(v) || /^data:/i.test(v)) return v;
+    const base = String(process.env.uriApi || "");
+    return `${base}${v.startsWith("/") ? "" : "/"}${v}`;
+  })();
+
   const checkScreenSize = () => {
     const mobile = window.innerWidth <= 1024;
     setIsMobile(prev => (prev === mobile ? prev : mobile));
@@ -225,7 +236,7 @@ const SidebarMobile = () => {
 
             <div className="p-3 border-t border-white/10 shrink-0">
               <img
-                src={`${process.env.uriApi || ""}${datalocal?.imgProperty || datalocal?.image || ""}`}
+                src={propertyLogoSrc}
                 className="w-full h-12 object-contain bg-white/30 rounded-lg"
                 alt="property logo"
               />

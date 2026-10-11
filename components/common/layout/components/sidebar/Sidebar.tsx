@@ -28,7 +28,19 @@ const Sidebar = (props: sidebarprops) => {
   const dispatch = useDispatch();
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
-  const  imageProp = datalocal?.image || datalocal?.imgProperty;
+  const imageProp = datalocal?.image || datalocal?.imgProperty;
+  // `image` is the shift-start payload value and `imgProperty` the choose-property
+  // one; both are meant to be a path relative to the API host. Older payloads
+  // carried an absolute URL, and prefixing uriApi onto that produced
+  // "http://host:3001http://host:3001/..." — a broken logo, which is what the
+  // sidebar showed right after Start Shift.
+  const imageSrc = (() => {
+    const v = String(imageProp ?? "");
+    if (!v) return "";
+    if (/^(https?:)?\/\//i.test(v) || /^data:/i.test(v)) return v;
+    const base = String(process.env.uriApi || "");
+    return `${base}${v.startsWith("/") ? "" : "/"}${v}`;
+  })();
   const [datamenus, setdatamenu] = useState<any>([]);
   // const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
@@ -358,7 +370,8 @@ const Sidebar = (props: sidebarprops) => {
             style={{ width: !hide ? '55px' : '15rem' }}
           >
             <img
-              src={`${process.env.uriApi || ""}${imageProp || ""}`}
+              src={imageSrc}
+              alt="property logo"
               className="w-full h-16 object-contain bg-white/30 rounded-lg hover:bg-white/75"
             />
           </div>

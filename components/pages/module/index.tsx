@@ -668,7 +668,13 @@ const [showPullModal, setShowPullModal] = useState(false);
               </button>
             </div>
           )}
-          {initCreateUpdate?.form && (
+          {/*
+            Rendered whenever the create/edit call succeeded, not only when a `form`
+            key is present. `initCreateUpdate?.form &&` silently swallowed the whole
+            form for every endpoint that answers without one, which is how
+            /module/content-room ended up with no fields at all on add and edit.
+          */}
+          {initCreateUpdate && (
             <>
               <ModuleAdd data={initCreateUpdate} />
             </>

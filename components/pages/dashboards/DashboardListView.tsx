@@ -20,6 +20,7 @@ import { IconHome } from "../../common/icon/SidebarIcon";
 import MapBase from "../../common/map/MapBase";
 import { AnyAaaaRecord } from "dns";
 import { get } from "http";
+import { BookingEngineLauncher } from "../../common/BookingEngineLauncher";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -721,8 +722,30 @@ const DashboardListView = () => {
       )}
       {/* <div className="ml-2 md:ml-[10px] px-2 md:px-0 overflow-x-hidden"> */}
       <div className="px-2 md:px-4 overflow-x-hidden">
-        <div className="font-bold text-md uppercase mb-2.5 flex gap-2">
-          <IconHome/>{property ? property?.name : ""}{" "}
+        {/*
+          Property name on the left, Booking Engine hand-off pinned to the far right,
+          on ONE row. These were two separate blocks stacked vertically — the launcher
+          sat in its own `flex justify-end mb-4` above the title — which is where the
+          "gap atas bawah" came from. items-center makes both share a baseline band
+          regardless of how tall the launcher button is.
+        */}
+        <div className="mb-2.5 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-2 font-bold text-md uppercase">
+            <IconHome />
+            <span className="truncate">{property ? property?.name : ""}</span>
+          </div>
+          {/* Only when this property is published to the guest portal. Without the flag
+              the button led to /loyalty with this hotel absent from it, which reads as a
+              broken portal rather than as "not published". */}
+          {property?.is_booking_engine ? (
+            <div className="shrink-0">
+              <BookingEngineLauncher
+                variant="button"
+                title="Booking Engine"
+                subtitle="Open the guest portal"
+              />
+            </div>
+          ) : null}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-12 w-full gap-4 md:gap-6">
           {loading ? (

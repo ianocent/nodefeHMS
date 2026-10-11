@@ -152,7 +152,6 @@ const AddView = (props: AddviewProps) => {
           options: [{}],
           ismulti: true,
           isOneColumn: true,
-          isAll: false,
         },
         {
           isgroup: true,

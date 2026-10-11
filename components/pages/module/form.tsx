@@ -32,34 +32,34 @@ const ModuleAddPage = (props: AddProps) => {
     replaceVal = "none",
     options = false
   ) => {
-    let tempForm = [...dataForm];
+    // Deep-clone before editing. The previous version only copied the OUTER array and
+    // then mutated `tempForm[i].step[j].input[k]` in place — i.e. it mutated the very
+    // objects React was holding as state. Typing updated the DOM because the input is
+    // uncontrolled-by-nature, but the saved payload could lag one keystroke behind and
+    // sibling fields bound to the same object never re-rendered.
+    const tempForm = structuredClone(dataForm ?? []);
+
+    const assign = (form: any[], listIdx: number, value: any) => {
+      form[listIdx].step[curStep].input[curInput].value = value;
+    };
 
     if (allLang) {
-      dataForm?.forEach((item, index) => {
-        tempForm[index].step[curStep].input[curInput].value = val;
-      });
+      tempForm.forEach((_, index) => assign(tempForm, index, val));
     } else {
-      tempForm[curList].step[curStep].input[curInput].value = val;
+      assign(tempForm, curList, val);
     }
-    target?.forEach((item, index) => {
+    target?.forEach((item) => {
       let valTarget = val;
-
-      if (replaceVal == "SpaceToStrip") {
+      if (replaceVal == "SpaceToStrip" && typeof val === "string") {
         valTarget = val.replaceAll(" ", "-");
       }
-      if (options) {
-        // console.log("vasl", val.triggerValue[index]);
-        valTarget = val.triggerValue[index];
+      if (options && val?.triggerValue) {
+        valTarget = val.triggerValue[item];
       }
-      // console.log("name", tempForm[curList].step[curStep].input[item].name);
-      // console.log("val", tempForm[curList].step[curStep].input[item].value);
-
       if (allLang) {
-        dataForm?.forEach((itm, i) => {
-          tempForm[i].step[curStep].input[item].value = valTarget;
-        });
+        tempForm.forEach((_, index) => assign(tempForm, index, valTarget));
       } else {
-        tempForm[curList].step[curStep].input[item].value = valTarget;
+        assign(tempForm, curList, valTarget);
       }
     });
     setDataForm(tempForm);
@@ -118,6 +118,20 @@ const ModuleAddPage = (props: AddProps) => {
       console.log(error);
     }
   };
+  // `props.data?.form?.list` was seeded once at mount. The parent refetches the
+  // create/edit payload whenever the query string changes, but this state was never
+  // resynced, so navigating from one record to another kept rendering the PREVIOUS
+  // record's inputs — which reads as "some fields refuse to accept input" because the
+  // value on screen is not the value being saved. Re-seed whenever the envelope
+  // identity changes.
+  useEffect(() => {
+    const next = props.data?.form?.list;
+    if (!next) return;
+    setDataForm(next);
+    setActiveList(0);
+    setActiveStep(0);
+  }, [props.data]);
+
   useEffect(() => {
     if (GetQueryStr("step")) {
       dataForm[activeList]?.step?.map((rw, i) => {
@@ -213,10 +227,10 @@ const ModuleAddPage = (props: AddProps) => {
                 ))}
               </ul>
               {/* form */}
-              <div className="grid grid-cols-12 h-fit gap-4 ml-2 mb-4 mt-4 mr-2">
-                {dataForm[activeList]?.step[activeStep]?.input?.map((rw, i) => (
-                  <>
-                    <div key={rw?.uri} className={rw?.col ?? "col-span-12"}>
+              {dataForm?.[activeList]?.step?.[activeStep]?.input?.length ? (
+                <div className="grid grid-cols-12 h-fit gap-4 ml-2 mb-4 mt-4 mr-2">
+                  {dataForm[activeList].step[activeStep].input.map((rw: any, i: number) => (
+                    <div key={rw?.uri ?? rw?.name ?? i} className={rw?.col ?? "col-span-12"}>
                       {(rw?.type == "text" ||
                         rw?.type == "number" ||
                         rw?.type == "autocomplete" ||
@@ -628,35 +642,30 @@ const ModuleAddPage = (props: AddProps) => {
                         </div>
                       )}
                     </div>
-                  </>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-6 py-10 text-center text-sm text-gray-500">
+                  {(() => {
+                    const model = (window.location.pathname.split("/").pop() ?? "")
+                      .replaceAll("-", " ")
+                      .replace(/\b\w/g, (c: string) => c.toUpperCase());
+                    return `This form has no editable fields configured (${model}). Use the table below to add a row.`;
+                  })()}
+                </div>
+              )}
             </fieldset>
           </div>
         </div>
-        <div className="fixed w-full bg-white py-2 px-4 bottom-0 left-0 z-30">
-          <div className="lg:ms-[250px] flex justify-end px-4 gap-4 ">
-            {activeStep == dataForm[activeList]?.step?.length - 1 ? (
-              <>
-                <ButtonSubmit
-                  onCreate={() => {
-                    setActiveStep(activeStep - 1);
-                  }}
-                  loading={loading}
-                  label="Prev"
-                />
-                <ButtonSubmit
-                  onCreate={() => {
-                    setloading(true);
-                    onSaveData();
-                  }}
-                  loading={loading}
-                  label="Save Change"
-                />
-              </>
-            ) : (
-              <>
-                {activeStep > 0 && (
+        {/* Hidden while there is nothing to submit. The fixed footer with an empty
+            step list rendered a dead "Prev" button and a "Next" that walked past the
+            last step, which is the "gap atas bawah" seen on pages whose form never
+            loaded. */}
+        {dataForm?.[activeList]?.step?.[activeStep]?.input?.length ? (
+          <div className="fixed w-full bg-white py-2 px-4 bottom-0 left-0 z-30">
+            <div className="lg:ms-[250px] flex justify-end px-4 gap-4 ">
+              {activeStep == dataForm[activeList]?.step?.length - 1 ? (
+                <>
                   <ButtonSubmit
                     onCreate={() => {
                       setActiveStep(activeStep - 1);
@@ -664,18 +673,38 @@ const ModuleAddPage = (props: AddProps) => {
                     loading={loading}
                     label="Prev"
                   />
-                )}
-                <ButtonSubmit
-                  onCreate={() => {
-                    setActiveStep(activeStep + 1);
-                  }}
-                  loading={loading}
-                  label="Next"
-                />
-              </>
-            )}
+                  <ButtonSubmit
+                    onCreate={() => {
+                      setloading(true);
+                      onSaveData();
+                    }}
+                    loading={loading}
+                    label="Save Change"
+                  />
+                </>
+              ) : (
+                <>
+                  {activeStep > 0 && (
+                    <ButtonSubmit
+                      onCreate={() => {
+                        setActiveStep(activeStep - 1);
+                      }}
+                      loading={loading}
+                      label="Prev"
+                    />
+                  )}
+                  <ButtonSubmit
+                    onCreate={() => {
+                      setActiveStep(activeStep + 1);
+                    }}
+                    loading={loading}
+                    label="Next"
+                  />
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </>
   );

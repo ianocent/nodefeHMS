@@ -11,7 +11,7 @@ interface AddviewProps {
   isview?: boolean;
 }
 
-const GLOBALURI = "/cms/content/lifestyle-terms";
+const GLOBALURI = "/cms/content/loyalty-facility";
 
 const AddView = (props: AddviewProps) => {
   const { isview = false } = props;
@@ -23,16 +23,15 @@ const AddView = (props: AddviewProps) => {
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
   const [dataoption, setdataoption] = useState<any>({});
   const [data, setData] = useState<any>({
-    type: "",
-    title: "",
-    content: "",
-    language: "id",
+    facility_key: "",
+    label: "",
+    icon: "",
     sort: 0,
     status: 1,
   });
   const [idusr, setidusr] = useState("0");
 
-  const { type, title, content, language, sort, status } = data;
+  const { facility_key, label, icon, sort, status } = data;
 
   const changeHandler = (e: any, b?: boolean, name?: string) => {
     if (!b) {
@@ -56,10 +55,9 @@ const AddView = (props: AddviewProps) => {
         ""
       );
       setData({
-        type: datauser?.data?.type ?? "",
-        title: datauser?.data?.title ?? "",
-        content: datauser?.data?.content ?? "",
-        language: datauser?.data?.language ?? "id",
+        facility_key: datauser?.data?.facility_key ?? "",
+        label: datauser?.data?.label ?? "",
+        icon: datauser?.data?.icon ?? "",
         sort: datauser?.data?.sort ?? 0,
         status: datauser?.data?.status ?? 1,
       });
@@ -75,10 +73,9 @@ const AddView = (props: AddviewProps) => {
       let mth = "POST";
 
       const raw = JSON.stringify({
-        type: type?.value ?? type,
-        title: title,
-        content: content,
-        language: language,
+        facility_key: facility_key?.value ?? facility_key,
+        label: label,
+        icon: icon,
         sort: sort,
         status: status?.value ?? status,
       });
@@ -139,7 +136,7 @@ const AddView = (props: AddviewProps) => {
           <div className="col-span-4">
             <h2 className="text-lg font-bold">
               {(idusr == "0" ? "Create" : isview ? "View" : "Edit") +
-                " Lifestyle Term"}
+                " Loyalty Facility"}
             </h2>
           </div>
           <div className="col-span-8 h-fit"></div>
@@ -151,12 +148,12 @@ const AddView = (props: AddviewProps) => {
               <InputMain
                 typeInput={"select-multi"}
                 error={false}
-                label={"Type"}
+                label={"Facility Key"}
                 required={true}
-                options={dataoption?.master?.term_types}
-                onChangeSel={(e) => changeHandler(e, true, "type")}
+                options={dataoption?.master?.facility_keys}
+                onChangeSel={(e) => changeHandler(e, true, "facility_key")}
                 restSelect={{}}
-                valueSel={type}
+                valueSel={facility_key}
                 isMulti={false}
               />
             </div>
@@ -164,12 +161,12 @@ const AddView = (props: AddviewProps) => {
               <InputMain
                 typeInput={"base"}
                 error={false}
-                label={"Title"}
+                label={"Label"}
                 required={false}
                 rest={{
-                  name: "title",
-                  placeholder: "Input Title",
-                  value: title,
+                  name: "label",
+                  placeholder: "Input Label",
+                  value: label,
                   type: "text",
                   onChange: (e) => changeHandler(e),
                 }}
@@ -179,33 +176,18 @@ const AddView = (props: AddviewProps) => {
               <InputMain
                 typeInput={"base"}
                 error={false}
-                label={"Content"}
+                label={"Icon"}
                 required={false}
                 rest={{
-                  name: "content",
-                  placeholder: "Input Content",
-                  value: content,
-                  type: "textarea",
-                  onChange: (e) => changeHandler(e),
-                }}
-              />
-            </div>
-            <div className={"col-span-6"}>
-              <InputMain
-                typeInput={"base"}
-                error={false}
-                label={"Language"}
-                required={false}
-                rest={{
-                  name: "language",
-                  placeholder: "id",
-                  value: language,
+                  name: "icon",
+                  placeholder: "e.g. SwimmingPool",
+                  value: icon,
                   type: "text",
                   onChange: (e) => changeHandler(e),
                 }}
               />
             </div>
-            <div className={"col-span-6"}>
+            <div className={"col-span-12"}>
               <InputMain
                 typeInput={"base"}
                 error={false}

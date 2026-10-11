@@ -284,7 +284,7 @@ const TableReport: React.FC<TableReportProps> = ({
         response = await fetch(
           `${env.uriApi}${item.url}?date=${formatDate(
             dateVal
-          )}&typeOps=view&start_date=${formatDate(
+          )}&typeOps=pdf&start_date=${formatDate(
             startDateVal
           )}&kurs=${kursVal}&end_date=${formatDate(endDateVal)}${
             staffVal?.value ? `&staff_id=${staffVal?.value}` : ""
@@ -363,21 +363,46 @@ const TableReport: React.FC<TableReportProps> = ({
     try {
       for (const item of zipData || []) {
         try {
-          const response = await fetch(env.uriApi + item.url, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${datalocal?.data?.access_token}`,
-            },
-          });
+          // `typeOps` was missing here, so the backend answered JSON and the blob was
+          // zipped under a .pdf name — the archive held JSON, not reports. `view` returns
+          // the Excel generator, matching the single-report Download button.
+          const response = await fetch(
+            `${env.uriApi}${item.url}?typeOps=view&date=${formatDate(
+              date
+            )}&start_date=${formatDate(
+              startDate
+            )}&end_date=${formatDate(
+              endDate
+            )}${
+              staff?.value ? `&staff_id=${staff.value}` : ""
+            }`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${datalocal?.data?.access_token}`,
+              },
+            }
+          );
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ${item.batch_name}`);
           }
 
+          const contentType = String(response.headers.get("Content-Type") || "");
+          const isExcel =
+            contentType.includes("spreadsheetml") ||
+            contentType.includes("ms-excel") ||
+            contentType.includes("application/octet-stream");
+          if (!isExcel && !contentType.includes("application/pdf")) {
+            throw new Error(
+              `${item.batch_name} returned ${contentType || "no content-type"}, expected a file`
+            );
+          }
+
           const blob = await response.blob();
           const baseName =
             (item.url || "").split("/").filter(Boolean).pop() || item.batch_name || "report";
-          zip.file(`${baseName}.pdf`, blob);
+          zip.file(`${baseName}.xlsx`, blob);
         } catch (error) {
           console.error(`Failed to download ${item.batch_name}:`, error);
           failedDownloads.push(item.batch_name);
@@ -419,10 +444,12 @@ const TableReport: React.FC<TableReportProps> = ({
       const pdfBlobs = await Promise.all(
         zipData.map(async (item) => {
           try {
+            // `typeOps=view` returned Excel, which an <iframe> cannot display, so the
+            // batch print window rendered blank. `pdf` returns the PDF renderer.
             const url =
               env.uriApi +
               item.url +
-              `?typeOps=view` +
+              `?typeOps=pdf` +
               `&date=${formatDate(date)}` +
               `&start_date=${formatDate(startDate)}` +
               `&end_date=${formatDate(endDate)}` +
@@ -437,6 +464,13 @@ const TableReport: React.FC<TableReportProps> = ({
 
             if (!response.ok) {
               throw new Error(`Failed to fetch ${item.batch_name}`);
+            }
+
+            const contentType = String(response.headers.get("Content-Type") || "");
+            if (!contentType.includes("application/pdf")) {
+              throw new Error(
+                `${item.batch_name} returned ${contentType || "no content-type"}, expected a PDF`
+              );
             }
 
             return { name: item.batch_name, blob: await response.blob() };

@@ -3,9 +3,9 @@ import Seo from "../../common/seo";
 import TableView from "../../common/table-edit";
 import AddPage from "./form";
 
-const LifestyleTerm = () => {
-  const GLOBALURI = "/cms/content/lifestyle-terms";
-  const groups = "lifestyle-terms";
+const LoyaltyFacility = () => {
+  const GLOBALURI = "/cms/content/loyalty-facility";
+  const groups = "loyalty-facility";
   const [add, setadd] = useState("0");
   const [view, setview] = useState("0");
   useEffect(() => {
@@ -36,4 +36,4 @@ const LifestyleTerm = () => {
   );
 };
 
-export default LifestyleTerm;
+export default LoyaltyFacility;

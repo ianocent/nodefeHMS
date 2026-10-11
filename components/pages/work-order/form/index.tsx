@@ -267,21 +267,20 @@ const AddView = (props: AddviewProps) => {
       );
 
       if (saveprocess?.code == "200") {
-        toast.success(saveprocess?.message || "Work Order berhasil disimpan", {
-          position: "top-center",
-        });
-
-        // Refresh data
-        const urlParams = new URLSearchParams(window.location.search);
-        const idreq = urlParams.get("data");
-        
-        if (idreq) {
-          GetDetailUser(idreq);   // refresh form
-        } else {
-          // Setelah create, reset form atau redirect
-          setData({ date: datalocal?.data?.bussinesDate });
-          GetDetailUser(0);
+        if (!isPopup) {
+          const [, queryString] = window.location.href.split("?");
+          const q = new URLSearchParams(queryString || "");
+          q.delete("data");
+          q.delete("add");
+          q.delete("view");
+          
+          router.replace({
+            pathname: window.location.pathname,
+            query: Object.fromEntries(q.entries()),
+          });
         }
+      } else {
+        toast.error(saveprocess?.message || "Gagal menyimpan Work Order");
       }
     } catch (error) {
       console.log("error", error);
@@ -665,7 +664,7 @@ const AddView = (props: AddviewProps) => {
                 {images.map((img, idx) => {
                   const src = img.startsWith('data:image')
                   ? img
-                  : `${env.uriApi}/storage${img}`;
+                  : `${env.uriApi.replace('/api', '')}/storage${img.startsWith('/') ? '' : '/'}${img}`;
 
                   return (
                     <div
@@ -844,13 +843,13 @@ const AddView = (props: AddviewProps) => {
               type="button"
               onClick={() => {
                 const currentIdx = images.findIndex((img) => {
-                  const src = img.startsWith('data:image') ? img : `{suriApi}/storage${img}`;
+                  const src = img.startsWith('data:image') ? img : `${env.uriApi.replace('/api', '')}/storage${img.startsWith('/') ? '' : '/'}${img}`;
                   return src === lightbox;
                 });
                 const prevIdx = (currentIdx - 1 + images.length) % images.length;
                 const prev = images[prevIdx];
                 // setLightbox(prev.startsWith('data:image') ? prev : `{suriApi}/storage${prev}`);
-                setLightbox(prev.startsWith('data:image') ? prev : `${env.uriApi}/storage${prev}`);
+                setLightbox(prev.startsWith('data:image') ? prev : `${env.uriApi.replace('/api', '')}/storage${prev.startsWith('/') ? '' : '/'}${prev}`);
               }}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-10 h-10 flex items-center justify-center"
             >
@@ -863,13 +862,13 @@ const AddView = (props: AddviewProps) => {
               type="button"
               onClick={() => {
                 const currentIdx = images.findIndex((img) => {
-                  const src = img.startsWith('data:image') ? img : `{suriApi}/storage${img}`;
+                  const src = img.startsWith('data:image') ? img : `${env.uriApi.replace('/api', '')}/storage${img.startsWith('/') ? '' : '/'}${img}`;
                   return src === lightbox;
                 });
                 const nextIdx = (currentIdx + 1) % images.length;
                 const next = images[nextIdx];
                 // setLightbox(next.startsWith('data:image') ? next : `{suriApi}/storage${next}`);
-                setLightbox(next.startsWith('data:image') ? next : `${env.uriApi}/storage${next}`); 
+                setLightbox(next.startsWith('data:image') ? next : `${env.uriApi.replace('/api', '')}/storage${next.startsWith('/') ? '' : '/'}${next}`); 
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-10 h-10 flex items-center justify-center"
             >
@@ -881,7 +880,7 @@ const AddView = (props: AddviewProps) => {
             {/* Counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
               {images.findIndex((img) => {
-                const src = img.startsWith('data:image') ? img : `{suriApi}/storage${img}`;
+                const src = img.startsWith('data:image') ? img : `${env.uriApi.replace('/api', '')}/storage${img.startsWith('/') ? '' : '/'}${img}`;
                 return src === lightbox;
               }) + 1} / {images.length}
             </div>

@@ -8,8 +8,8 @@ import SeoRoom from "../../components/pages/seo-room";
 import RoomPax from "../../components/pages/room-pax";
 import Cancellationrule from "../../components/pages/cancellation-rule";
 import CancellationruleDate from "../../components/pages/cancellation-rule-date";
-import LifestyleFacility from "../../components/pages/lifestyle-facility";
-import LifestyleTerm from "../../components/pages/lifestyle-terms";
+import LoyaltyFacility from "../../components/pages/loyalty-facility";
+import LoyaltyTerm from "../../components/pages/loyalty-terms";
 import LoyaltyReward from "../../components/pages/loyalty-reward";
 import RewardRedemption from "../../components/pages/reward-redemption";
 import GuestPointTransaction from "../../components/pages/guest-point-transaction";
@@ -51,10 +51,10 @@ const ContentPage = () => {
       return <CancellationruleDate />;
     } else if (path == "cancelation-rule") {
       return <Cancellationrule />;
-    } else if (path == "lifestyle-facility") {
-      return <LifestyleFacility />;
-    } else if (path == "lifestyle-terms") {
-      return <LifestyleTerm />;
+    } else if (path == "loyalty-facility") {
+      return <LoyaltyFacility />;
+    } else if (path == "loyalty-terms") {
+      return <LoyaltyTerm />;
     } else if (path == "loyalty-reward") {
       return <LoyaltyReward />;
     } else if (path == "reward-redemption") {

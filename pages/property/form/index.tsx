@@ -42,6 +42,7 @@ const AddView = () => {
     country_id: {},
     room_count: "0",
     is_tax: {},
+    is_booking_engine: {},
     logo: "",
     ip_doorlock: "",
     contract_expired: "",
@@ -92,6 +93,7 @@ const AddView = () => {
     country_id,
     logo,
     is_tax,
+    is_booking_engine,
     ip_doorlock,
     contract_expired,
     join_date,
@@ -176,6 +178,7 @@ const AddView = () => {
         region_id: datauser?.data?.relation?.regions,
         country_id: datauser?.data?.relation?.countries,
         is_tax: datauser?.data?.is_tax,
+        is_booking_engine: datauser?.data?.is_booking_engine,
         logo: datauser?.data?.logo,
         ip_doorlock: datauser?.data?.ip_doorlock,
         market_segment_1: datauser?.data?.market_segment_1,
@@ -231,6 +234,11 @@ const AddView = () => {
         region: region_id?.value,
         country_id: country_id?.value,
         is_tax: is_tax?.value,
+        // Absent on a form that predates the field, so omit the key rather than send
+        // undefined — the backend treats "key present" as an explicit choice.
+        ...(is_booking_engine?.value !== undefined
+          ? { is_booking_engine: Number(!!is_booking_engine.value) }
+          : {}),
         logo: logo,
         ip_doorlock: ip_doorlock,
         market_segment_1: market_segment_1?.value,
@@ -628,6 +636,30 @@ const AddView = () => {
                     valueSel={is_tax}
                     isMulti={false}
                   />
+                </div>
+                {/* Publication switch, not a tax/accounting setting. Active puts the
+                    hotel in the guest portal's /loyalty list and shows the Booking Engine
+                    button on the HMS dashboard; Inactive takes both away without touching
+                    `status`, which would also remove the hotel from HMS itself. */}
+                <div className={"col-span-6"}>
+                  <InputMain
+                    typeInput={"select-multi"}
+                    error={false}
+                    label={"Booking Engine"}
+                    required={true}
+                    options={dataoption?.master?.statuses}
+                    onChangeSel={(e) => {
+                      changeHandler(e, true, "is_booking_engine");
+                    }}
+                    restSelect={{}}
+                    valueSel={is_booking_engine}
+                    isMulti={false}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {is_booking_engine?.value
+                      ? "Published to the guest portal. Guests can find this hotel at /loyalty."
+                      : "Hidden from the guest portal. Use Status to take the hotel out of HMS."}
+                  </p>
                 </div>
                 <div className={"col-span-6"}>
                   <InputMain

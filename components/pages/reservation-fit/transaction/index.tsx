@@ -117,13 +117,12 @@ const TrxPageView = (props: TrxProps) => {
   };
 
   const submitApproval = () => {
-    const id = approverId.trim();
     const pin = approverPin.trim();
-    if (!id || !pin) {
-      setApprovalError("Supervisor ID and PIN are both required.");
+    if (!pin) {
+      setApprovalError("PIN is required.");
       return;
     }
-    setApproval({ approved_by: id, approval_pin: pin });
+    setApproval({ approved_by: "self", approval_pin: pin });
     const action = approvalAction;
     setApprovalAction(null);
     if (action === "void") {
@@ -2911,30 +2910,21 @@ const TrxPageView = (props: TrxProps) => {
               </h1>
               <p className="text-sm text-gray-500 font-normal mt-1">
                 {approvalAction === "void"
-                  ? "A supervisor must authorize this void. It cannot be your own ID."
-                  : "A supervisor must authorize this refund. It cannot be your own ID."}
+                  ? "Please enter your Endshift PIN to authorize this void."
+                  : "Please enter your Endshift PIN to authorize this refund."}
               </p>
             </div>
             <div className="flex flex-col gap-3">
               <label className="text-xs text-gray-500">
-                Supervisor ID
+                Endshift PIN
                 <input
                   autoFocus
-                  type="text"
-                  value={approverId}
-                  onChange={(e) => setApproverId(e.target.value)}
-                  placeholder="Supervisor user id"
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="text-xs text-gray-500">
-                Supervisor PIN
-                <input
                   type="password"
                   value={approverPin}
                   onChange={(e) => setApproverPin(e.target.value)}
                   placeholder="Approval PIN"
                   className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                  autoComplete="new-password"
                 />
               </label>
               {approvalError && (

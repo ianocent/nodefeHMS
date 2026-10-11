@@ -502,6 +502,10 @@ const AddView = (props: AddviewProps) => {
       arrCOl.push(obj);
     });
     objpost.reservation_list = arrCOl;
+    // `room_reservation_list` must stay as the room-git table payload (keyed by
+    // room type `id`). Overwriting it with the reservation rows broke the
+    // availability check ("Cannot convert undefined to a BigInt") and made the
+    // GIT create come back 422 "Room reservation list is required".
     objpost.type_reservation = isType;
     return objpost;
   };
@@ -1076,12 +1080,7 @@ const AddView = (props: AddviewProps) => {
         // console.log("coba,", event.target.className);
         if (event?.target?.className.length) {
           if (
-            event?.target?.className?.split(" ")[0] !=
-              "Select2__input-container" &&
-            event?.target?.className?.split(" ")[0] !=
-              "Select2__value-container" &&
-            event?.target?.className?.split(" ")[0] != "Select2__indicator" &&
-            event?.target?.className?.split(" ")[0] != "Select2__placeholder"
+            !String(event?.target?.className ?? "").includes("Select2__")
           ) {
             setactAuto("-1");
             setpopup(false);
@@ -1274,9 +1273,10 @@ const AddView = (props: AddviewProps) => {
                       isBtnAdd={false}
                       isPageing={false}
                       onDataval={(data) => {
+                        const list = Array.isArray(data) ? data : Object.values(data || {});
                         setData((dataval) => ({
                           ...dataval,
-                          ["room_reservation_list"]: data,
+                          ["room_reservation_list"]: list,
                         }));
                       }}
                     />

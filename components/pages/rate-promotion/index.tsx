@@ -138,9 +138,11 @@ const ListView = () => {
                       parent: new URLSearchParams(window.location.search).get(
                         "parent"
                       ),
+                      module: new URLSearchParams(window.location.search).get("module") ?? "",
                       data: new URLSearchParams(window.location.search).get(
                         "data"
                       ),
+                      add: new URLSearchParams(window.location.search).get("add") ?? "",
                       popup: popup ? "1" : "2",
                     },
                   });
@@ -185,9 +187,11 @@ const ListView = () => {
                       parent: new URLSearchParams(window.location.search).get(
                         "parent"
                       ),
+                      module: new URLSearchParams(window.location.search).get("module") ?? "",
                       data: new URLSearchParams(window.location.search).get(
                         "data"
                       ),
+                      add: new URLSearchParams(window.location.search).get("add") ?? "",
                       popup: popup ? "1" : "2",
                     },
                   });

@@ -14,7 +14,9 @@ const ListView = () => {
   // rate code detail briefly rendered the list (add still "0") before the effect ran.
   const [, queryString] = useRouter().asPath.split("?");
   const q = new URLSearchParams(queryString ?? "");
-  const add = q.get("add") ?? "0";
+  // Laravel/Frontend contract: `data` is the rate id for the detail form; `add` is a
+  // legacy alias used by some popups. Treat either as "open the rate code detail".
+  const add = q.get("add") ?? (q.get("data") ? "1" : "0");
   const view = q.get("view") ?? "0";
   function RouteInit() {
     if (add == "1") {

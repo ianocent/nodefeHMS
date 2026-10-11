@@ -122,12 +122,6 @@ const Reporting = () => {
     { batch_name: "room-occupancy-chart", url: "/cms/report/batch/sales-marketing/room-occupancy-chart" },
   ];
 
-  const dataBatchZip = dataAll;
-
-  const dataBatch = [
-    { batch_name: "Batch", url: "/cms/report/batch/download-reports-batch" },
-  ];
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const parent = urlParams.get("parent");
@@ -149,7 +143,7 @@ const Reporting = () => {
       return <ReportPermission />;
     } else if (path == "batch") {
       return (
-        <TableReport reportData={data} isBatch={true} dataZip={dataBatchZip} />
+        <TableReport reportData={data} isBatch={true} dataZip={dataAll} />
       );
     } else {
       if (data.length >= 0) {

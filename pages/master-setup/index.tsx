@@ -18,7 +18,7 @@ import TypePayment from "../../components/pages/type-payment/index";
 import { useRouter } from "next/router";
 import { GetPathUri } from "../../components/helper";
 import PosMatrixSales from "../../components/pages/pos-matrix-sales";
-import RoomTypeImage from "../../components/pages/room-type-image";
+import RoomTypeMedia from "../../components/pages/room-type-media";
 import AddPage from "../../components/pages/room-type/form";
 import StaahOtaMapping from "../../components/pages/staah-ota-mapping";
 import DynamicRate from "../dynamic-rate";
@@ -39,6 +39,10 @@ const MODULE_PATH_SEGMENTS: Record<string, string[]> = {
   "pos-matrix-sales": ["pos-matrix-sales", "pos-matrix-saless"],
   "room-type": ["room-type"],
   "room-type-main": ["main"],
+  // Menu 1099 (Image) and 1195 (Facility) are two visibility keys over one screen:
+  // components/pages/room-type-media reads ?kind= and swaps image vs facility.
+  "room-type-image": ["image"],
+  "room-type-facility": ["facility"],
   "country": ["country"],
   "city": ["city"],
   "room": ["room"],
@@ -95,8 +99,14 @@ const MasterPage = () => {
       return <CodeItem />;
     } else if (module == "code-post") {
       return <CodePost />;
-    } else if (lastPath == "image") {
-      return <RoomTypeImage />;
+    } else if (
+      module == "room-type-image" ||
+      module == "room-type-facility"
+    ) {
+      // `kind` is derived from the path rather than left to ?kind= so the URL that
+      // the menu row points at (/master-setup/room-type/image) renders the image
+      // screen even when the tab link carries no query string.
+      return <RoomTypeMedia kind={module === "room-type-facility" ? "facility" : "image"} />;
     } else if (module == "room-type") {
       return <RoomType />;
     } else if (module == "city") {

@@ -108,7 +108,7 @@ export function GetNextDay(dt1: string, next: number) {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dt1 ?? ""));
   if (m) {
     const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-    d.setDate(d.getDate() + next);
+    d.setDate(d.getDate() + Number(next));
     return formatDate(
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
     );
@@ -136,9 +136,6 @@ export function formatDate(date: string) {
 export function getEnv(key: string) {
   if (key == "domainapi") {
     return env.uriApi;
-  }
-  if (key == "domain") {
-    return "https://cmsbankofindia.dipstrategy.co.id/";
   }
   if (key == "token") {
     // Legacy hardcoded PAT removed — supply via NEXT_PUBLIC_PAT_TOKEN if ever needed
@@ -637,8 +634,8 @@ export function formatAmount(number: string | number) {
   dec = dec.replace(/[-!$%^&*()_+|~=`{}[:;<>?.@#\]]/g, "");
   return minus + "" + (num == 0 ? "0" : formatAmountNoDecimals(x1)) + dec;
 }
-export function NumberClear(cur: string) {
-  cur = cur.replaceAll(".", "").replaceAll(",", ".");
+export function NumberClear(cur: any) {
+  cur = String(cur ?? "").replaceAll(".", "").replaceAll(",", ".");
   return cur;
 }
 export function IntlNumberFormat(number: number) {

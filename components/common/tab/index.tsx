@@ -53,24 +53,28 @@ const Tabs = (props: tabsProps) => {
       if (datajson?.code == "200") {
         setdatatable(datajson);
 
-        datajson?.data?.map((row: any, index: number) => {
-          //console.log(row?.alias_url + "==" + window.location.pathname);
-          if (row?.alias_url == window.location.pathname) {
-            // console.log(row?.alias_url + "==" + window.location.pathname);
-            // console.log(row);
-            setchilds(row?.relation?.children);
-          }
-
-          if (getParent == row?.id) {
-            palcedat = row?.place;
-          }
-          row?.relation?.children?.map((col: any, i: number) => {
-            // console.log(col?.alias_url + "=child=" + window.location.pathname);
-            if (col?.alias_url == window.location.pathname) {
-              setchilds(row?.relation?.children);
+        let foundChilds: any = null;
+        const searchNodes = (nodes: any[], parentNodes: any[]) => {
+          nodes.forEach((n) => {
+            if (getParent == n.id) {
+              palcedat = n.place;
+            }
+            if (n.alias_url == window.location.pathname) {
+              foundChilds = parentNodes;
+            }
+            if (n.relation?.children) {
+              searchNodes(n.relation.children, n.relation.children);
             }
           });
-        });
+        };
+
+        searchNodes(datajson?.data || [], datajson?.data || []);
+
+        if (foundChilds) {
+          setchilds(foundChilds);
+        } else {
+          setchilds([]);
+        }
 
         if (palcedat == "table") {
           setshowMenuu(true);

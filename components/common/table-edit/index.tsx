@@ -959,7 +959,10 @@ const TableView = (props: TableViewProps) => {
           )}
           {filter}
           {filterProps && filterProps(datavalMulti)}
-          <div className="flex justify-end gap-2">
+          {/* Toolbar row: custom filters on the left, actions pinned right. `flex-wrap`
+              keeps the Add button reachable when the filter block is wide instead of
+              letting it push the button out of view. */}
+          <div className="flex flex-wrap items-start justify-end gap-2">
             {datatable?.permission?.add == 1 ? (
               <>
                 {isBtnAdd && (
@@ -1035,7 +1038,11 @@ const TableView = (props: TableViewProps) => {
                 </legend>
                 {searchActive ? (
                   <>
-                    <div className="sm:grid grid-cols-4 gap-2 mt-[20px]  mb-2 justify-end m-2 ">
+                    {/* 4 fixed columns forced every field onto its own row on a
+                        2-column table like content-room, pushing the Reset/Search
+                        pair below the fold. auto-fit with a max keeps it to 4 on a
+                        wide screen and degrades to 2/1 instead of always 4. */}
+                    <div className="grid gap-2 mt-[20px] mb-2 m-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                       <div className=" w-full">
                         <InputMain
                           typeInput="base"
@@ -1135,8 +1142,12 @@ const TableView = (props: TableViewProps) => {
                           </div>
                         ) : <React.Fragment key={row.key}></React.Fragment>;
                       })}
+                      {/* Reset + Search ride the last grid cell. `items-end` keeps them
+                          baseline-aligned with the inputs above; the stray `ml-2 mt-4`
+                          offset them down a row and is what made them look detached
+                          from the search fields. */}
                       <div className="flex items-end">
-                        <div className=" flex ml-2 h-[38px] mt-4 gap-4">
+                        <div className="flex w-full gap-4 lg:w-auto">
                           <ButtonSubmit
                             label="Reset"
                             onCreate={() => {
@@ -1195,16 +1206,29 @@ const TableView = (props: TableViewProps) => {
           {datatable?.table && !loadError ? (
             <>
               <>{insertHTML && insertHTML()}</>
+              {/*
+                Horizontal scroll is scoped to THIS div only. The wrapper above used
+                `overflow-hidden` plus `table-responsive` (a Bootstrap class that is
+                not defined in this project), so a wide table had nowhere to scroll
+                and the browser scrolled the whole document instead — which carried
+                the search fieldset and the Add button off-screen with it. That is the
+                "search sama button nya ke geser" report.
+
+                The toolbar (search + actions) sits OUTSIDE this div, so it keeps its
+                position no matter how wide the table gets, which is the behaviour
+                asked for. `max-h` + `overflow-auto` gives the table its own
+                vertical scroll for very long result sets instead of growing the page.
+              */}
               <div
                 className={
-                  "rounded-xl overflow-hidden shadow-md " +
+                  "rounded-xl shadow-md w-full overflow-x-auto " +
                   (overflow == true
-                    ? " w-full overflow-auto min-h-screen"
+                    ? " max-h-[calc(100vh-16rem)] overflow-y-auto"
                     : editActive != -1
-                    ? " h-screen table-responsive "
+                    ? " h-screen overflow-y-auto"
                     : add
-                    ? " h-screen table-responsive "
-                    : " table-responsive ")
+                    ? " h-screen overflow-y-auto"
+                    : " max-h-[calc(100vh-16rem)] overflow-y-auto")
                 }
               >
                 <table

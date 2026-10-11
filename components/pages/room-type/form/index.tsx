@@ -297,7 +297,7 @@ const AddPage = (props: AddviewProps) => {
                   setloading(true);
                   router.replace({
                     pathname: "master-setup/room-type/",
-                    query: { parent: parent },
+                    query: { parent: "1120" },
                     //module: { module: GetQueryStr("") },
                   });
                 }}

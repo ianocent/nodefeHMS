@@ -1796,12 +1796,7 @@ const AddView = (props: AddviewProps) => {
         // console.log("coba,", event.target.className);
         if (event?.target?.className.length) {
           if (
-            event?.target?.className?.split(" ")[0] !=
-              "Select2__input-container" &&
-            event?.target?.className?.split(" ")[0] !=
-              "Select2__value-container" &&
-            event?.target?.className?.split(" ")[0] != "Select2__indicator" &&
-            event?.target?.className?.split(" ")[0] != "Select2__placeholder"
+            !String(event?.target?.className ?? "").includes("Select2__")
           ) {
             setactAuto("-1");
             setpopup(false);
