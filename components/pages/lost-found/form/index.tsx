@@ -308,11 +308,17 @@ const AddView = (props: AddviewProps) => {
         ""
       );
 
-      setDataEd({
+      // `dataval` is what OnSave posts. It used to stay `{}` on edit, so the save
+      // payload carried nothing but the fields the user had just typed - the folio
+      // (and every other untouched value) was never re-sent, and a record whose
+      // folio had not been stored on create could not get one from the edit form.
+      const loaded = {
         ...datauser?.data,
         checkin: datauser?.reservation?.check_in_date,
         checkout: datauser?.reservation?.check_out_date,
-      });
+      };
+      setData(loaded);
+      setDataEd(loaded);
       let dataInput = [...dataform];
       dataInput[0].data[0].options = datauser?.master?.statusLost;
       dataInput[0].data[4].options = datauser?.master?.itemsStatus;

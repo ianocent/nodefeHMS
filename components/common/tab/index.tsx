@@ -53,28 +53,33 @@ const Tabs = (props: tabsProps) => {
       if (datajson?.code == "200") {
         setdatatable(datajson);
 
+        // Laravel / hms-frontend parity: the tab strip is the sibling list of the
+        // node whose OWN url matches the current path - checked on the top level
+        // rows and one level of children only.
+        //
+        // Do NOT walk the whole tree. Menu 71 "Room Configurator" and menu 35
+        // "Room Configurator" share the url /master-setup/room-configurator/
+        // room-configuration, and 35 sits one level deeper under 71. A deep walk
+        // finds 71 first (correct: Room Setting siblings) and then 35, which
+        // overwrites it with 71's own children - the strip then collapsed to
+        // "Room Configurator" + "In Room Equipment" instead of staying on the
+        // Room Setting tab row.
         let foundChilds: any = null;
-        const searchNodes = (nodes: any[], parentNodes: any[]) => {
-          nodes.forEach((n) => {
-            if (getParent == n.id) {
-              palcedat = n.place;
-            }
-            if (n.alias_url == window.location.pathname) {
-              foundChilds = parentNodes;
-            }
-            if (n.relation?.children) {
-              searchNodes(n.relation.children, n.relation.children);
+        datajson?.data?.forEach((row: any) => {
+          if (row?.alias_url == window.location.pathname) {
+            foundChilds = row?.relation?.children;
+          }
+          if (getParent == row?.id) {
+            palcedat = row?.place;
+          }
+          row?.relation?.children?.forEach((col: any) => {
+            if (col?.alias_url == window.location.pathname) {
+              foundChilds = row?.relation?.children;
             }
           });
-        };
+        });
 
-        searchNodes(datajson?.data || [], datajson?.data || []);
-
-        if (foundChilds) {
-          setchilds(foundChilds);
-        } else {
-          setchilds([]);
-        }
+        setchilds(foundChilds ?? []);
 
         if (palcedat == "table") {
           setshowMenuu(true);

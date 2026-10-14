@@ -24,7 +24,9 @@ import {
   GetQueryParam,
   GetQueryStr,
   GetSelisihDay,
-  removeItem
+  removeItem,
+  idPostValue,
+  isOutsidePopup,
 } from "../../../helper";
 import CompanyAdd from "../../company-profile/form/index";
 import GuestAdd from "../../guest/form/index";
@@ -34,6 +36,11 @@ const EditView = () => {
   const GLOBALURI = "/cms/reservation";
   const router = useRouter();
   const ref = useRef(null);
+  // Dedicated ref for the guest/company popup - see form-git/index.tsx. Sharing
+  // `ref` with the autocomplete dropdown made the outside-click handler treat
+  // clicks inside the modal as outside clicks and close it on the first field
+  // the user touched.
+  const popupRef = useRef(null);
   const layout = useContext(LayoutContext);
   const [popup, setpopup] = useState(false);
   const [loading, setloading] = useState(false);
@@ -1830,20 +1837,23 @@ const EditView = () => {
     dataform[0]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
 
     dataform[1]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
     dataform[3]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
 
@@ -1852,7 +1862,8 @@ const EditView = () => {
       row?.data?.map((rw, index) => {
         if (rw?.idpost) {
           obj[rw?.name] = rw?.value;
-          obj[rw?.idpost] = rw?.valueid;
+          const idValueRow = idPostValue(rw);
+          if (idValueRow !== undefined) obj[rw?.idpost] = idValueRow;
         } else {
           obj[rw?.name] = rw?.value;
         }
@@ -2329,29 +2340,17 @@ const EditView = () => {
   };
   useEffect(() => {
     const handleOutSideClick = (event) => {
-      // console.log("coba,", event.target.className);
-      if (event?.target?.className.length) {
-        if (event?.target?.className?.split(" ")[0] == "close-btn") {
-          setactAuto("-1");
-          setpopup(false);
-        }
+      const t = event?.target;
+      if (t instanceof Element && t.classList.contains("close-btn")) {
+        setactAuto("-1");
+        setpopup(false);
+        return;
       }
-
-      if (!ref.current?.contains(event.target)) {
-        // console.log("coba,", event.target.className);
-        if (event?.target?.className.length) {
-          if (
-            !String(event?.target?.className ?? "").includes("Select2__")
-          ) {
-            setactAuto("-1");
-            setpopup(false);
-          }
-        }
-
-        // setactAuto("-1");
-        // setpopup(false);
-        // setoverflow(true);
-        // console.log("coba", event.target.className?.split(" ")[0]);
+      // See isOutsidePopup() — class-name matching closed this modal as soon as
+      // any control inside it was used (the guest Title dropdown in particular).
+      if (isOutsidePopup(t, popup, popupRef, [ref])) {
+        setactAuto("-1");
+        setpopup(false);
       }
     };
 
@@ -2360,7 +2359,7 @@ const EditView = () => {
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
-  }, [ref]);
+  }, [ref, popup]);
   const folioId = GetQueryStr("data");
   const hasFetched = useRef(false);
   // useEffect(() => {
@@ -2471,10 +2470,10 @@ const EditView = () => {
       <div className="flex flex-col gap-4">
         {popup ? (
           <>
-            <div className="overlay flex items-center justify-center p-4">
-              <div
-                ref={ref}
-                className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
+          <div className="overlay flex items-center justify-center p-4">
+          <div
+            ref={popupRef}
+                className="relative z-[60] w-full max-w-5xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
               >
                 {ContentPopUp(
                   new URLSearchParams(window.location.search).get("key"),

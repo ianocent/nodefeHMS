@@ -42,6 +42,12 @@ const TrxPageView = (props: TrxProps) => {
   const GLOBALURI = "/cms/transaction";
   const groups = "";
   const ref = useRef(null);
+  // Both overlays below sit inside the same window-level outside-click handler,
+  // so they need their own node reference - see form-git/index.tsx. Sharing `ref`
+  // with the autocomplete dropdown made a click inside one overlay look like a
+  // click outside the other and closed it.
+  const popupRef = useRef(null);
+  const paymentPrintRef = useRef(null);
   const [popup, setpopup] = useState(false);
 
   const router = useRouter();
@@ -2887,8 +2893,8 @@ const TrxPageView = (props: TrxProps) => {
       {popup ? (
         <div className="overlay flex items-center justify-center p-4">
           <div
-            ref={ref}
-            className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
+            ref={popupRef}
+            className="relative z-[60] w-full max-w-4xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
           >
             {ContentPopUp(
               new URLSearchParams(window.location.search).get("key")
@@ -2945,8 +2951,8 @@ const TrxPageView = (props: TrxProps) => {
       {modalPaymentPrint && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div
-            ref={ref}
-            className="w-full max-w-md max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20 p-4"
+            ref={paymentPrintRef}
+            className="relative z-[60] w-full max-w-md max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl p-4"
           >
             {ModalPaymentPrintComp("")}
           </div>

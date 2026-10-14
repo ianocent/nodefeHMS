@@ -15,6 +15,7 @@ import {
   GetDecrypt,
   GetEncrypt,
   GetQueryStr,
+  isOutsidePopup,
 } from "../../../helper";
 
 const ListView = () => {
@@ -35,6 +36,10 @@ const ListView = () => {
   const [subfolio, setsubfolio] = useState<any>([]);
   const [idSubfolio, setidSubfolio] = useState("");
   const ref = useRef(null);
+  // The add-guest modal needs its own node reference. It shared `ref` with the
+  // autocomplete dropdown, so the window-level outside-click handler treated
+  // every click inside the modal as an outside click.
+  const userAddRef = useRef(null);
 
   useEffect(() => {
     if (subfolio.length > 0) {
@@ -123,8 +128,8 @@ const ListView = () => {
           <>
             <div className="overlay flex items-center justify-center p-4">
               <div
-                ref={ref}
-                className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
+                ref={userAddRef}
+                className="relative z-[60] w-full max-w-5xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
               >
                 {/* <div className="mt-2 mr-4 absolute z-20 right-0">
                 <ButtonSubmit
@@ -327,29 +332,17 @@ const ListView = () => {
   }
   useEffect(() => {
     const handleOutSideClick = (event) => {
-      // console.log("coba,", event.target.className);
-      if (event?.target?.className.length) {
-        if (event?.target?.className?.split(" ")[0] == "close-btn") {
-          setactAuto("-1");
-          setuseradd(false);
-        }
+      const t = event?.target;
+      if (t instanceof Element && t.classList.contains("close-btn")) {
+        setactAuto("-1");
+        setuseradd(false);
+        return;
       }
-
-      if (!ref.current?.contains(event.target)) {
-        console.log("coba,", event.target.className);
-        if (event?.target?.className.length) {
-          if (
-            !String(event?.target?.className ?? "").includes("Select2__")
-          ) {
-            setactAuto("-1");
-            setuseradd(false);
-          }
-        }
-
-        // setactAuto("-1");
-        // setpopup(false);
-        // setoverflow(true);
-        // console.log("coba", event.target.className?.split(" ")[0]);
+      // See isOutsidePopup() — class-name matching closed this modal as soon as
+      // any control inside it was used (the guest Title dropdown in particular).
+      if (isOutsidePopup(t, useradd, userAddRef, [ref])) {
+        setactAuto("-1");
+        setuseradd(false);
       }
     };
 
@@ -358,7 +351,7 @@ const ListView = () => {
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
-  }, [ref]);
+  }, [ref, useradd]);
   return (
     <>
       <Seo

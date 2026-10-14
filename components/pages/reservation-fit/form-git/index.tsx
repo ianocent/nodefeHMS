@@ -14,6 +14,8 @@ import {
   RouteChange,
   removeItem,
   GetCurrentDate,
+  idPostValue,
+  isOutsidePopup,
 } from "../../../helper";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -36,6 +38,11 @@ const AddView = (props: AddviewProps) => {
   const GLOBALURI = "/cms/reservation";
   const router = useRouter();
   const ref = useRef(null);
+  // The guest/company popup needs its OWN ref. `ref` is also on the autocomplete
+  // dropdown, so while both are mounted `ref.current` points at whichever React
+  // attached last - the outside-click handler then read every click inside the
+  // modal as an outside click and closed it the moment you touched a field.
+  const popupRef = useRef(null);
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
   const [canSave, setCanSave] = useState(false);
@@ -489,12 +496,25 @@ const AddView = (props: AddviewProps) => {
     objpost = dataval;
     var arrCOl = [];
 
+    // Only the room rows are rebuilt here. The master block (`dataform[0]`:
+    // guest / company / rate / check-in / check-out) is NOT copied back out of
+    // `dataform` — it is bound to `dataval` through InputMain and
+    // `changeHandler` only ever writes `dataval`, never `dataform[n].value`.
+    // Reading `dataform[0]` here therefore overwrote the real
+    // check_in_date / check_out_date / room_reservation_list with the empty
+    // defaults baked into the block definition, and `POST /reservation/on-check`
+    // came back "room_reservation_list, check_in_date, and check_out_date are
+    // required". `objpost` IS `dataval`, so those fields are already correct.
     dataform[1].items?.map((row: any, i) => {
       var obj = {};
       row?.data?.map((rw, index) => {
         if (rw?.idpost) {
           obj[rw?.name] = rw?.value;
-          obj[rw?.idpost] = rw?.valueid;
+          // Guard the id: `valueid` is only written when the user actually
+          // touched this control, so copying it blindly turns a good id into
+          // `undefined` and JSON.stringify then drops the key.
+          const idv = idPostValue(rw);
+          if (idv !== undefined) obj[rw?.idpost] = idv;
         } else {
           obj[rw?.name] = rw?.value;
         }
@@ -509,6 +529,7 @@ const AddView = (props: AddviewProps) => {
     objpost.type_reservation = isType;
     return objpost;
   };
+
   const GetDataAutoComp = async (word, uri, relate: any, ix, ia) => {
     try {
       let getuuri = "";
@@ -1006,12 +1027,25 @@ const AddView = (props: AddviewProps) => {
       if (data?.code == "200") {
         // console.log(data?.master?.business_date);
         let dataInput = [...dataform];
-        setData({
-          ...dataval,
-          check_in_date: data?.master?.business_date,
-          check_out_date: GetNextDay(data?.master?.business_date, 1),
-          night: 1,
-        });
+        // Updater form, NOT `{ ...dataval }`. `dataval` here is the value from the
+        // render in which GetDataDetail was created (mount), so the plain spread
+        // resolved whatever the user had typed while this fetch was still in
+        // flight — guest, company, rate and the stay dates all silently
+        // reverted to empty. React batches state, so the spread lost the race
+        // every single time the fetch resolved late.
+        const masterBusinessDate = data?.master?.business_date;
+        setData((prev: any) => ({
+          ...prev,
+          // Only seed the dates when the property actually gave us one, and
+          // never clobber dates the user has already set.
+          ...(masterBusinessDate && !prev.check_in_date
+            ? {
+                check_in_date: masterBusinessDate,
+                check_out_date: GetNextDay(masterBusinessDate, 1),
+                night: 1,
+              }
+            : {}),
+        }));
 
         dataInput[2].data[2].options = data?.master?.market_segment_1;
         dataInput[2].data[2].type =
@@ -1067,30 +1101,19 @@ const AddView = (props: AddviewProps) => {
     }
   }, []);
   useEffect(() => {
+    // Close the popup on a click that is genuinely outside both the popup and
+    // the autocomplete list — see isOutsidePopup() for why the old class-name
+    // matching closed the modal the moment the guest Title dropdown was used.
     const handleOutSideClick = (event) => {
-      // console.log("coba,", event.target.className);
-      if (event?.target?.className.length) {
-        if (event?.target?.className?.split(" ")[0] == "close-btn") {
-          setactAuto("-1");
-          setpopup(false);
-        }
+      const t = event?.target;
+      if (t instanceof Element && t.classList.contains("close-btn")) {
+        setactAuto("-1");
+        setpopup(false);
+        return;
       }
-
-      if (!ref.current?.contains(event.target)) {
-        // console.log("coba,", event.target.className);
-        if (event?.target?.className.length) {
-          if (
-            !String(event?.target?.className ?? "").includes("Select2__")
-          ) {
-            setactAuto("-1");
-            setpopup(false);
-          }
-        }
-
-        // setactAuto("-1");
-        // setpopup(false);
-        // setoverflow(true);
-        // console.log("coba", event.target.className?.split(" ")[0]);
+      if (isOutsidePopup(t, popup, popupRef, [ref])) {
+        setactAuto("-1");
+        setpopup(false);
       }
     };
 
@@ -1099,15 +1122,15 @@ const AddView = (props: AddviewProps) => {
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
-  }, [ref]);
+  }, [ref, popup]);
   return (
     <>
       <Seo title={"Management " + layout?.title} />
       {popup ? (
         <div className="overlay flex items-center justify-center p-4">
           <div
-            ref={ref}
-            className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
+            ref={popupRef}
+            className="relative z-[60] w-full max-w-5xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
           >
             {ContentPopUp(
               new URLSearchParams(window.location.search).get("key")

@@ -17,6 +17,7 @@ import {
   removeItem,
   GFormatDate,
   getColor,
+idPostValue,
 } from "../../../helper";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -45,6 +46,10 @@ const AddView = (props: AddviewProps) => {
   const GLOBALURI = "/cms/reservation";
   const router = useRouter();
   const ref = useRef(null);
+  // The reason modal needs its own node reference - it used to share `ref` with
+  // the autocomplete dropdown, so the window-level outside-click handler read
+  // clicks inside the modal as outside clicks and closed it.
+  const remarkRef = useRef(null);
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
   const [groupBlockError, setgroupBlockError] = useState<string | null>(null);
@@ -173,7 +178,8 @@ const AddView = (props: AddviewProps) => {
         row?.data?.map((rw, index) => {
           if (rw?.idpost) {
             obj[rw?.name] = rw?.value;
-            obj[rw?.idpost] = rw?.valueid;
+            const idValueRow = idPostValue(rw);
+          if (idValueRow !== undefined) obj[rw?.idpost] = idValueRow;
           } else {
             if (rw?.isprice) {
               obj[rw?.name] = NumberClear(rw?.value + "");
@@ -1023,6 +1029,10 @@ const AddView = (props: AddviewProps) => {
   }, []);
   useEffect(() => {
     const handleOutSideClick = (event) => {
+      // A click inside the reason modal is never an outside click - it used to
+      // be tested against `ref`, the shared autocomplete ref, so clicking the
+      // Reason dropdown closed the modal before the option could be picked.
+      if (Isremarks && remarkRef.current?.contains(event.target)) return;
       if (!ref.current?.contains(event.target)) {
         setactAuto("-1");
         // setoverflow(true);
@@ -1036,16 +1046,20 @@ const AddView = (props: AddviewProps) => {
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
-  }, [ref]);
+  }, [ref, Isremarks]);
 
   return (
     <>
       {Isremarks ? (
         <div className="overlay flex items-center justify-center p-4">
           <div
-            ref={ref}
+            // Own ref + no clipping: this used to share the autocomplete `ref`
+            // and to carry `overflow-auto`, so the Reason dropdown was both
+            // treated as an outside click (closing the modal) and clipped away
+            // by the container. Scrolling is handled by the inner `overflow-y-auto`.
+            ref={remarkRef}
             className={
-              "w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-50 "
+              "relative z-[60] w-full max-w-5xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
             }
           >
             <div className=" overflow-y-auto">

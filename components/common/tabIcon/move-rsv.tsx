@@ -15,6 +15,7 @@ import {
   RouteChange,
   formatAmount,
   removeItem,
+idPostValue,
 } from "../../helper";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -105,11 +106,17 @@ const AddView = (props: AddviewProps) => {
       if (page) {
         pages = page;
       }
+      // `uri` already carries its own query string (the reservation Room tab
+      // passes `/cms/assign-room?folio_id=…&type=all`). Appending a second `?`
+      // makes Express read `sort`/`group` as part of the previous value, so
+      // sorting and paging silently stopped working on that screen.
+      const sep = GLOBALURI.includes("?") ? "&" : "?";
       const raw = JSON.stringify(bodyFetch);
       const aesraw = GetEncrypt(raw);
       const datajson = await FetchData(
         GLOBALURI +
-          "?sort=" +
+          sep +
+          "sort=" +
           sort +
           "&group=" +
           Lastpath +
@@ -117,7 +124,6 @@ const AddView = (props: AddviewProps) => {
           pages +
           "&search=" +
           (datavalsrc?.search ?? (search == null ? "" : search)) +
-          "&" +
           (queryString ?? "") +
           "" +
           srcfield +
@@ -196,7 +202,8 @@ const AddView = (props: AddviewProps) => {
         row?.data?.map((rw, index) => {
           if (rw?.idpost) {
             obj[rw?.name] = rw?.value;
-            obj[rw?.idpost] = rw?.valueid;
+            const idValueRow = idPostValue(rw);
+          if (idValueRow !== undefined) obj[rw?.idpost] = idValueRow;
           } else {
             if (rw?.isprice) {
               obj[rw?.name] = NumberClear(rw?.value + "");

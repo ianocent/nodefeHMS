@@ -436,6 +436,37 @@ const TableView = (props: TableViewProps) => {
     }
     return obj;
   };
+  /**
+   * MSG column of the folio tables. `message_bool` is derived from the
+   * messages table on the backend, so clicking the icon has to go through the
+   * API and the row is patched from the response - re-fetching the whole table
+   * would lose the scroll position and reset any in-progress cell edit.
+   */
+  const toggleMessage = async (row: any, key: string) => {
+    const folioId = row?.id ?? row?.value;
+    if (!folioId) return;
+    try {
+      const raw = JSON.stringify({ folio_id: folioId });
+      const res: any = await FetchData(
+        "/message/toggle",
+        "POST",
+        GetEncrypt(raw),
+        false,
+        datalocal?.data?.access_token,
+        router,
+        ""
+      );
+      if (res?.code != "200") return;
+      setdatatable((prev: any) => ({
+        ...prev,
+        data: (prev?.data ?? []).map((r: any) =>
+          r?.id === row?.id ? { ...r, [key]: !!res?.data?.message_bool } : r
+        ),
+      }));
+    } catch (e) {
+      console.log("message toggle error", e);
+    }
+  };
   const onSave = async (id: number) => {
     // console.log("sets", FinalPOstDat());
     try {
@@ -2034,6 +2065,16 @@ const TableView = (props: TableViewProps) => {
                                     : ""
                                 } ${item?.max_width ? "truncate" : ""} relative`}
                                 style={item?.max_width ? { maxWidth: item.max_width } : undefined}
+                                // A capped column is `truncate`d, so the tail is
+                                // unreachable by eye. Expose the full cell value
+                                // on hover - that is what makes `Folio` still
+                                // readable if a property ever uses a longer folio
+                                // format than the cap was sized for.
+                                title={
+                                  item?.max_width && row[item.key] != null
+                                    ? String(row[item.key])
+                                    : undefined
+                                }
                                 key={item.key + "-" + a}
                                 onClick={(e) => {
                                   if (item?.is_link) {
@@ -2165,12 +2206,48 @@ const TableView = (props: TableViewProps) => {
                                     <img
                                       src="/assets/images/apps/checklist.png"
                                       className="w-[20px]"
+                                      onClick={
+                                        item?.action === "message"
+                                          ? () => toggleMessage(row, item.key)
+                                          : undefined
+                                      }
+                                      style={{
+                                        cursor:
+                                          item?.action === "message"
+                                            ? "pointer"
+                                            : undefined,
+                                      }}
+                                      title={
+                                        item?.action === "message"
+                                          ? row[item.key]
+                                            ? "Close message"
+                                            : "Add message"
+                                          : undefined
+                                      }
                                     />
                                   ) : row[item.key] == false &&
                                     typeof row[item.key] == "boolean" ? (
                                     <img
                                       src="/assets/images/apps/cross.png"
                                       className="w-[20px]"
+                                      onClick={
+                                        item?.action === "message"
+                                          ? () => toggleMessage(row, item.key)
+                                          : undefined
+                                      }
+                                      style={{
+                                        cursor:
+                                          item?.action === "message"
+                                            ? "pointer"
+                                            : undefined,
+                                      }}
+                                      title={
+                                        item?.action === "message"
+                                          ? row[item.key]
+                                            ? "Close message"
+                                            : "Add message"
+                                          : undefined
+                                      }
                                     />
                                   ) : item?.is_html ? (
                                     <div

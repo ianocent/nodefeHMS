@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import type React from "react";
 import { fetchQueue } from "../../utils/fetchQueue";
 import { toast } from "react-toastify";
 
@@ -142,6 +143,65 @@ export function getEnv(key: string) {
     return process.env.NEXT_PUBLIC_PAT_TOKEN ?? "";
   }
 }
+/**
+ * Read the id behind a form field that has an `idpost` partner.
+ *
+ * Every select in these forms is bound to `dataval[name]` AND mirrors its id
+ * onto `dataval[idpost]`, but which of the two actually gets written depends on
+ * which control the user touched — an autocomplete writes `dataval[idpost]`,
+ * a plain input writes nothing. The per-block `FinalPOstDat()` loops in the
+ * reservation forms copy the *row's* `valueid` over the top of `dataval`, and
+ * for a row nobody touched that is `undefined`.
+ *
+ * Because `objpost` IS `dataval` (same object reference) the assignment also
+ * wiped the real value, `JSON.stringify` dropped the key, and the API stored the
+ * reservation with `rate_id: NULL` — which is why the on-check preview showed a
+ * price and the saved folio showed 0,00 on every line. Returning `undefined`
+ * here lets the caller keep whatever is already in the payload.
+ */
+export function idPostValue(row: any): any {
+  const v = row?.valueid;
+  return v === undefined || v === null || v === "" ? undefined : v;
+}
+
+/**
+ * Decide whether a document-level click should dismiss the current popup.
+ *
+ * The old per-form handlers worked this out by string-matching
+ * `event.target.className` and by testing containment against the
+ * autocomplete `ref` — a different node from the modal. Any click that landed
+ * on a control the modal owns but whose class did not match the escape list
+ * (the guest **Title** dropdown, for instance) was therefore classified as an
+ * outside click and the modal closed the instant it was used.
+ *
+ * This asks the DOM instead of guessing from class names:
+ *  - a closed popup is never dismissed by a stray click,
+ *  - a click inside the popup box is always "inside",
+ *  - a click inside another node that must stay open (an autocomplete list) is
+ *    also "inside",
+ *  - react-select is configured with `classNamePrefix="Select2"` and may render
+ *    its menu through a portal on <body>, i.e. outside the modal's box, so a
+ *    `closest()` on that prefix keeps those clicks inside as well.
+ */
+export function isOutsidePopup(
+  target: any,
+  isOpen: boolean,
+  popupRef: React.RefObject<HTMLElement>,
+  keepOpenRefs: Array<React.RefObject<HTMLElement>> = []
+): boolean {
+  if (!isOpen) return false;
+  if (target instanceof Node) {
+    if (popupRef.current?.contains(target)) return false;
+    for (const r of keepOpenRefs) {
+      if (r.current?.contains(target)) return false;
+    }
+  }
+  if (target instanceof Element && target.closest('[class*="Select2__"]')) {
+    return false;
+  }
+  return true;
+}
+
 export function GetEncrypt(text: any, logout?: boolean) {
   if (process.versions.openssl <= "1.0.1f") {
     throw new Error("OpenSSL Version too old, vulnerability to Heartbleed");
@@ -150,15 +210,29 @@ export function GetEncrypt(text: any, logout?: boolean) {
   let cipher = crypto.createCipheriv(AES_METHOD, Buffer.from(passwords), iv);
   let encrypted = cipher.update(text);
   encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString("hex") + ":" + encrypted.toString("hex");
+  // Base64, not hex. Hex costs two characters per byte, and every image field
+  // in this app is sent as a `data:image/...;base64,...` string — so a 1 MB
+  // picture was travelling as ~2.75 MB of hex and tripping the body limit with
+  // an opaque 413. Base64 keeps the identical cipher (Laravel still sends hex;
+  // the API decodes either) at two thirds of the size.
+  return iv.toString("base64") + ":" + encrypted.toString("base64");
 }
 export function GetDecrypt(text: any, logout?: boolean) {
   try {
-    let textParts = text.split(":");
-    let iv = Buffer.from(textParts.shift()!, "hex");
-    let encryptedText = Buffer.from(textParts.join(":"), "hex");
+    let textParts = String(text).split(":");
+    let ivBuf = textParts.shift()!;
+    let encryptedText = textParts.join(":");
+    // Responses may still arrive hex-encoded from callers that were not part of
+    // the base64 switch (the booking engine bridge, cached payloads).
+    const isHex = (v: string) =>
+      v.length >= 32 && v.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(v);
+    let iv = Buffer.from(ivBuf, isHex(ivBuf) ? "hex" : "base64");
+    let encrypted = Buffer.from(
+      encryptedText,
+      isHex(encryptedText) ? "hex" : "base64"
+    );
     let decipher = crypto.createDecipheriv(AES_METHOD, Buffer.from(passwords), iv);
-    let decrypted = decipher.update(encryptedText);
+    let decrypted = decipher.update(encrypted);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();
   } catch (error) {

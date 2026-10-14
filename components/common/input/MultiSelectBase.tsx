@@ -67,21 +67,14 @@ const MultiSelectBAse = (props: SelectBaseProps) => {
   }
   useEffect(() => {
     const handleOutSideClick = (event) => {
-      // console.log(event.target.className.split(" ")[0]);
       try {
-        if (
-          event?.target?.className?.split(" ")[0] !=
-            "Select2__input-container" &&
-          event?.target?.className?.split(" ")[0] !=
-            "Select2__value-container" &&
-          event?.target?.className?.split(" ")[0] != "Select2__indicator" &&
-          event?.target?.className?.split(" ")[0] != "Select2__placeholder"
-        ) {
-          // console.log(event.target.className);
-          setIsOpen(false);
-          // console.log(event.target.className);
-          // setoverflow(true);
-        }
+        const root: any = ref.current;
+        if (root && event?.target && root.contains(event.target)) return;
+        // Menu may render in a portal/outside root; keep it open when the click
+        // lands on this select's own menu.
+        const cls = String(event?.target?.className ?? "");
+        if (cls.indexOf("Select2__") !== -1) return;
+        setIsOpen(false);
       } catch (error) {}
     };
 

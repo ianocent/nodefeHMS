@@ -267,13 +267,33 @@ const AddView = (props: AddviewProps) => {
       );
 
       if (saveprocess?.code == "200") {
-        if (!isPopup) {
+        // A freshly created work order has no id in the form yet. Adopt the one
+        // the server returned, otherwise Start/End below would POST to
+        // /work-order again and open a duplicate instead of updating this row.
+        const savedId = saveprocess?.data?.id;
+        if (idusr == "0" && savedId) {
+          setidusr(String(savedId));
+          if (!isPopup) {
+            const q = new URLSearchParams(window.location.search);
+            q.set("data", String(savedId));
+            q.delete("add");
+            router.replace({
+              pathname: window.location.pathname,
+              query: Object.fromEntries(q.entries()),
+            });
+          }
+        }
+        // Re-read the record so anything the server computed (dates, status,
+        // images) shows up right away instead of only after a manual refresh.
+        if (idusr != "0" || savedId) {
+          await GetDetailUser(idusr != "0" ? idusr : String(savedId));
+        }
+        if (!isPopup && idusr != "0") {
           const [, queryString] = window.location.href.split("?");
           const q = new URLSearchParams(queryString || "");
-          q.delete("data");
           q.delete("add");
           q.delete("view");
-          
+
           router.replace({
             pathname: window.location.pathname,
             query: Object.fromEntries(q.entries()),
@@ -334,12 +354,17 @@ const AddView = (props: AddviewProps) => {
         ""
       );
       if (saveprocess?.code == "200") {
-        if (datavaled.room_id.value) {
-          const uriRoomUpdate =
-            "/cms/housekeeping/room-status" +
-            "/" +
-            datavaled.room_id.value +
-            "";
+        // `datavaled.room_id` is null for every work order whose area is not a
+        // room. Reading `.value` off it threw before the refresh below could
+        // run, so the start/end dates the server had just written stayed
+        // invisible until the page was reloaded by hand.
+        const roomIdValue = datavaled?.room_id?.value ?? dataval?.room_id?.value;
+        if (roomIdValue) {
+const uriRoomUpdate =
+              "/cms/housekeeping/room-status" +
+              "/" +
+              roomIdValue +
+              "";
           const model = "PUT";
 
           if (process === "start") {
@@ -378,13 +403,18 @@ const AddView = (props: AddviewProps) => {
             );
           }
         }
+        // Reload in `finally`, not at the end of the happy path: any throw in
+        // the room-status step used to skip the refresh and leave the form
+        // showing pre-save values. `idusr` is the fallback when the URL has no
+        // `data` param yet.
         const urlParams = new URLSearchParams(window.location.search);
-        const idreq = urlParams.get("data");
-        GetDetailUser(idreq);
+        const idreq = urlParams.get("data") ?? (idusr != "0" ? idusr : null);
+        if (idreq) {
+          await GetDetailUser(idreq);
+        }
       }
     } catch (error) {
       console.log("erro", error);
-      setloading(false);
     } finally {
       setloading(false);
     }

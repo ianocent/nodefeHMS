@@ -14,6 +14,8 @@ import {
   RouteChange,
   removeItem,
   GetCurrentDate,
+idPostValue,
+  isOutsidePopup,
 } from "../../../helper";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -34,6 +36,11 @@ const AddView = (props: AddviewProps) => {
   const GLOBALURI = "/cms/reservation";
   const router = useRouter();
   const ref = useRef(null);
+  // Dedicated ref for the guest/company popup - see form-git/index.tsx. Sharing
+  // `ref` with the autocomplete dropdown made the outside-click handler treat
+  // clicks inside the modal as outside clicks and close it on the first field
+  // the user touched.
+  const popupRef = useRef(null);
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
   const [actAuto, setactAuto] = useState("-1");
@@ -757,7 +764,8 @@ const AddView = (props: AddviewProps) => {
       row?.data?.map((rw, index) => {
         if (rw?.idpost) {
           obj[rw?.name] = rw?.value;
-          obj[rw?.idpost] = rw?.valueid;
+          const idValueRow = idPostValue(rw);
+          if (idValueRow !== undefined) obj[rw?.idpost] = idValueRow;
         } else {
           obj[rw?.name] = rw?.value;
         }
@@ -1278,10 +1286,11 @@ const AddView = (props: AddviewProps) => {
   }, []);
   useEffect(() => {
     const handleOutSideClick = (event) => {
-      if (!ref.current?.contains(event.target)) {
+      // See isOutsidePopup() — class-name matching closed this modal as soon as
+      // any control inside it was used.
+      if (isOutsidePopup(event?.target, popup, popupRef, [ref])) {
         setactAuto("-1");
         setpopup(false);
-        // setoverflow(true);
       }
     };
 
@@ -1290,15 +1299,15 @@ const AddView = (props: AddviewProps) => {
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
-  }, [ref]);
+  }, [ref, popup]);
   return (
     <>
       <Seo title={"Management " + layout?.title} />
       {popup ? (
         <div className="overlay flex items-center justify-center p-4">
           <div
-            ref={ref}
-            className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20"
+            ref={popupRef}
+            className="relative z-[60] w-full max-w-5xl max-h-[90vh] overflow-visible bg-white rounded-xl shadow-xl"
           >
             {ContentPopUp(
               new URLSearchParams(window.location.search).get("key")

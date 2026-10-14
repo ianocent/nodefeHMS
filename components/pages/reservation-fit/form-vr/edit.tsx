@@ -15,7 +15,8 @@ import {
     GetNextDay,
     GetQueryStr,
     GetSelisihDay,
-    removeItem
+    removeItem,
+    idPostValue,
 } from "../../../helper";
 
 const EditView = () => {
@@ -1357,20 +1358,23 @@ const EditView = () => {
     dataform[0]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
 
     dataform[1]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
     dataform[3]?.data?.map((rw, i) => {
       objpost[rw?.name] = rw?.value;
       if (rw?.idpost) {
-        objpost[rw?.idpost] = rw?.valueid;
+        const idValue = idPostValue(rw);
+        if (idValue !== undefined) objpost[rw?.idpost] = idValue;
       }
     });
 
@@ -1379,7 +1383,8 @@ const EditView = () => {
       row?.data?.map((rw, index) => {
         if (rw?.idpost) {
           obj[rw?.name] = rw?.value;
-          obj[rw?.idpost] = rw?.valueid;
+          const idValueRow = idPostValue(rw);
+          if (idValueRow !== undefined) obj[rw?.idpost] = idValueRow;
         } else {
           obj[rw?.name] = rw?.value;
         }
