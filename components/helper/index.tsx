@@ -676,6 +676,13 @@ export function formatAmountNoDecimals(number: string) {
 }
 export function formatAmount(number: string | number) {
   number = String(number);
+  // Laravel moneyFormat() hands out en-US money ("970,000.00"). The parser below
+  // strips every "." from the integer part, so an en-US value has to be normalised
+  // to the de-DE shape it expects ("970000,00") first - otherwise 970,000.00
+  // collapsed to 970,00000.
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(number)) {
+    number = number.replace(/,/g, "").replace(".", ",");
+  }
   var numberD = number.split(",");
   var main = numberD[0];
   main = main.replace(/[A-Za-z]/g, "");
@@ -709,7 +716,14 @@ export function formatAmount(number: string | number) {
   return minus + "" + (num == 0 ? "0" : formatAmountNoDecimals(x1)) + dec;
 }
 export function NumberClear(cur: any) {
+  // A real number is already clean. Pushing it through the string parser stripped
+  // the dot from 247933.8843 and turned it into 2479338843.
+  if (typeof cur === "number") return Number.isFinite(cur) ? String(cur) : "0";
   let s = String(cur ?? "").trim();
+  // Keep the sign: negative money must survive the round trip (Laravel's
+  // NumberClear only swaps separators, it never drops a leading "-").
+  const negative = /^\(.*\)$/.test(s) || s.startsWith("-");
+  s = s.replace(/[()]/g, "").replace(/^-/, "");
   const lastComma = s.lastIndexOf(",");
   const lastDot = s.lastIndexOf(".");
   if (lastComma !== -1 && lastDot !== -1) {
@@ -726,8 +740,8 @@ export function NumberClear(cur: any) {
     }
   } else if (lastDot !== -1) {
     const parts = s.split(".");
-    if (parts.length === 2 && /\d{2}$/.test(parts[1])) {
-      // keep as decimal
+    if (parts.length === 2 && /^\d{1,2}$/.test(parts[1])) {
+      // exactly two decimals -> already a decimal value, keep it
     } else {
       s = s.replace(/\./g, "");
     }
@@ -737,7 +751,8 @@ export function NumberClear(cur: any) {
   if (dots.length > 2) {
     s = dots[0] + "." + dots.slice(1).join("");
   }
-  return s;
+  if (s === "" || s === ".") return "0";
+  return (negative ? "-" : "") + s;
 }
 export function IntlNumberFormat(number: number) {
   const formattedNumber = new Intl.NumberFormat("de-DE", {

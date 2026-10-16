@@ -808,15 +808,46 @@ const DashboardListView = () => {
                 const boxStyle = { animationDelay: `${Math.min(i, 8) * 60}ms` };
                 const boxBodyClasses = `px-6 pb-6`;
 
+                // Laravel moneyFormat() hands out en-US money ("247,933.88"), while
+                // other nodes (id-ID toLocaleString) emit de-DE ("247.933,88").
+                // The old parser stripped every "." and treated the first comma as
+                // the decimal point, so 247,933.88 collapsed to "247,93". Normalise
+                // both shapes, then render en-US so the cards agree with the
+                // drill-down Total row.
+                const parseMoney = (val: any): number => {
+                  // A real number needs no separator handling - running it through
+                  // the string parser turned 247933.8843 into 2479338843.
+                  if (typeof val === "number") return Number.isFinite(val) ? val : 0;
+                  let s = String(val ?? "").trim();
+                  if (s === "" || s === "-") return 0;
+                  const negative = /^\(.*\)$/.test(s) || s.startsWith("-");
+                  s = s.replace(/[()]/g, "").replace(/^-/, "");
+                  const lastComma = s.lastIndexOf(",");
+                  const lastDot = s.lastIndexOf(".");
+                  if (lastComma !== -1 && lastDot !== -1) {
+                    if (lastComma > lastDot) s = s.replace(/\./g, "").replace(",", ".");
+                    else s = s.replace(/,/g, "");
+                  } else if (lastComma !== -1) {
+                    if (/,\d{2}$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+                    else s = s.replace(/,/g, "");
+                  } else if (lastDot !== -1) {
+                    const parts = s.split(".");
+                    if (!(parts.length === 2 && /^\d{1,2}$/.test(parts[1]))) {
+                      s = s.replace(/\./g, "");
+                    }
+                  }
+                  const n = Number(s.replace(/[^0-9.]/g, ""));
+                  if (!Number.isFinite(n)) return 0;
+                  return negative ? -n : n;
+                };
+
                 const formatIDR = (val: any): string => {
-                    if (val == null || val === "") return "0,00";
-                    const clean = String(val).replace(/[^\d,-]/g, "").replace(",", ".");
-                    const num = parseFloat(clean);
-                    return isNaN(num) ? "0,00" : num.toLocaleString("id-ID", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    });
-                  };
+                  if (val == null || val === "") return "0.00";
+                  return parseMoney(val).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                };
 
                   const formatInt = (val: any): string => {
                     const num = parseInt(String(val).replace(/[^\d]/g, ""), 10);

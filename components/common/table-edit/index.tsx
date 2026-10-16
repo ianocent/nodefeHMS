@@ -2245,8 +2245,8 @@ const TableView = (props: TableViewProps) => {
                                 {typeof row[item.key] == "string" ||
                                 typeof row[item.key] == "number" ||
                                 typeof row[item.key] == "boolean" ? (
-                                  row[item.key] == true &&
-                                  typeof row[item.key] == "boolean" ? (
+                                   ((typeof row[item.key] == "boolean") || item.type == "checkbox" || item.type == "boolean") &&
+                                   Number(row[item.key]) === 1 ? (
                                     <img
                                       src="/assets/images/apps/checklist.png"
                                       className="w-[20px]"
@@ -2269,8 +2269,9 @@ const TableView = (props: TableViewProps) => {
                                           : undefined
                                       }
                                     />
-                                  ) : row[item.key] == false &&
-                                    typeof row[item.key] == "boolean" ? (
+                                   ) : ((typeof row[item.key] == "boolean") || item.type == "checkbox" || item.type == "boolean") &&
+                                     row[item.key] != null &&
+                                     Number(row[item.key]) === 0 ? (
                                     <img
                                       src="/assets/images/apps/cross.png"
                                       className="w-[20px]"
@@ -2847,14 +2848,16 @@ const TableView = (props: TableViewProps) => {
                                 ) : typeof row[item.key] == "string" ||
                                   typeof row[item.key] == "number" ||
                                   typeof row[item.key] == "boolean" ? (
-                                  row[item.key] == true &&
-                                  typeof row[item.key] != "number" ? (
+                                  ((typeof row[item.key] == "boolean") || item.type == "checkbox" || item.type == "boolean") &&
+                                  row[item.key] != null &&
+                                  Number(row[item.key]) === 1 ? (
                                     <img
                                       src="/assets/images/apps/checklist.png"
                                       className="w-[20px]"
                                     />
-                                  ) : row[item.key] == false &&
-                                    typeof row[item.key] != "number" ? (
+                                   ) : ((typeof row[item.key] == "boolean") || item.type == "checkbox" || item.type == "boolean") &&
+                                     row[item.key] != null &&
+                                     Number(row[item.key]) === 0 ? (
                                     <img
                                       src="/assets/images/apps/cross.png"
                                       className="w-[20px]"
