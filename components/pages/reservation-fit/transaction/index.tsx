@@ -74,6 +74,7 @@ const TrxPageView = (props: TrxProps) => {
   const [dataFolio, setdataFolio] = useState<any>({});
   const [subfolio, setsubfolio] = useState<any>([]);
   const [idSubfolio, setidSubfolio] = useState("0");
+  const [isGitMaster, setIsGitMaster] = useState(false);
   const [isPrint, setIsPrint] = useState(false);
   const [IsOpenModalIns, setIsOpenModalIns] = useState(false);
   const [dataTotal, setdataTotal] = useState("0");
@@ -747,14 +748,41 @@ const TrxPageView = (props: TrxProps) => {
   };
   useEffect(() => {
     const isGIT = window.location.pathname.split("/")[2];
+    const initialSub = new URLSearchParams(window.location.search).get("sub_data");
+    if (initialSub) setidSubfolio(initialSub);
 
     if (isGIT == "git") {
       GetDetailData(new URLSearchParams(window.location.search).get("data"));
+    } else {
+      (async () => {
+        try {
+          const folioData: any = await FetchData(
+            "/cms/reservation/" + new URLSearchParams(window.location.search).get("data") + "/update",
+            "GET",
+            "",
+            false,
+            datalocal?.data?.access_token,
+            router,
+            ""
+          );
+          if (folioData?.code == "200" && Boolean(folioData?.data?.is_parent_git)) {
+            setIsGitMaster(true);
+            GetDetailData(new URLSearchParams(window.location.search).get("data"));
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      })();
     }
     if (isPayment) {
       showPopup("payment", "Payment");
     }
   }, []);
+
+  useEffect(() => {
+    const sd = router?.query?.sub_data;
+    if (sd !== undefined && sd !== null) setidSubfolio(String(sd));
+  }, [router?.query?.sub_data]);
   useEffect(() => {
     // console.log("paypopup", isPayment);
     if (isPayment) {

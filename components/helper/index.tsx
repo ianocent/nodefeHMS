@@ -709,8 +709,35 @@ export function formatAmount(number: string | number) {
   return minus + "" + (num == 0 ? "0" : formatAmountNoDecimals(x1)) + dec;
 }
 export function NumberClear(cur: any) {
-  cur = String(cur ?? "").replaceAll(".", "").replaceAll(",", ".");
-  return cur;
+  let s = String(cur ?? "").trim();
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else {
+      s = s.replace(/,/g, "");
+    }
+  } else if (lastComma !== -1) {
+    if (/,\d{2}$/.test(s)) {
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else {
+      s = s.replace(/,/g, "");
+    }
+  } else if (lastDot !== -1) {
+    const parts = s.split(".");
+    if (parts.length === 2 && /\d{2}$/.test(parts[1])) {
+      // keep as decimal
+    } else {
+      s = s.replace(/\./g, "");
+    }
+  }
+  s = s.replace(/[^0-9.]/g, "");
+  const dots = s.split(".");
+  if (dots.length > 2) {
+    s = dots[0] + "." + dots.slice(1).join("");
+  }
+  return s;
 }
 export function IntlNumberFormat(number: number) {
   const formattedNumber = new Intl.NumberFormat("de-DE", {

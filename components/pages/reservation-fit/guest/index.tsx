@@ -35,6 +35,8 @@ const ListView = () => {
   const [IsCancel, setIsCancel] = useState(false);
   const [subfolio, setsubfolio] = useState<any>([]);
   const [idSubfolio, setidSubfolio] = useState("");
+  const [isGitMaster, setIsGitMaster] = useState(false);
+  const [ogRefresh, setOgRefresh] = useState(0);
   const ref = useRef(null);
   // The add-guest modal needs its own node reference. It shared `ref` with the
   // autocomplete dropdown, so the window-level outside-click handler treated
@@ -43,15 +45,19 @@ const ListView = () => {
 
   useEffect(() => {
     if (subfolio.length > 0) {
-      router.replace({
-        pathname: window.location.pathname,
-        query: {
-          parent: new URLSearchParams(window.location.search).get("parent"),
-          data: new URLSearchParams(window.location.search).get("data"),
-          module: new URLSearchParams(window.location.search).get("module"),
-          sub_data: subfolio[0].value,
-        },
-      });
+      const currentSub = new URLSearchParams(window.location.search).get("sub_data");
+      if (!currentSub) {
+        router.replace({
+          pathname: window.location.pathname,
+          query: {
+            parent: new URLSearchParams(window.location.search).get("parent"),
+            data: new URLSearchParams(window.location.search).get("data"),
+            module: new URLSearchParams(window.location.search).get("module"),
+            sub_data: subfolio[0].value,
+          },
+        });
+      }
+      if (!idSubfolio) setidSubfolio(String(subfolio[0].value));
     }
   }, [subfolio]);
   const GetDetailData = async (i: any) => {
@@ -96,6 +102,9 @@ const ListView = () => {
       );
       if (data?.code == "200") {
         setIsCancel(data?.data?.is_cancel);
+        const isGit = Boolean(data?.data?.is_parent_git);
+        setIsGitMaster(isGit);
+        if (isGit) GetDetailData(new URLSearchParams(window.location.search).get("data"));
       }
       return;
     } catch (error) {
@@ -105,6 +114,8 @@ const ListView = () => {
   };
   useEffect(() => {
     const isGIT = window.location.pathname.split("/")[2];
+    const initialSub = new URLSearchParams(window.location.search).get("sub_data");
+    if (initialSub) setidSubfolio(initialSub);
     GetDataDetailFolio();
     if (isGIT == "git") {
       GetDetailData(new URLSearchParams(window.location.search).get("data"));
@@ -143,11 +154,22 @@ const ListView = () => {
                 <GuestAdd
                   isPopup={true}
                   nameinit={""}
-                  OnCancelSv={() => setpopup(false)}
-                  ActionSv={
-                    (id, fn, ln, ti, pn, em, gs) => {}
-                    // ActSv(id, fn, ln, ti, pn, em, "guest", gs)
-                  }
+                  OnCancelSv={() => setuseradd(false)}
+                  ActionSv={async (id, fn, ln, ti, pn, em, gs, all) => {
+                    try {
+                      const folioId = GetQueryStr("data");
+                      const subfolioId = GetQueryStr("sub_data") || idSubfolio;
+                      const payload = { idx: [id], folio_id: folioId, subfolio_id: subfolioId };
+                      const raw = JSON.stringify(payload);
+                      const aesraw = GetEncrypt(raw);
+                      await FetchData("/cms/other-guest", "POST", aesraw, false, datalocal?.data?.access_token, router, "");
+                    } catch (error) {
+                      console.log(error);
+                    } finally {
+                      setuseradd(false);
+                      setOgRefresh((k) => k + 1);
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -309,6 +331,7 @@ const ListView = () => {
           </div>
           {!popup ? (
             <TableView
+              key={ogRefresh}
               groups={groups}
               isBtnAdd={IsCancel ? false : true}
               isBtnEdit={IsCancel ? false : true}

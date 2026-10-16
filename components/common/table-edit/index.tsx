@@ -138,6 +138,33 @@ const TableView = (props: TableViewProps) => {
     status: { value: "-1", label: "ALL" },
   });
   const [datatable, setdatatable] = useState<any>({});
+  // Laravel's paging() helper emits { start_paging, end_paging, prev, next,
+  // prev_jump, next_jump, total_data, limit_data }; the node API emits
+  // { current_page, last_page, per_page, total }. The grid reads the Laravel
+  // keys everywhere, so on the node API `datatable.paging` was undefined and
+  // every grid rendered a dead pager (Bar > Rate Link included). Normalise both
+  // shapes into one object instead of patching each controller.
+  const paging = ((): any => {
+    const p = datatable?.paging;
+    const n = datatable?.pagination;
+    const raw: any = p ?? n ?? {};
+    const totalData = Number(raw.total_data ?? raw.total ?? 0);
+    const limitData = Number(raw.limit_data ?? raw.per_page ?? 0);
+    const lastPage = Number(
+      raw.end_paging ?? raw.last_page ?? (limitData ? Math.ceil(totalData / limitData) : 0)
+    );
+    const currentPage = Number(raw.start_paging ?? raw.current_page ?? 1);
+    return {
+      limit_data: limitData,
+      total_data: totalData,
+      start_paging: currentPage,
+      end_paging: lastPage,
+      prev_jump: raw.prev_jump ?? (currentPage > 1 ? 1 : 0),
+      prev: raw.prev ?? (currentPage > 1 ? currentPage - 1 : 0),
+      next: raw.next ?? (currentPage < lastPage ? currentPage + 1 : 0),
+      next_jump: raw.next_jump ?? (currentPage < lastPage ? lastPage : 0),
+    };
+  })();
   const [add, setaddform] = useState<boolean>(false);
   const [idparent, setidparent] = useState("");
   const [loading, setloading] = useState<boolean>(false);
@@ -300,8 +327,25 @@ const TableView = (props: TableViewProps) => {
         setData({ ...dataval, [name]: e.target.checked });
       }
     } else if (b == "select") {
-      let dataMerge = {};
-      dataMerge[name] = e.value;
+      let dataMerge: any = {};
+      const isMultiple = ismulti || Array.isArray(e) || Array.isArray(e?.target?.value);
+      if (isMultiple) {
+        // react-select in multi mode hands the selected-options ARRAY back as the
+        // first argument, so `e.value` was undefined and a select_multiple column
+        // stored nothing under its own key. FinalPOstDat then drops the "_ori" twin
+        // as UI-only, so the column posted NOTHING at all.
+        //
+        // Rate Link "Applied to" is a select_multiple: with this bug the save only
+        // ever wrote the room type being edited, so the value the user picked was
+        // never applied to the other room type.
+        const raw: any = Array.isArray(e) ? e : e?.target?.value ?? e?.value ?? [];
+        const list: any[] = Array.isArray(raw) ? raw : [raw];
+        dataMerge[name] = list
+          .map((x: any) => (x && typeof x === "object" ? x.value : x))
+          .filter((x: any) => x !== undefined && x !== null && x !== "");
+      } else {
+        dataMerge[name] = e?.value;
+      }
       dataMerge[name + "_ori"] = e;
 
       if (related) {
@@ -837,33 +881,33 @@ const TableView = (props: TableViewProps) => {
   };
   const previn = () => {
     // alert(1);
-    if (datatable?.pagging?.prev) {
-      GetDataTable(datavalsrc?.status?.value, datatable?.pagging?.prev);
+    if (paging.prev) {
+      GetDataTable(datavalsrc?.status?.value, paging.prev);
     }
-    setPageDat(datatable?.pagging?.prev);
+    setPageDat(paging.prev);
   };
   const nextin = () => {
-    if (datatable?.pagging?.next) {
-      GetDataTable(datavalsrc?.status?.value, datatable?.pagging?.next);
+    if (paging.next) {
+      GetDataTable(datavalsrc?.status?.value, paging.next);
     }
     // alert(2);
-    setPageDat(datatable?.pagging?.next);
+    setPageDat(paging.next);
   };
   const prevJumpin = () => {
-    if (datatable?.pagging?.prev_jump) {
-      GetDataTable(datavalsrc?.status?.value, datatable?.pagging?.prev_jump);
+    if (paging.prev_jump) {
+      GetDataTable(datavalsrc?.status?.value, paging.prev_jump);
     }
-    setPageDat(datatable?.pagging?.prev_jump);
+    setPageDat(paging.prev_jump);
   };
   const nextJumpin = () => {
-    if (datatable?.pagging?.next_jump) {
-      GetDataTable(datavalsrc?.status?.value, datatable?.pagging?.next_jump);
+    if (paging.next_jump) {
+      GetDataTable(datavalsrc?.status?.value, paging.next_jump);
     }
-    setPageDat(datatable?.pagging?.next_jump);
+    setPageDat(paging.next_jump);
   };
   const onLoadmore = () => {
-    if (datatable?.pagging?.next) {
-      GetDataTable(datavalsrc?.status?.value, datatable?.pagging?.next, true);
+    if (paging.next) {
+      GetDataTable(datavalsrc?.status?.value, paging.next, true);
     } else {
       setishide(true);
     }
@@ -2889,17 +2933,17 @@ const TableView = (props: TableViewProps) => {
       ) : isPageing ? (
         <div className="order-3">
           <PaginationTable
-            vnext={datatable?.pagging?.next}
-            vprev={datatable?.pagging?.prev}
-            vnextJump={datatable?.pagging?.next_jump}
-            vprevjump={datatable?.pagging?.prev_jump}
+            vnext={paging.next}
+            vprev={paging.prev}
+            vnextJump={paging.next_jump}
+            vprevjump={paging.prev_jump}
             prev={previn}
             next={nextin}
             prevJump={prevJumpin}
             nextJump={nextJumpin}
-            totalPage={datatable?.pagging?.end_paging}
-            page={datatable?.pagging?.start_paging}
-            totalData={datatable?.pagging?.total_data}
+            totalPage={paging.end_paging}
+            page={paging.start_paging}
+            totalData={paging.total_data}
           />
         </div>
       ) : (
