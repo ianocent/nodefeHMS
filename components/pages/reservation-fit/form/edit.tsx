@@ -2452,13 +2452,13 @@ const EditView = () => {
               <ButtonSubmit
                 onCreate={() => {
                   setIspopupChange(false);
+                  // The Apply button used to stop at a console.log — the picked
+                  // sub-folios never landed in a request, so a bulk Move/Extend
+                  // looked like it saved while the folio dates stayed put.
+                  // Forward the selection into the normal save payload
+                  // (sub_folio_selected is picked up inside OnSave()).
                   if (bulkData && bulkData.length > 0) {
-                    console.log(
-                      "Sub-folio selected for date change:",
-                      bulkData,
-                    );
-                  } else {
-                    console.log("No sub-folio selected");
+                    OnSave(0);
                   }
                 }}
                 label="Apply"

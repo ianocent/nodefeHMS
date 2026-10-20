@@ -1604,6 +1604,11 @@ const TabMenuIcon = (props: DatatabProps) => {
 
   useEffect(() => {
     const handleOutSideClick = (event) => {
+      // The Reason dropdown (react-select, classNamePrefix "Select2") is a
+      // popup child; a mousedown on the menu or its body must not close the
+      // popup itself — the menus used to close before the option was picked.
+      const cls = String(event?.target?.className ?? "");
+      if (cls.indexOf("Select2__") !== -1) return;
       if (!ref.current?.contains(event.target)) {
         if (popup) {
           setpopup(false);
@@ -1648,11 +1653,11 @@ const TabMenuIcon = (props: DatatabProps) => {
     return (
     <>
       {popup && String(id) === GetQueryStr("data") ? (
-        <div className="overlay flex items-center justify-center p-4">
+        <div className="overlay">
           <div
             ref={ref}
             className={
-              "w-full max-w-5xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl z-20 "
+              "w-[77%] relative max-h-[calc(100vh-140px)] bg-white z-20 top-[95px] left-[19%]"
             }
           >
             <div className=" overflow-y-auto">
