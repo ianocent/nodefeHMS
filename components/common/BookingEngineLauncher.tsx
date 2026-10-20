@@ -10,7 +10,7 @@ import { env } from "../../next.config";
 //   local        http://localhost:3002
 //   production   https://booking-node.anyaman.id
 export const BOOKING_ENGINE_URL = (env.bookingEngineUrl ||
-  "http://localhost:3002") as string;
+  "https://booking-node.anyaman.id") as string;
 
 export const bookingEngineHref = (path = "/loyalty"): string =>
   `${BOOKING_ENGINE_URL.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;

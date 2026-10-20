@@ -19,6 +19,7 @@ idPostValue,
 } from "../../helper";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import ButtonSubmit from "../../common/button/ButtonSubmit";
 import { LayoutContext } from "../../../context/LayoutContext";
 import { Value } from "sass";
@@ -42,6 +43,7 @@ interface AddviewProps {
   keys?: string;
   isBtnAdd?: boolean,
   isBtnEdit?: boolean,
+  refreshKey?: number,
 }
 const AddView = (props: AddviewProps) => {
   const {
@@ -62,7 +64,10 @@ const AddView = (props: AddviewProps) => {
     isCalculate = true,
     keys = "0",
     isBtnAdd = true,
-    isBtnEdit = true
+    isBtnEdit = true,
+    // Bump this number from the parent (e.g. after a bulk check-in succeeded)
+    // to re-fetch the rows without unmounting the grid.
+    refreshKey = 0
   } = props;
   const router = useRouter();
   const ref = useRef(null);
@@ -431,6 +436,19 @@ const AddView = (props: AddviewProps) => {
         setValedit(-1);
         GetDataDetail(idusr);
         setloading(false);
+        // Treat the row-edit save like every other save in the app: failures
+        // used to look identical to a success because only the rows refetched.
+        toast(saveprocess?.message ?? "Failed to save the reservation row", {
+          autoClose: 8000,
+          type: "error",
+          position: "bottom-center",
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
     } catch (error) {
       console.log("erro", error);
@@ -860,6 +878,19 @@ const AddView = (props: AddviewProps) => {
       window.removeEventListener("mousedown", handleOutSideClick);
     };
   }, [ref]);
+
+  // Parent-driven row refresh (bulk check-in/out/cancel leaves the grid in
+  // place but its rows are stale).
+  useEffect(() => {
+    if (refreshKey === 0) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const idreq = urlParams.get("data");
+    if (idreq) {
+      GetDataDetail(idreq);
+      GetDataTable();
+      setidusr(idreq);
+    }
+  }, [refreshKey]);
 
   return (
     <>

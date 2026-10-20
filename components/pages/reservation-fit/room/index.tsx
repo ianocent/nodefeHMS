@@ -53,6 +53,12 @@ const AddView = (props: AddviewProps) => {
   const layout = useContext(LayoutContext);
   const [loading, setloading] = useState(false);
   const [groupBlockError, setgroupBlockError] = useState<string | null>(null);
+  // Per-folio failures reported by /cms/reservation/update-bulk. Kept on screen
+  // so a partial bulk check-in/out/cancel is visible instead of silently lost.
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  // Bumped after a bulk action so the MoveRsv grid refetches its rows while
+  // staying on the Room tab.
+  const [moveRsvRefresh, setmoveRsvRefresh] = useState(0);
   const [isParentGIT, setisParentGIT] = useState(false);
   const [actAuto, setactAuto] = useState("-1");
   const [stsRsv, setstsRsv] = useState(-1);
@@ -465,7 +471,7 @@ const AddView = (props: AddviewProps) => {
         ""
       );
 
-        if (saveprocess?.code == 200) {
+      if (saveprocess?.code == 200) {
         setEdit(false);
         setValedit(-1);
         setPendingEditIndex(null);
@@ -474,6 +480,18 @@ const AddView = (props: AddviewProps) => {
         setloading(false);
       } else {
         setloading(false);
+        // Row-edit failures used to be silent — show what the API rejected.
+        toast(saveprocess?.message ?? "Failed to save the reservation row", {
+          autoClose: 8000,
+          type: "error",
+          position: "bottom-center",
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
 
       GetDataDetail(idusr);
@@ -915,6 +933,41 @@ const AddView = (props: AddviewProps) => {
     // console.log("widylog", dataval);
     setloading(true);
     try {
+      // The bulk-cancel modal must never submit an incomplete reason — a batch
+      // used to be cancellable with the Reason dropdown left empty.
+      if (key == "cancel_reservation") {
+        if (!reasonVal?.value) {
+          toast("Please select the cancellation reason first", {
+            autoClose: 6000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setloading(false);
+          return;
+        }
+        if (!String(remarkGitCancel ?? "").trim()) {
+          toast("Please fill in the remark first", {
+            autoClose: 6000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setloading(false);
+          return;
+        }
+      }
+
       let urisave = "/cms/reservation/update-bulk";
       let mth = "POST";
       let datapost = {
@@ -954,14 +1007,71 @@ const AddView = (props: AddviewProps) => {
         ""
       );
       if (saveprocess?.code == "200") {
-        window.location.assign(
-          "/reservation/git/reservation/?parent=" +
-            GetQueryStr("parent") +
-            "&data=" +
-            GetQueryStr("data") +
-            "&time=1729590399828&card=0&pageload=&group=git"
-        );
+        // Stay on the Room tab. The old handler hard-redirected to the
+        // Reservation tab, which both hid the result of the bulk action and
+        // wiped the bulk selection (the bulk buttons disappeared).
+        const failed = saveprocess?.data?.failed;
+        if (Array.isArray(failed) && failed.length > 0) {
+          setBulkError(
+            failed
+              .map(
+                (f: any) =>
+                  `${f?.folio_number ?? f?.folio_id ?? "folio"}: ${f?.message ?? "failed"}`
+              )
+              .join(" | ")
+          );
+          toast("Some reservations failed to process — see the details", {
+            autoClose: 8000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+        } else {
+          setBulkError(null);
+          toast(
+            (key == "check_in"
+              ? "Check in"
+              : key == "check_out"
+              ? "Check out"
+              : "Cancel reservation") + " success",
+            {
+              autoClose: 6000,
+              type: "success",
+              position: "bottom-center",
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "colored",
+            }
+          );
+        }
+        // Refresh the folio data without leaving the tab; bulkData is kept so
+        // the bulk action buttons stay available.
+        GetDataFolion();
+        setmoveRsvRefresh((v) => v + 1);
+        // Close the reason modal — it used to stay open because the success
+        // path was a hard page redirect.
+        setIsremark(false);
       } else {
+        setBulkError(saveprocess?.message ?? "Failed to process the bulk action");
+        toast(saveprocess?.message ?? "Failed to process the bulk action", {
+          autoClose: 8000,
+          type: "error",
+          position: "bottom-center",
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
       setloading(false);
     } catch (error) {
@@ -1096,6 +1206,8 @@ const AddView = (props: AddviewProps) => {
                     // ClassPrimary="ti-btn ti-btn-warning !bg-red !text-white !font-medium"
                     onCreate={() => {
                       setIsremark(false);
+                      setBulkError(null);
+                      setreasonVal({});
                     }}
                   />
                   <ButtonSubmit
@@ -1464,11 +1576,18 @@ const AddView = (props: AddviewProps) => {
               isCheckBox={true}
               isFolio={true}
               isCalculate={false}
+              refreshKey={moveRsvRefresh}
               saveBulk={(idx) => setBulkData(idx)}
             />
 
             {bulkData.length ? (
-              <div className="flex gap-4 mt-4 justify-end">
+              <div className="flex gap-4 mt-4 justify-end items-center flex-wrap">
+                {bulkError && (
+                  <div className="w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 mb-2">
+                    <p className="font-bold">Some reservations were not processed:</p>
+                    <p className="mt-1 break-words">{bulkError}</p>
+                  </div>
+                )}
                 {showChangeDateModal && (
                   <ModalBulkChangeDate
                     isOpen={showChangeDateModal}

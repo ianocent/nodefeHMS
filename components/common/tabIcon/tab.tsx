@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { useFormPermission, useTransactionPermission } from "../../../hooks/useFormPermission";
 import {
   FetchData,
@@ -122,6 +123,40 @@ const TabMenuIcon = (props: DatatabProps) => {
     setBulkError(null);
     try {
       setreloadPay(false);
+      // A cancel needs the Reason dropdown AND the remark filled in — the old
+      // flow posted straight away and could cancel with an empty reason.
+      if (key == "cancel_reservation") {
+        if (!valReason?.value) {
+          toast("Please select the cancellation reason first", {
+            autoClose: 6000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setloading(false);
+          return;
+        }
+        if (!String(remarkval ?? "").trim()) {
+          toast("Please fill in the remark first", {
+            autoClose: 6000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setloading(false);
+          return;
+        }
+      }
       let urisave = "";
       let mth = "POST";
       var datapost = datavala;
@@ -235,7 +270,6 @@ const TabMenuIcon = (props: DatatabProps) => {
       if (saveprocess?.code == "200") {
         //
         setreloadPay(true);
-        setpopup(false);
         if (saveprocess?.data?.door_lock?.ip_doorlock) {
           OnSaveSugestionsss("/cms/new-key", false);
         }
@@ -244,6 +278,10 @@ const TabMenuIcon = (props: DatatabProps) => {
         // for the whole batch, so rejected rooms looked checked out.
         const failed = saveprocess?.data?.failed;
         if (Array.isArray(failed) && failed.length > 0) {
+          // Partial failure: KEEP the popup open and leave the URL alone. The
+          // old handler closed the popup and ResetPath'd right away, so a
+          // failing bulk check-in showed no explanation and threw the user
+          // back to the Reservation tab.
           setBulkError(
             failed
               .map(
@@ -252,12 +290,39 @@ const TabMenuIcon = (props: DatatabProps) => {
               )
               .join(" | ")
           );
-        } else {
-          setBulkError(null);
+          toast("Some reservations failed to process — see the details", {
+            autoClose: 8000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setloading(false);
+          return;
         }
+        setBulkError(null);
+        setpopup(false);
+        setBulkData([]);
         // window.location.reload();
         ResetPath();
       } else {
+        // Surface the rejection in the popup footer instead of failing silently.
+        setBulkError(saveprocess?.message ?? "Failed to process the action");
+        toast(saveprocess?.message ?? "Failed to process the action", {
+          autoClose: 8000,
+          type: "error",
+          position: "bottom-center",
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
         if (dataIconAll?.is_has_folio_auto_transfer) {
           // window.location.reload();
           setreloadPay(true);
