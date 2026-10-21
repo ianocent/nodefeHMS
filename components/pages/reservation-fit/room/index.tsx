@@ -145,7 +145,9 @@ const AddView = (props: AddviewProps) => {
           toast.success("Dates updated successfully");
         }
         GetDataFolion();
-        setBulkData([]);
+        // Keep the bulk selection — the bulk action buttons must survive a
+        // successful Change Check In-Out Date like they do after check-in.
+        setmoveRsvRefresh((v) => v + 1);
       } else {
         toast.error(response?.message || "Failed to update dates");
       }
@@ -1105,10 +1107,12 @@ const AddView = (props: AddviewProps) => {
       );
       setloading(false);
       if (saveprocess?.code == "200") {
-        // sleep 2
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // Refresh the rows in place. The old window.location.reload() remounted
+        // the whole tab and wiped every piece of client state — the bulk
+        // selection first of all, so the Check In / Cancel / Move Reservation
+        // buttons disappeared right after editing a sub-folio detail.
+        GetDataFolion();
+        setmoveRsvRefresh((v) => v + 1);
       } else {
         // Surface the rejection instead of silently doing nothing — a 400 here
         // used to look identical to a success from the user's seat.
@@ -1343,7 +1347,11 @@ const AddView = (props: AddviewProps) => {
                                             stsRsv != 2 &&
                                             stsRsv != 5 &&
                                             item?.action_table && 
-                                            datalocal?.data?.permissions?.[3]?.access?.[3]?.crud?.edit === true && (
+                                            // Lenient truthy: permission payloads
+                                            // serve booleans, `1` and "true" —
+                                            // strict === true hid the row edit
+                                            // pencil for perfectly valid roles.
+                                            !!datalocal?.data?.permissions?.[3]?.access?.[3]?.crud?.edit && (
                                               <button
                                                 className="w-[21px]"
                                                 onClick={() => {

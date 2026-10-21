@@ -306,8 +306,11 @@ const TabMenuIcon = (props: DatatabProps) => {
         }
         setBulkError(null);
         setpopup(false);
-        setBulkData([]);
-        // window.location.reload();
+        // Keep the bulk selection (and the bulk action buttons it drives) after
+        // a successful batch — the QA contract is that Check In / Check Out /
+        // Cancel / Change Date stay available after a bulk check-in, same as
+        // the Room tab handler. Only a partial failure could warrant rerunning
+        // the batch; wiping the list here made every button vanish.
         ResetPath();
       } else {
         // Surface the rejection in the popup footer instead of failing silently.

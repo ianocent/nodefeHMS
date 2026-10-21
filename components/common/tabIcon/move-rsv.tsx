@@ -974,6 +974,12 @@ const AddView = (props: AddviewProps) => {
                                   id={item?.data[0]?.id}
                                   name={"nm_id"}
                                   value={item?.data[0]?.id}
+                                  checked={
+                                    Array.isArray(dataval) &&
+                                    dataval
+                                      .map((v) => String(v))
+                                      .includes(String(item?.data[0]?.id))
+                                  }
                                   onChange={(e) => {
                                     changeHandlera(e);
                                   }}

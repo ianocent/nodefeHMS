@@ -5,6 +5,14 @@ import React, {
   useState,
 } from "react";
 import dynamic from "next/dynamic";
+
+// IMPORTANT: the dynamic import MUST live at module scope. Creating it inside
+// the component body produced a NEW component type on every render, so
+// react-select remounted whenever the parent re-rendered (e.g. after
+// onMenuOpen/setIsOpen) — the menu closed itself before an option could be
+// clicked, which made the cancel-reservation Reason dropdown unclickable.
+const Select = dynamic(() => import("react-select"), { ssr: false });
+
 interface SelectBaseProps {
   label: string;
   key?: string;
@@ -42,7 +50,6 @@ const MultiSelectBAse = (props: SelectBaseProps) => {
   } = props;
   const ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
-  const Select = dynamic(() => import("react-select"), { ssr: false });
   let optionsAdd = [];
   let optionMerge = [];
 
@@ -101,6 +108,11 @@ const MultiSelectBAse = (props: SelectBaseProps) => {
         className="basic-multi-select min-w-[120px] "
         id="choices-multiple-default"
         menuPlacement="auto"
+        // Render with fixed positioning so long option lists are never clipped
+        // by the popup's overflow-y-auto/max-h scroll containers — inside those
+        // containers the inline menu was cut off and the visible options were
+        // unclickable.
+        menuPosition="fixed"
         classNamePrefix="Select2"
         placeholder={placeholder}
         defaultValue={defaultValue}
