@@ -456,23 +456,19 @@ const AddView = (props: AddviewProps) => {
     }
   };
   const changeHandlera = (e: any) => {
-    var arry = [];
-    dataval?.map((rw) => {
-      arry.push(rw);
-    });
-    if (e.target.checked) {
-      arry.push(e.target.value);
-      setData((dataval) => [...dataval, e.target.value]);
-    } else {
-      // remove
-      var pos = dataval.findIndex((val) => val == e.target.value);
-      var arrpos = arry.findIndex((val) => val == e.target.value);
-      if (pos >= 0) {
-        dataval.splice(pos, 1);
-        arry.splice(arrpos, 1);
-      }
-    }
-    saveBulk(arry);
+    // Keep the selection list an array at all times. `dataval` is also used as
+    // the search/filter object elsewhere in this component, and the previous
+    // implementation assumed it was always an array: after a sub-folio edit the
+    // checkbox handler threw and the checklist became unclickable.
+    const current: any[] = Array.isArray(dataval) ? dataval : [];
+    const value = String(e.target.value);
+    const next = e.target.checked
+      ? current.some((v) => String(v) === value)
+        ? current
+        : [...current, value]
+      : current.filter((v) => String(v) !== value);
+    setData(next);
+    saveBulk(next);
   };
   const ListTblGuest = (id, datI, name, ix, ia, isAdd) => {
     return (
@@ -974,12 +970,6 @@ const AddView = (props: AddviewProps) => {
                                   id={item?.data[0]?.id}
                                   name={"nm_id"}
                                   value={item?.data[0]?.id}
-                                  checked={
-                                    Array.isArray(dataval) &&
-                                    dataval
-                                      .map((v) => String(v))
-                                      .includes(String(item?.data[0]?.id))
-                                  }
                                   onChange={(e) => {
                                     changeHandlera(e);
                                   }}
