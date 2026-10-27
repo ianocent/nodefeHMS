@@ -1382,10 +1382,16 @@ const EditView = () => {
                   index
                 ]?.room_type_id_origin?.value;
             } else if (rw?.name == "room_id") {
-              dataInput[2].items[index].data[i].value =
-                data?.data?.reservation_items[index]?.room_id_origin?.label;
-              dataInput[2].items[index].data[i].valueid =
-                data?.data?.reservation_items[index]?.room_id_origin?.value;
+              // Promote the same way as "name-room": an assigned room lands in
+              // room_id (origin) but a pending change lives in room_id_next.
+              // Reading only room_id_origin left the Field Data Reservation Room
+              // blank whenever the pick had not yet been folded into room_id.
+              const rNextRoom = data?.data?.reservation_items[index]?.room_id_next;
+              const rCurRoom = data?.data?.reservation_items[index]?.room_id_origin;
+              const rShownRoom =
+                rNextRoom && rNextRoom.value ? rNextRoom : rCurRoom && rCurRoom.value ? rCurRoom : null;
+              dataInput[2].items[index].data[i].value = rShownRoom?.label ?? "";
+              dataInput[2].items[index].data[i].valueid = rShownRoom?.value ?? null;
             } else if (rw?.name == "name-rate") {
               dataInput[2].items[index].data[i].valueOri =
                 data?.data?.reservation_items[index]?.rate_id;

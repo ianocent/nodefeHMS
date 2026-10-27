@@ -1368,7 +1368,6 @@ const TabMenuIcon = (props: DatatabProps) => {
             key == "confirm_change_room" ||
             key == "cancel_change_room" ||
             key == "confirm_reservation" ||
-            key == "assign_room" ||
             key == "move_reservation" ? (
               <>
                 {bulkError && (
@@ -1393,7 +1392,6 @@ const TabMenuIcon = (props: DatatabProps) => {
                   key == "confirm_change_room" ||
                   key == "cancel_change_room" ||
                   key == "confirm_reservation" ||
-                  key == "assign_room" ||
                   key == "move_reservation"
                     ? "Confirmation"
                     : "Save"

@@ -342,7 +342,7 @@ const AddView = (props: AddviewProps) => {
           options: [],
           placeholder: "Choose Data",
           isShow: true,
-          required: true,
+          required: false,
         },
         {
           label: "Market Segment 3",
@@ -352,7 +352,7 @@ const AddView = (props: AddviewProps) => {
           options: [],
           placeholder: "Choose Data",
           isShow: true,
-          required: true,
+          required: false,
         },
         {
           label: "Market Segment 4",
@@ -362,7 +362,7 @@ const AddView = (props: AddviewProps) => {
           options: [],
           placeholder: "Choose Data",
           isShow: true,
-          required: true,
+          required: false,
         },
       ],
     },
