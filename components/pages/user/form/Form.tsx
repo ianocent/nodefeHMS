@@ -108,6 +108,24 @@ const AddUsertView = () => {
         pin_enshift: datauser?.data?.pin_enshift,
       };
       // console.log("data", datauser?.data?.properties);
+      // Make sure the saved Role / Company / Property selections are actually present
+      // in their option lists, otherwise react-select renders the field blank even
+      // though the value was loaded from the backend.
+      const master = datauser?.master || {};
+      if (dataobj.roles?.value != null && !((master.roles || []).some((r: any) => r?.value === dataobj.roles.value))) {
+        master.roles = [...(master.roles || []), dataobj.roles];
+      }
+      if (dataobj.companies?.value != null && !((master.companies || []).some((c: any) => c?.value === dataobj.companies.value))) {
+        master.companies = [...(master.companies || []), dataobj.companies];
+      }
+      if (Array.isArray(dataobj.propertiess)) {
+        const propOpts = [...(master.properties || [])];
+        dataobj.propertiess.forEach((p: any) => {
+          if (p?.value != null && !propOpts.some((x: any) => x?.value === p.value)) propOpts.push(p);
+        });
+        master.properties = propOpts;
+      }
+      if (datauser) datauser.master = master;
       setData(dataobj);
       setdataoption(datauser);
 

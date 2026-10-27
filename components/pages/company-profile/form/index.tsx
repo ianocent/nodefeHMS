@@ -652,7 +652,11 @@ const AddView = (props: AddviewProps) => {
         mth = "PUT";
       }
       const aesraw = GetEncrypt(raw);
-      var redirects = isPopup ? "" : `${pathname}?parent=83`;
+      // Hindari double navigasi: FetchData dengan linksucces non-kosong akan
+      // push ke ${pathname}?parent=83 setelah 800ms (kembali ke halaman form)
+      // sedangkan OnSave sudah replace ke list page. Biarkan OnSave yang atur
+      // navigasi setelah sukses.
+      var redirects = "";
       const saveprocess = await FetchData(
         urisave,
         mth,
