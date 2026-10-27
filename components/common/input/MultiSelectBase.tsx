@@ -115,7 +115,7 @@ const MultiSelectBAse = (props: SelectBaseProps) => {
         menuPosition="fixed"
         classNamePrefix="Select2"
         placeholder={placeholder}
-        defaultValue={defaultValue}
+        value={defaultValue}
         onMenuClose={() => {
           onMenuClose();
           setIsOpen(false);
