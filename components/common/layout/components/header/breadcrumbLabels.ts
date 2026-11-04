@@ -125,7 +125,15 @@ export interface Crumb {
  * consumer can never keep rendering a previous route's crumbs.
  */
 export function buildBreadcrumbs(pathname: string): Crumb[] {
-  const segments = pathname.split("/").filter(Boolean);
+  // Record ids (/user/form/1, /x/<uuid>) are data, not navigation: skip them.
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .filter(
+      (s) =>
+        !/^\d+$/.test(s) &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+    );
   if (segments.length === 0) return [];
 
   return segments.map((segment, index) => {

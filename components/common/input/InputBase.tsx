@@ -47,6 +47,21 @@ const InputBase = (props: InputBaseProps) => {
   const [activeAuto, setactiveAuto] = useState(false);
   const [valOri, setValOri] = useState<any>(valEdit);
 
+  // Edit forms load their record asynchronously, so `valEdit` is empty on first
+  // render. Re-sync once the real {value,label} arrives (ignore the transient
+  // {value:0,label:0} emitted while the user is typing a search).
+  useEffect(() => {
+    if (
+      valEdit &&
+      typeof valEdit === "object" &&
+      valEdit.label !== undefined &&
+      valEdit.label !== null &&
+      valEdit.label !== 0
+    ) {
+      setValOri(valEdit);
+    }
+  }, [valEdit?.value, valEdit?.label]);
+
   const GetDataAutoComp = async (word) => {
     try {
       setloading(true);

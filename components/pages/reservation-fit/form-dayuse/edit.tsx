@@ -1272,27 +1272,41 @@ const EditView = () => {
                     index
                   ]?.room_type_id_origin?.value;
               } else {
-                dataInput[2].items[index].data[i].valueOri =
+                const rtNext =
                   data?.data?.reservation_items[index]?.room_type_id_next;
+                const rtCur =
+                  data?.data?.reservation_items[index]?.room_type_id_origin;
+                const rtShown =
+                  rtNext && rtNext.value != null && rtNext.value !== 0
+                    ? rtNext
+                    : rtCur && rtCur.value != null && rtCur.value !== 0
+                      ? rtCur
+                      : null;
+                dataInput[2].items[index].data[i].valueOri = rtShown;
                 dataInput[2].items[index].data[i].value =
-                  data?.data?.reservation_items[
-                    index
-                  ]?.room_type_id_next?.label;
+                  rtShown?.label ?? "";
                 dataInput[2].items[index].data[i].valueid =
-                  data?.data?.reservation_items[
-                    index
-                  ]?.room_type_id_next?.value;
+                  rtShown?.value ?? null;
                 dataInput[2].items[index].data[i].uri =
                   "/cms/room-type?reservation=1&check_in_date=[0]&check_out_date=[1]&rate_id=" +
                   data?.data?.reservation_items[index]?.rate_id?.value;
               }
             } else if (rw?.name == "name-room") {
-              dataInput[2].items[index].data[i].valueOri =
+              const rNext =
                 data?.data?.reservation_items[index]?.room_id_next;
+              const rCur =
+                data?.data?.reservation_items[index]?.room_id_origin;
+              const rShown =
+                rNext && rNext.value != null && rNext.value !== 0
+                  ? rNext
+                  : rCur && rCur.value != null && rCur.value !== 0
+                    ? rCur
+                    : null;
+              dataInput[2].items[index].data[i].valueOri = rShown;
               dataInput[2].items[index].data[i].value =
-                data?.data?.reservation_items[index]?.room_id_next?.label;
+                rShown?.label ?? "";
               dataInput[2].items[index].data[i].valueid =
-                data?.data?.reservation_items[index]?.room_id_next?.value;
+                rShown?.value ?? null;
             } else if (rw?.name == "room_type_id") {
               dataInput[2].items[index].data[i].value =
                 data?.data?.reservation_items[
@@ -1303,10 +1317,20 @@ const EditView = () => {
                   index
                 ]?.room_type_id_origin?.value;
             } else if (rw?.name == "room_id") {
+              const rNextRoom =
+                data?.data?.reservation_items[index]?.room_id_next;
+              const rCurRoom =
+                data?.data?.reservation_items[index]?.room_id_origin;
+              const rShownRoom =
+                rNextRoom && rNextRoom.value != null && rNextRoom.value !== 0
+                  ? rNextRoom
+                  : rCurRoom && rCurRoom.value != null && rCurRoom.value !== 0
+                    ? rCurRoom
+                    : null;
               dataInput[2].items[index].data[i].value =
-                data?.data?.reservation_items[index]?.room_id_origin?.label;
+                rShownRoom?.label ?? "";
               dataInput[2].items[index].data[i].valueid =
-                data?.data?.reservation_items[index]?.room_id_origin?.value;
+                rShownRoom?.value ?? null;
             } else if (rw?.name == "name-rate") {
               dataInput[2].items[index].data[i].valueOri =
                 data?.data?.reservation_items[index]?.rate_id;

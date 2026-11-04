@@ -5,6 +5,17 @@ import { toast } from "react-toastify";
 
 const env = process.env;
 
+// Last resource version seen in a GET response. Attached to mutating requests
+// so the backend can reject stale saves coming from another tab/device.
+let currentResourceVersion: string | null = null;
+function extractResourceVersion(data: any): string | null {
+  if (!data || typeof data !== "object") return null;
+  const candidates = [data?.version, data?.data?.version, data?.data?.data?.version];
+  for (const c of candidates) {
+    if (c !== undefined && c !== null) return String(c);
+  }
+  return null;
+}
 const AES_METHOD = "aes-256-cbc";
 const IV_LENGTH = 16;
 const passwords = env.passAes;
@@ -286,6 +297,9 @@ export const FetchData = async (
     var myHeaders = new Headers();
     myHeaders.append("Authorization", "Bearer " + token);
     myHeaders.append("Content-Type", "text/plain");
+    if ((methods == "POST" || methods == "PUT") && currentResourceVersion) {
+      myHeaders.append("x-expected-version", currentResourceVersion);
+    }
     if (methods == "POST" || methods == "PUT") {
       requestOptions = {
         method: methods,
@@ -307,6 +321,7 @@ export const FetchData = async (
       const data = isjson ? await response.json() : await response.text();
       const datatext = data;
       const datajson: any = JSON.parse(GetDecrypt(datatext));
+    const __v = extractResourceVersion(datajson); if (__v) currentResourceVersion = __v;
       if (datajson?.code != "200") {
         if (datajson?.errors && typeof window !== "undefined") {
           window.dispatchEvent(
@@ -465,6 +480,9 @@ export const FetchDataDocument = async (
   let requestOptions: RequestInit = {};
   var myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer " + token);
+  if ((methods == "POST" || methods == "PUT") && currentResourceVersion) {
+    myHeaders.append("x-expected-version", currentResourceVersion);
+  }
   if (methods == "POST" || methods == "PUT") {
     requestOptions = {
       method: methods,
@@ -485,6 +503,7 @@ export const FetchDataDocument = async (
     const response = await fetch(apiUrl, requestOptions);
     const data = isjson ? await response.json() : await response.text();
     const datajson: any = JSON.parse(GetDecrypt(data));
+    const __v2 = extractResourceVersion(datajson); if (__v2) currentResourceVersion = __v2;
     if (datajson?.code != "200") {
       if (datajson?.errors && typeof window !== "undefined") {
         window.dispatchEvent(

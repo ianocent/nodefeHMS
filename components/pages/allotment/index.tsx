@@ -20,7 +20,7 @@ const ListView = () => {
     setadd(add);
     setview(view);
     // console.log("DATALOG", window.location.pathname.split("/"));
-  });
+  }, [window.location.search]); // re-sync when Save redirects with data=<id>&add=1 so AddPage (with Room table) mounts
   function RouteInit() {
     if (add == "1") {
       return <AddPage />;

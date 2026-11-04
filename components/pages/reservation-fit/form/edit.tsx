@@ -1346,9 +1346,9 @@ const EditView = () => {
                 const rtCur =
                   data?.data?.reservation_items[index]?.room_type_id_origin;
                 const rtShown =
-                  rtNext && rtNext.value
+                  rtNext && rtNext.value != null && rtNext.value !== 0
                     ? rtNext
-                    : rtCur && rtCur.value
+                    : rtCur && rtCur.value != null && rtCur.value !== 0
                       ? rtCur
                       : null;
                 dataInput[2].items[index].data[i].valueOri = rtShown;
@@ -1368,7 +1368,11 @@ const EditView = () => {
               const rNext = data?.data?.reservation_items[index]?.room_id_next;
               const rCur = data?.data?.reservation_items[index]?.room_id_origin;
               const rShown =
-                rNext && rNext.value ? rNext : rCur && rCur.value ? rCur : null;
+                rNext && rNext.value != null && rNext.value !== 0
+                  ? rNext
+                  : rCur && rCur.value != null && rCur.value !== 0
+                    ? rCur
+                    : null;
               dataInput[2].items[index].data[i].valueOri = rShown;
               dataInput[2].items[index].data[i].value = rShown?.label ?? "";
               dataInput[2].items[index].data[i].valueid = rShown?.value ?? null;
@@ -1389,7 +1393,11 @@ const EditView = () => {
               const rNextRoom = data?.data?.reservation_items[index]?.room_id_next;
               const rCurRoom = data?.data?.reservation_items[index]?.room_id_origin;
               const rShownRoom =
-                rNextRoom && rNextRoom.value ? rNextRoom : rCurRoom && rCurRoom.value ? rCurRoom : null;
+                rNextRoom && rNextRoom.value != null && rNextRoom.value !== 0
+                  ? rNextRoom
+                  : rCurRoom && rCurRoom.value != null && rCurRoom.value !== 0
+                    ? rCurRoom
+                    : null;
               dataInput[2].items[index].data[i].value = rShownRoom?.label ?? "";
               dataInput[2].items[index].data[i].valueid = rShownRoom?.value ?? null;
             } else if (rw?.name == "name-rate") {
