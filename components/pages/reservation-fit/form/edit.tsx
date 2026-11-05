@@ -24,9 +24,9 @@ import {
   GetQueryParam,
   GetQueryStr,
   GetSelisihDay,
-  removeItem,
   idPostValue,
   isOutsidePopup,
+  removeItem,
 } from "../../../helper";
 import CompanyAdd from "../../company-profile/form/index";
 import GuestAdd from "../../guest/form/index";
@@ -46,7 +46,7 @@ const EditView = () => {
   const [loading, setloading] = useState(false);
   const { isLogin } = useSelector((state: any) => state?.auth);
   const datalocal: any = isLogin ? JSON.parse(GetDecrypt(isLogin)) : null;
-  console.log("datalocal", datalocal);
+  // console.log("datalocal", datalocal);
   const [dataguest, setdataguest] = useState<any>([]);
   const [actAuto, setactAuto] = useState("-1");
   const [load, setisload] = useState(false);
@@ -1344,7 +1344,8 @@ const EditView = () => {
                 const rtNext =
                   data?.data?.reservation_items[index]?.room_type_id_next;
                 const rtCur =
-                  data?.data?.reservation_items[index]?.room_type_id_origin;
+                  data?.data?.reservation_items[index]?.room_type_id_origin ??
+                  data?.data?.reservation_items[index]?.room_type_id;
                 const rtShown =
                   rtNext && rtNext.value != null && rtNext.value !== 0
                     ? rtNext
@@ -1366,7 +1367,9 @@ const EditView = () => {
               // only room_id_next therefore showed a blank Room field on reopen
               // even though the room was saved — fall back to the current room.
               const rNext = data?.data?.reservation_items[index]?.room_id_next;
-              const rCur = data?.data?.reservation_items[index]?.room_id_origin;
+              const rCur =
+                data?.data?.reservation_items[index]?.room_id_origin ??
+                data?.data?.reservation_items[index]?.room_id;
               const rShown =
                 rNext && rNext.value != null && rNext.value !== 0
                   ? rNext
@@ -1377,21 +1380,20 @@ const EditView = () => {
               dataInput[2].items[index].data[i].value = rShown?.label ?? "";
               dataInput[2].items[index].data[i].valueid = rShown?.value ?? null;
             } else if (rw?.name == "room_type_id") {
-              dataInput[2].items[index].data[i].value =
-                data?.data?.reservation_items[
-                  index
-                ]?.room_type_id_origin?.label;
-              dataInput[2].items[index].data[i].valueid =
-                data?.data?.reservation_items[
-                  index
-                ]?.room_type_id_origin?.value;
+              const rtOrigin =
+                data?.data?.reservation_items[index]?.room_type_id_origin ??
+                data?.data?.reservation_items[index]?.room_type_id;
+              dataInput[2].items[index].data[i].value = rtOrigin?.label ?? "";
+              dataInput[2].items[index].data[i].valueid = rtOrigin?.value ?? null;
             } else if (rw?.name == "room_id") {
               // Promote the same way as "name-room": an assigned room lands in
               // room_id (origin) but a pending change lives in room_id_next.
               // Reading only room_id_origin left the Field Data Reservation Room
               // blank whenever the pick had not yet been folded into room_id.
               const rNextRoom = data?.data?.reservation_items[index]?.room_id_next;
-              const rCurRoom = data?.data?.reservation_items[index]?.room_id_origin;
+              const rCurRoom =
+                data?.data?.reservation_items[index]?.room_id_origin ??
+                data?.data?.reservation_items[index]?.room_id;
               const rShownRoom =
                 rNextRoom && rNextRoom.value != null && rNextRoom.value !== 0
                   ? rNextRoom

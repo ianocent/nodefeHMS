@@ -889,23 +889,12 @@ const TableView = (props: TableViewProps) => {
         : el(".popuponly");
     const elBtn = evt.currentTarget;
 
-    // Object.assign(elPopup.style, {
-    //   left: `${evt.pageX}px`,
-    //   top: `${evt.pageY - 180}px`,
-    // });
+    if (!elPopup) return;
 
-    if (isNAudit) {
-      // if (left == "0") {
-      // setleft(evt.nativeEvent.offsetY + 20);
-      // // }
-      // // if (top == "0") {
-      // settop(evt.nativeEvent.offsetX + 100);
-      // }
-      // setleft(evt.offsetLeft);
-      // settop(evt.offsetTop);
-      // console.log(evt.nativeEvent.offsetX + "_" + e.pageY);
-    } else {
-    }
+    Object.assign(elPopup.style, {
+      left: `${evt.pageX + elBtn.scrollLeft - elBtn.offsetLeft + 25}px`,
+      top: `${evt.pageY + elBtn.scrollTop - elBtn.offsetTop - 50}px`,
+    });
   };
 
   useEffect(() => {
@@ -2346,7 +2335,7 @@ const TableView = (props: TableViewProps) => {
         <div
           className={
             ishide
-              ? "mt-2 w-full justify-center flex hidden"
+              ? "mt-2 w-full justify-center hidden"
               : "mt-2 w-full justify-center flex"
           }
         >

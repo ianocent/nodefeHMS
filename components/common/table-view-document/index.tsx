@@ -1483,7 +1483,7 @@ const TableViewDocument = (props: TableViewProps) => {
         <div
           className={
             ishide
-              ? "mt-2 w-full justify-center flex hidden"
+              ? "mt-2 w-full justify-center hidden"
               : "mt-2 w-full justify-center flex"
           }
         >

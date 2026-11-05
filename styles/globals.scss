@@ -363,14 +363,30 @@ legend {
 
 /* The actual popup */
 .popuponly {
-  background-color: #555;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.98);
+  color: #1f2937;
   text-align: left;
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  padding: 8px 0;
   position: absolute;
   z-index: 10000;
-  bottom: 1px;
+  min-width: 180px;
+  max-width: 240px;
+}
+.popuponly > div {
+  padding: 8px 14px;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.popuponly > div:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+.popuponly hr {
+  margin: 4px 0;
+  border-color: rgba(148, 163, 184, 0.45);
 }
 .label-text {
   font-size: 30px;

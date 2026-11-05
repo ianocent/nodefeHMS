@@ -1505,7 +1505,16 @@ const TrxPageView = (props: TrxProps) => {
               <ButtonSubmit
                 label="Print All"
                 onCreate={() => {
-                  handlePrint(`/cms/report/batch/folio/${folio}/guest-invoice`);
+                  // Laravel GuestInvoiceController requires the `ledger_id`
+                  // (`id-company` | `id-guest`); without it the invoice renders
+                  // the whole folio's transactions across every ledger.
+                  const ledgerKey = ["guest_a", "guest_b", "guest_c", "guest_d"].find(
+                    (k) => datavalPrint?.[k]?.value
+                  );
+                  const ledgerVal = ledgerKey ? datavalPrint?.[ledgerKey]?.value : "";
+                  handlePrint(
+                    `/cms/report/batch/folio/${folio}/guest-invoice${ledgerVal ? `?ledger_id=${ledgerVal}` : ""}`
+                  );
                 }}
               />
             </div>
