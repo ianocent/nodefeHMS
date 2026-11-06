@@ -839,7 +839,7 @@ const TableView = (props: TableViewProps) => {
       const raw = JSON.stringify(bodyFetch);
       const aesraw = GetEncrypt(raw);
       const datajson = await FetchData(
-        uriSave +
+        uri +
           "?sort=" +
           sort +
           "&group=" +
