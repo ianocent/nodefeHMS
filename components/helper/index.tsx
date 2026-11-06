@@ -323,6 +323,28 @@ export const FetchData = async (
       const datajson: any = JSON.parse(GetDecrypt(datatext));
     const __v = extractResourceVersion(datajson); if (__v) currentResourceVersion = __v;
       if (datajson?.code != "200") {
+        if (datajson?.code == "401") {
+          if (typeof window !== "undefined" && (window as any).__tokenExpired) {
+            return false;
+          }
+          if (typeof window !== "undefined") (window as any).__tokenExpired = true;
+          toast(formatValidationMessage(datajson?.message, datajson?.errors), {
+            autoClose: 6000,
+            type: "error",
+            position: "bottom-center",
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+          setTimeout(() => {
+            localStorage.clear();
+            RouteChange(navigate, "/dashboard", true);
+          }, 800);
+          return false;
+        }
         if (datajson?.errors && typeof window !== "undefined") {
           window.dispatchEvent(
             new CustomEvent(VALIDATION_EVENT, {
@@ -345,16 +367,12 @@ export const FetchData = async (
           progress: undefined,
           theme: "colored",
         });
-        if (datajson?.code == "401") {
-          setTimeout(() => {
-            localStorage.clear();
-            RouteChange(navigate, "/dashboard", true);
-          }, 800);
-        } else if (datajson?.code == "403") {
+        if (datajson?.code == "403") {
           setTimeout(() => {
           }, 800);
         }
         return false;
+      if (typeof window !== "undefined") (window as any).__tokenExpired = false;
       } else {
         if (
           (datajson?.code == "200" && methods == "PUT") ||

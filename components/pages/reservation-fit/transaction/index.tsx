@@ -1370,7 +1370,16 @@ const TrxPageView = (props: TrxProps) => {
     }
   }
   async function GetLedgerTrx(val: any, loop) {
-    // setDataTrxLedger([]);
+    // Empty ledger slot must stay empty — never fetch with an undefined
+    // ledger_id, because the backend would then return every transaction.
+    if (!val?.value) {
+      const empty = { code: 200, data: [], ledgerLabel: "", ledgerValue: "" };
+      if (loop === 0) settblguestA(empty);
+      else if (loop === 1) settblguestB(empty);
+      else if (loop === 2) settblguestC(empty);
+      else if (loop === 3) settblguestD(empty);
+      return;
+    }
     try {
       var dataLoop: any;
       var objData = [];
@@ -2793,7 +2802,7 @@ const TrxPageView = (props: TrxProps) => {
         GetLedgerTrx(datavalPrint?.guest_a, 0);
         GetLedgerTrx(datavalPrint?.guest_b, 1);
         GetLedgerTrx(datavalPrint?.guest_c, 2);
-        GetLedgerTrx(datavalPrint?.guest_a, 4);
+        GetLedgerTrx(datavalPrint?.guest_d, 3);
       } else {
         setloading(false);
       }

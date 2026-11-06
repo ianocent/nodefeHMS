@@ -132,8 +132,8 @@ const AddView = (props: AddviewProps) => {
           type: "select-multi",
           cols: "col-span-3",
           options: [
-            { value: true, label: "Active" },
-            { value: false, label: "Inactive" },
+            { value: 1, label: "Active" },
+            { value: 0, label: "Inactive" },
           ],
           ismulti: false,
         },
@@ -232,6 +232,14 @@ const AddView = (props: AddviewProps) => {
       setdataform([...dataInput]);
       dataform[0].data?.map((row, index) => {
         if (index == 0) {
+          var dataobj = {
+            [row?.name]: datauser?.data[row?.name],
+            [row?.name + "_ori"]: {
+              value: datauser?.data[row?.name],
+              label: datauser?.data[row?.name],
+            },
+          };
+        } else if (row?.type === "select-multi") {
           var dataobj = {
             [row?.name]: datauser?.data[row?.name],
             [row?.name + "_ori"]: {
