@@ -171,7 +171,8 @@ const TabMenuIcon = (props: DatatabProps) => {
         key == "copy_reservation" ||
         key == "confirm_change_room" ||
         key == "cancel_change_room" ||
-        key == "confirm_reservation"
+        key == "confirm_reservation" ||
+        key == "move_reservation"
       ) {
         mth = "POST";
         urisave = "/cms/reservation/update-status/" + GetQueryStr("data") + "";

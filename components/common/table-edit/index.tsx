@@ -914,9 +914,10 @@ const TableView = (props: TableViewProps) => {
   };
   const el = (sel: any, par?: any) => (par || document).querySelector(sel);
   const showPopup = (evt) => {
+    const card = GetQueryStr("card");
     const elPopup =
-      GetQueryStr("card") && GetQueryStr("card") != "0"
-        ? el("." + GetQueryStr("card") + "cls")
+      card && card != "0"
+        ? el("." + card + "cls") || el(".popuponly")
         : el(".popuponly");
     const elBtn = evt.currentTarget;
 

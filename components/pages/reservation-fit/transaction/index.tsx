@@ -315,10 +315,10 @@ const TrxPageView = (props: TrxProps) => {
         values = formatAmount(e.target.value);
         // console.log("1", values);
         if (e.target.name == "amount") {
-          GetCharge(values);
+          GetCharge(values, false);
           if (dataInput[0].data[13].value) {
             values = 0;
-            GetCharge(dataInput[0].data[6].value);
+            GetCharge(dataInput[0].data[6].value, false);
           }
         }
       } else {
@@ -368,7 +368,7 @@ const TrxPageView = (props: TrxProps) => {
       if (e.target.value == "complimentary") {
         if (e.target.checked) {
           dataInput[form].data[6].value = 0;
-          GetCharge(0);
+          GetCharge(0, false);
         }
       }
       if (ismulti) {
@@ -633,7 +633,7 @@ const TrxPageView = (props: TrxProps) => {
       return;
     }
   };
-  const GetCharge = async (amount) => {
+  const GetCharge = async (amount, updateBillTo = true) => {
     try {
       if (
         dataform[0].data[4].value?.value == undefined ||
@@ -664,7 +664,7 @@ const TrxPageView = (props: TrxProps) => {
       if (data?.code == "200") {
         setdatarate(data);
         let dataInput: any = [...dataform];
-        dataInput[0].data[10].value = data?.ledger;
+        if (updateBillTo) dataInput[0].data[10].value = data?.ledger;
         setdataform(dataInput);
       }
 

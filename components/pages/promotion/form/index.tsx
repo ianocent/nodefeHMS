@@ -231,26 +231,53 @@ const AddView = (props: AddviewProps) => {
 
       setdataform([...dataInput]);
       dataform[0].data?.map((row, index) => {
-        if (index == 0) {
-          var dataobj = {
-            [row?.name]: datauser?.data[row?.name],
+        if (row?.name === "status") {
+          const raw = datauser?.data?.[row?.name];
+          const scalar =
+            raw && typeof raw === "object" ? (raw.value ?? raw.id ?? 1) : (raw ?? 1);
+          const num = Number(scalar) === 0 ? 0 : 1;
+          var dataobj: any = {
+            [row?.name]: num,
             [row?.name + "_ori"]: {
-              value: datauser?.data[row?.name],
-              label: datauser?.data[row?.name],
+              value: num,
+              label: num === 1 ? "Active" : "Inactive",
+            },
+          };
+        } else if (row?.name === "apply_to_every_min_night") {
+          const raw = datauser?.data?.[row?.name];
+          const scalar =
+            raw && typeof raw === "object" ? (raw.value ?? raw.id) : raw;
+          const num = scalar === true || scalar === 1 || scalar === "1" ? 1 : 0;
+          var dataobj: any = {
+            [row?.name]: num,
+            [row?.name + "_ori"]: {
+              value: num,
+              label: num === 1 ? "Yes" : "No",
+            },
+          };
+        } else if (index == 0) {
+          var dataobj: any = {
+            [row?.name]: datauser?.data?.[row?.name],
+            [row?.name + "_ori"]: {
+              value: datauser?.data?.[row?.name],
+              label: datauser?.data?.[row?.name],
             },
           };
         } else if (row?.type === "select-multi") {
-          var dataobj = {
-            [row?.name]: datauser?.data[row?.name],
+          const raw = datauser?.data?.[row?.name];
+          const scalar =
+            raw && typeof raw === "object" ? (raw.value ?? raw.id ?? raw) : raw;
+          var dataobj: any = {
+            [row?.name]: scalar,
             [row?.name + "_ori"]: {
-              value: datauser?.data[row?.name],
-              label: datauser?.data[row?.name],
+              value: scalar,
+              label: scalar,
             },
           };
         } else {
-          var dataobj = {
-            [row?.name]: datauser?.data[row?.name],
-            [row?.name + "_ori"]: datauser?.data[row?.name],
+          var dataobj: any = {
+            [row?.name]: datauser?.data?.[row?.name],
+            [row?.name + "_ori"]: datauser?.data?.[row?.name],
           };
         }
 
@@ -258,9 +285,13 @@ const AddView = (props: AddviewProps) => {
       });
 
       if (i == 0) {
-        var dataobj = {
+        var dataobj: any = {
           ["promotion_code"]: datauser?.master?.code,
           ["promotion_code" + "_ori"]: datauser?.master?.code,
+          ["status"]: 1,
+          ["status" + "_ori"]: { value: 1, label: "Active" },
+          ["apply_to_every_min_night"]: 0,
+          ["apply_to_every_min_night" + "_ori"]: { value: 0, label: "No" },
         };
 
         setData((dataval) => ({ ...dataval, ...dataobj }));
